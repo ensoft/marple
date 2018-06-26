@@ -2,4 +2,6 @@ from .Interface import perf
 
 
 def perf_collect():
-    perf.collect(10)
+    """Uses perf module to collect scheduling data"""
+    perf.collect_sched_all(10)
+
