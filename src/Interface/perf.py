@@ -11,25 +11,29 @@ def collect(t):
     call(["perf", "record",  "sleep", str(t)])
 
 
-def collect_sched_all(t):
+def collect_sched_all(t, f):
     """
     Collect all CPU scheduling data using perf sched.
 
     This will get all the events in the scheduler.
     :param t:
         time in seconds for which to collect the data
+    :param f:
+        frequency of taking samples in Hz
 
     """
     call(["perf", "sched", "record", "sleep", str(t)])
 
 
-def collect_sched_enter_exit(t):
+def collect_sched_enter_exit(t, f):
     """
     Collect relevant CPU scheduling data using perf sched.
 
     This will get the enter and exit events in the scheduler.
     :param t:
         time in seconds for which to collect the data
+    :param f:
+        frequency of taking samples in Hz
 
     """
     call(["perf", "sched", "record", "sleep", str(t)])
@@ -58,4 +62,5 @@ def get_sched_data():
     :return:
         string of sched event lines of the form pid:cpu:time
     """
+    cl = input()
     call(["perf", "sched", "script", "-F", "pid", "cpu", "time"])
