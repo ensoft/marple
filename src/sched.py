@@ -1,4 +1,4 @@
-from .Interface import perf
+from .interface import perf
 
 
 def collect(t = 10, f = 100):
