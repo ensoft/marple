@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interface/perf.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sched.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sched.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -14,20 +14,20 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="sched.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="sched.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/sched.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="400">
-              <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
+            <state relative-caret-position="300">
+              <caret line="12" column="28" selection-start-line="12" selection-start-column="28" selection-end-line="12" selection-end-column="28" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="perf.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="perf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="198">
-              <caret line="9" column="41" selection-start-line="9" selection-start-column="41" selection-end-line="9" selection-end-column="41" />
+            <state relative-caret-position="220">
+              <caret line="10" column="9" selection-start-line="10" selection-start-column="9" selection-end-line="10" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -73,10 +73,10 @@
         <option value="$PROJECT_DIR$/src/Common/perf_to_g2.py" />
         <option value="$PROJECT_DIR$/src/Common/perf_to_flame.py" />
         <option value="$PROJECT_DIR$/Readme.md" />
-        <option value="$PROJECT_DIR$/src/sched.py" />
         <option value="$PROJECT_DIR$/src/Interface/perf.py" />
         <option value="$PROJECT_DIR$/src/controller.py" />
         <option value="$PROJECT_DIR$/src/interface/perf.py" />
+        <option value="$PROJECT_DIR$/src/sched.py" />
       </list>
     </option>
   </component>
@@ -216,7 +216,14 @@
       <option name="project" value="LOCAL" />
       <updated>1530098369744</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Add frequency parameter to standard perf recording, remove it from perf sched recording">
+      <created>1530106474421</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1530106474421</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -252,7 +259,8 @@
     <MESSAGE value="Add frequency argument to perf and sched" />
     <MESSAGE value="Refactor packages to lowercase" />
     <MESSAGE value="Add controller module" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add controller module" />
+    <MESSAGE value="Add frequency parameter to standard perf recording, remove it from perf sched recording" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add frequency parameter to standard perf recording, remove it from perf sched recording" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/sched.py">
@@ -359,13 +367,6 @@
     <entry file="file://$PROJECT_DIR$/src/common/perf_to_flame.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/sched.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="400">
-          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Readme.md">
       <provider editor-type-id="text-editor">
         <state relative-caret-position="60">
@@ -390,8 +391,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="9" column="41" selection-start-line="9" selection-start-column="41" selection-end-line="9" selection-end-column="41" />
+        <state relative-caret-position="220">
+          <caret line="10" column="9" selection-start-line="10" selection-start-column="9" selection-end-line="10" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/sched.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="12" column="28" selection-start-line="12" selection-start-column="28" selection-end-line="12" selection-end-column="28" />
         </state>
       </provider>
     </entry>
