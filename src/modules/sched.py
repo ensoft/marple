@@ -1,4 +1,4 @@
-from .interface import perf
+from src.interface import perf
 
 
 def collect(t=10):
@@ -7,7 +7,6 @@ def collect(t=10):
 
     :param t:
         time in seconds for the data to be collected
-
 
     """
     perf.collect_sched_all(t)
