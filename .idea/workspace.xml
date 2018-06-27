@@ -3,8 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/Interface/perf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sched.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sched.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interface/perf.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -25,22 +24,19 @@
         </entry>
       </file>
       <file leaf-file-name="perf.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/Interface/perf.py">
+        <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="21" column="41" selection-start-line="21" selection-start-column="41" selection-end-line="21" selection-end-column="41" />
+            <state relative-caret-position="198">
+              <caret line="9" column="41" selection-start-line="9" selection-start-column="41" selection-end-line="9" selection-end-column="41" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Readme.md" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Readme.md">
-          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-            <state split_layout="SPLIT">
-              <first_editor>
-                <caret column="6" selection-start-column="6" selection-end-column="6" />
-              </first_editor>
-              <second_editor />
+      <file leaf-file-name="controller.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/controller.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <caret column="52" selection-start-column="52" selection-end-column="52" />
             </state>
           </provider>
         </entry>
@@ -79,6 +75,8 @@
         <option value="$PROJECT_DIR$/Readme.md" />
         <option value="$PROJECT_DIR$/src/sched.py" />
         <option value="$PROJECT_DIR$/src/Interface/perf.py" />
+        <option value="$PROJECT_DIR$/src/controller.py" />
+        <option value="$PROJECT_DIR$/src/interface/perf.py" />
       </list>
     </option>
   </component>
@@ -110,13 +108,13 @@
               <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
               <item name="LEAP" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="Common" type="462c0819:PsiDirectoryNode" />
+              <item name="common" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
               <item name="LEAP" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="Interface" type="462c0819:PsiDirectoryNode" />
+              <item name="interface" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -197,7 +195,28 @@
       <option name="project" value="LOCAL" />
       <updated>1530012579432</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Add frequency argument to perf and sched">
+      <created>1530098226817</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1530098226817</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Refactor packages to lowercase">
+      <created>1530098288019</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1530098288019</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Add controller module">
+      <created>1530098369744</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1530098369744</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -230,7 +249,10 @@
     <MESSAGE value="initial commit" />
     <MESSAGE value="move functions from sched to perf" />
     <MESSAGE value="Add scheduler functions for data output in perf, use in sched.&#10;Also append readme." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add scheduler functions for data output in perf, use in sched.&#10;Also append readme." />
+    <MESSAGE value="Add frequency argument to perf and sched" />
+    <MESSAGE value="Refactor packages to lowercase" />
+    <MESSAGE value="Add controller module" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add controller module" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/sched.py">
@@ -250,7 +272,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Interface/perf.py">
+    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="900">
           <caret line="60" column="16" selection-start-line="60" selection-start-column="16" selection-end-line="60" selection-end-column="16" />
@@ -272,13 +294,13 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Common/perf_to_g2.py">
+    <entry file="file://$PROJECT_DIR$/src/common/perf_to_g2.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Common/perf_to_flame.py">
+    <entry file="file://$PROJECT_DIR$/src/common/perf_to_flame.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Interface/perf.py">
+    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="720">
           <caret line="48" selection-start-line="48" selection-end-line="48" />
@@ -292,10 +314,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Common/perf_to_g2.py">
+    <entry file="file://$PROJECT_DIR$/src/common/perf_to_g2.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Common/perf_to_flame.py">
+    <entry file="file://$PROJECT_DIR$/src/common/perf_to_flame.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/src/sched.py">
@@ -322,20 +344,27 @@
     <entry file="file://$PROJECT_DIR$/src/mem.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Common/data_converter.py">
+    <entry file="file://$PROJECT_DIR$/src/common/data_converter.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Interface/ebpf.py">
+    <entry file="file://$PROJECT_DIR$/src/interface/ebpf.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Interface/ftrace.py">
+    <entry file="file://$PROJECT_DIR$/src/interface/ftrace.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Common/perf_to_g2.py">
+    <entry file="file://$PROJECT_DIR$/src/common/perf_to_g2.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Common/perf_to_flame.py">
+    <entry file="file://$PROJECT_DIR$/src/common/perf_to_flame.py">
       <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/sched.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="400">
+          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
+        </state>
+      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Readme.md">
       <provider editor-type-id="text-editor">
@@ -352,17 +381,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/sched.py">
+    <entry file="file://$PROJECT_DIR$/src/controller.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="400">
-          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
+        <state>
+          <caret column="52" selection-start-column="52" selection-end-column="52" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/Interface/perf.py">
+    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="462">
-          <caret line="21" column="41" selection-start-line="21" selection-start-column="41" selection-end-line="21" selection-end-column="41" />
+        <state relative-caret-position="198">
+          <caret line="9" column="41" selection-start-line="9" selection-start-column="41" selection-end-line="9" selection-end-column="41" />
         </state>
       </provider>
     </entry>

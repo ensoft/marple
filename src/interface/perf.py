@@ -1,39 +1,39 @@
 from subprocess import call
 
 
-def collect(t):
+def collect(t, f=99):
     """
     Collect system data using perf
     :param t:
-        time in seconds for which to collect the data
+        The ime in seconds for which to collect the data
+    :param f:
+        The frequency in Hz of taking samples
+        The default value is 99 rather than 100 to avoid
+        recording in lockstep with some periodic activity.
 
     """
-    call(["perf", "record",  "sleep", str(t)])
+    call(["perf", "record", "-F", str(f), "-a", "-g" "--" "sleep", str(t)])
 
 
-def collect_sched_all(t, f):
+def collect_sched_all(t):
     """
     Collect all CPU scheduling data using perf sched.
 
     This will get all the events in the scheduler.
     :param t:
         time in seconds for which to collect the data
-    :param f:
-        frequency of taking samples in Hz
 
     """
     call(["perf", "sched", "record", "sleep", str(t)])
 
 
-def collect_sched_enter_exit(t, f):
+def collect_sched_enter_exit(t):
     """
     Collect relevant CPU scheduling data using perf sched.
 
     This will get the enter and exit events in the scheduler.
     :param t:
         time in seconds for which to collect the data
-    :param f:
-        frequency of taking samples in Hz
 
     """
     call(["perf", "sched", "record", "sleep", str(t)])
