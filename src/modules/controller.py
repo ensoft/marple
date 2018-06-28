@@ -126,6 +126,11 @@ def args_parse(argv):
     module.add_argument("-l", "--lib", action="store_true", help="library module")
     module.add_argument("-i", "--ipc", action="store_true", help="ipc module")
     module.add_argument("-m", "--mem", action="store_true", help="memory module")
+    
+    # Add flag and parameter for displaying type in case of display
+    d_type = parser.add_mutually_exclusive_group()
+    d_type.add_argument("-n", action="store_true", help="numerical representation")
+    d_type.add_argument("-g", action="store_true", help="graphical representation")
 
     # Add flag and parameter for time in case of collect
     time = parser.add_argument_group()
@@ -134,11 +139,6 @@ def args_parse(argv):
     # Add flag and parameter for filename
     filename = parser.add_argument_group()
     filename.add_argument("-f", "--file", type=str, help="Output file where collected data is stored")
-
-    # Add flag and parameter for displaying type in case of display
-    d_type = parser.add_mutually_exclusive_group(required=True)
-    d_type.add_argument("-n", action="store_true", help="numerical representation")
-    d_type.add_argument("-g", action="store_true", help="graphical representation")
 
     # Add string command parameter that specifies whether the action is collect or display
     parser.add_argument("COMMAND", type=str, help='The choices are: {collect, display}')

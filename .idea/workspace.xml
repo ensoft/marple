@@ -3,10 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interface/perf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/modules/controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/controller.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/modules/sched.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/sched.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -17,7 +13,7 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="controller.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="controller.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/modules/controller.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="1944">
@@ -50,7 +46,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="config.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="config.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/common/config.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="450">
@@ -413,19 +409,54 @@
       <option name="project" value="LOCAL" />
       <updated>1530183286257</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Add default frequency.">
+      <created>1530185209555</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1530185209555</updated>
+    </task>
+    <task id="LOCAL-00018" summary="Fix filename parameter as non-optional.&#10;Correct docstrings.">
+      <created>1530185254095</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1530185254095</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Implement the only function so far that collects and saves data using perf.">
+      <created>1530185320064</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1530185320064</updated>
+    </task>
+    <task id="LOCAL-00020" summary="Update workspace (automatic)">
+      <created>1530185399938</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1530185399938</updated>
+    </task>
+    <task id="LOCAL-00021" summary="Add filename parameter to controller parser.&#10;Make module choices mutually exclusive.&#10;Create filename here if not specified.&#10;Call functions using filename parameter.">
+      <created>1530185497248</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1530185497248</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Python Console" order="7" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.33015874" />
+      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.33015874" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" weight="0.32946146" />
       <window_info id="Favorites" order="2" side_tool="true" />
@@ -460,7 +491,12 @@
     <MESSAGE value="Remove TODOs" />
     <MESSAGE value="Explain main call" />
     <MESSAGE value="Split up the two different parts of the controller into different functions" />
-    <option name="LAST_COMMIT_MESSAGE" value="Split up the two different parts of the controller into different functions" />
+    <MESSAGE value="Add default frequency." />
+    <MESSAGE value="Fix filename parameter as non-optional.&#10;Correct docstrings." />
+    <MESSAGE value="Implement the only function so far that collects and saves data using perf." />
+    <MESSAGE value="Update workspace (automatic)" />
+    <MESSAGE value="Add filename parameter to controller parser.&#10;Make module choices mutually exclusive.&#10;Create filename here if not specified.&#10;Call functions using filename parameter." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add filename parameter to controller parser.&#10;Make module choices mutually exclusive.&#10;Create filename here if not specified.&#10;Call functions using filename parameter." />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/modules/sched.py">
@@ -717,23 +753,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/modules/controller.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1944">
-          <caret line="81" selection-start-line="81" selection-end-line="81" />
-          <folding>
-            <element signature="e#113#128#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/modules/sched.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="15" lean-forward="true" selection-start-line="15" selection-end-line="15" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/common/file.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="96">
@@ -755,6 +774,23 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="450">
           <caret line="30" lean-forward="true" selection-start-line="30" selection-end-line="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/modules/sched.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="330">
+          <caret line="15" lean-forward="true" selection-start-line="15" selection-end-line="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/modules/controller.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1944">
+          <caret line="81" selection-start-line="81" selection-end-line="81" />
+          <folding>
+            <element signature="e#113#128#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
