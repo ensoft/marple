@@ -1,7 +1,7 @@
-from subprocess import call
+from subprocess import call, check_output, Popen, PIPE
 
 
-def collect(t, f=99):
+def collect(t, f=99, filename=None):
     """
     Collect system data using perf
     :param t:
@@ -10,9 +10,16 @@ def collect(t, f=99):
         The frequency in Hz of taking samples
         The default value is 99 rather than 100 to avoid
         recording in lockstep with some periodic activity.
+    :param filename:
+        Optional parameter for the user to decide how the file should be stored
 
     """
-    call(["perf", "record", "-F", str(f), "-a", "-g" "--" "sleep", str(t)])
+    # create file for recording output. TODO: diff file names each time, also user option
+    outfile = open("my_file.txt", "w")
+
+    proc = Popen(["perf", "record", "-F", str(f), "-a", "-g" "--" "sleep", str(t)], stdout=outfile)
+    # if blocking:
+    #    proc.wait()
 
 
 def collect_sched_all(t):
@@ -65,3 +72,7 @@ def get_sched_data():
 
     """
     call(["perf", "sched", "script", "-F", "pid", "cpu", "time"])
+
+
+if __name__ == "__main__":
+    collect(1)
