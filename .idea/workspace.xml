@@ -2,11 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interface/perf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/modules/controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/controller.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/modules/sched.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/sched.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -26,11 +22,20 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="perf.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="perf.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="709">
-              <caret line="65" column="4" selection-start-line="65" selection-start-column="4" selection-end-line="65" selection-end-column="4" />
+            <state relative-caret-position="483">
+              <caret line="21" column="20" lean-forward="true" selection-start-line="21" selection-start-column="20" selection-end-line="21" selection-end-column="20" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="subprocess.py" pinned="false" current-in-tab="false">
+        <entry file="file:///usr/lib/python3.6/subprocess.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="202">
+              <caret line="417" selection-start-line="417" selection-end-line="417" />
             </state>
           </provider>
         </entry>
@@ -47,7 +52,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="150">
@@ -98,6 +103,7 @@
         <option value="$PROJECT_DIR$/src/main.py" />
         <option value="$PROJECT_DIR$/src/modules/controller.py" />
         <option value="$PROJECT_DIR$/src/modules/sched.py" />
+        <option value="$PROJECT_DIR$/src/interface/test.py" />
         <option value="$PROJECT_DIR$/src/interface/perf.py" />
       </list>
     </option>
@@ -168,25 +174,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.main">
-    <configuration name="Sched" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="LEAP" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/modules/sched.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-    </configuration>
+  <component name="RunManager" selected="Python.perf">
     <configuration name="controller" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="LEAP" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -223,6 +211,24 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
+    <configuration name="perf" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="LEAP" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/interface" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/interface/perf.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
     <configuration name="scratchfile" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="LEAP" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -241,18 +247,38 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="LEAP" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/interface" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/interface/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
     <list>
-      <item itemvalue="Python.Sched" />
       <item itemvalue="Python.controller" />
       <item itemvalue="Python.scratchfile" />
       <item itemvalue="Python.main" />
+      <item itemvalue="Python.test" />
+      <item itemvalue="Python.perf" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.perf" />
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.main" />
         <item itemvalue="Python.controller" />
         <item itemvalue="Python.scratchfile" />
-        <item itemvalue="Python.Sched" />
       </list>
     </recent_temporary>
   </component>
@@ -323,19 +349,32 @@
       <option name="project" value="LOCAL" />
       <updated>1530116430907</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Add logging and comments">
+      <created>1530174465138</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1530174465142</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Redirect the output from the general collect command to a file">
+      <created>1530180376148</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1530180376148</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Python Console" order="7" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.33015874" />
+      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.33015874" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" weight="0.32946146" />
       <window_info id="Favorites" order="2" side_tool="true" />
@@ -362,7 +401,9 @@
     <MESSAGE value="Add frequency parameter to standard perf recording, remove it from perf sched recording" />
     <MESSAGE value="Remove frequency parameter from collection function" />
     <MESSAGE value="Add controller module with parsing facility.&#10;Add main script to call controller for parsing.&#10;Move modules into modules package" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add controller module with parsing facility.&#10;Add main script to call controller for parsing.&#10;Move modules into modules package" />
+    <MESSAGE value="Add logging and comments" />
+    <MESSAGE value="Redirect the output from the general collect command to a file" />
+    <option name="LAST_COMMIT_MESSAGE" value="Redirect the output from the general collect command to a file" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/modules/sched.py">
@@ -543,13 +584,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="709">
-          <caret line="65" column="4" selection-start-line="65" selection-start-column="4" selection-end-line="65" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/modules/sched.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="336">
@@ -574,6 +608,27 @@
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/lib/python3.6/subprocess.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="202">
+          <caret line="417" selection-start-line="417" selection-end-line="417" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/interface/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" lean-forward="true" selection-start-line="6" selection-end-line="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="483">
+          <caret line="21" column="20" lean-forward="true" selection-start-line="21" selection-start-column="20" selection-end-line="21" selection-end-column="20" />
         </state>
       </provider>
     </entry>
