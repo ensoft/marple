@@ -36,6 +36,7 @@ def collect_sched_enter_exit(t):
         time in seconds for which to collect the data
 
     """
+    # At the moment same as sched_all
     call(["perf", "sched", "record", "sleep", str(t)])
 
 
@@ -61,6 +62,6 @@ def get_sched_data():
 
     :return:
         string of sched event lines of the form pid:cpu:time
+
     """
-    cl = input()
     call(["perf", "sched", "script", "-F", "pid", "cpu", "time"])

@@ -10,4 +10,3 @@ def collect(t=10):
 
     """
     perf.collect_sched_all(t)
-
