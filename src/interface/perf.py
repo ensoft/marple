@@ -72,7 +72,7 @@ def get_sched_data(filename):
     # Create file for recording output
     outfile = open(filename, "w")
 
-    sub_process = Popen(["perf", "sched", "script", "-F", "pid,cpu,time"], stdout=outfile)
+    sub_process = Popen(["perf", "sched", "script", "-F", "pid,cpu,time,event"], stdout=outfile)
 
     # Block if blocking is set by config module
     if config.is_blocking():
