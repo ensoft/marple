@@ -6,31 +6,95 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
+    """
+    The main function of the controller.
+
+    Calls the middle level modules according to options selected by user.
+
+    :param argv:
+        command line arguments from call in main
+
+    """
     args = args_parse(argv)
+
     if not (args.sched or args.lib or args.ipc or args.ipc or args.mem):
-        print("At least one of the possible options needs to be specified!")
+        logger.error("At least one of the possible options needs to be specified!")
+        return
+
     if args.COMMAND == "collect":
-        if args.sched:
-            logger.info("recording scheduling data for {} seconds".format(args.t))
-        if args.lib:
-            logger.info("recording library loading data for {} seconds".format(args.t))
-        if args.ipc:
-            logger.info("recording ipc data for {} seconds".format(args.t))
-        if args.mem:
-            logger.info("recording memory data for {} seconds".format(args.t))
+        collect(args)
     elif args.COMMAND == "display":
-        if args.sched:
-            logger.info("displaying scheduling data")
-        if args.lib:
-            logger.info("displaying library loading data")
-        if args.ipc:
-            logger.info("displaying ipc scheduling data")
-        if args.mem:
-            logger.info("displaying mem scheduling data")
+        display(args)
+
+
+def collect(args):
+    """
+    Collection part of the controller module.
+
+    Deals with data collection.
+    :param args:
+        Command line arguments for data-collection
+        Passed by main function
+
+    """
+    if args.sched:
+        # Stub
+        logger.info("recording scheduling data for {} seconds".format(args.t))
+    if args.lib:
+        # Stub
+        logger.info("recording library loading data for {} seconds".format(args.t))
+    if args.ipc:
+        # Stub
+        logger.info("recording ipc data for {} seconds".format(args.t))
+    if args.mem:
+        # Stub
+        logger.info("recording memory data for {} seconds".format(args.t))
+
+
+def display(args):
+    """
+    Displaying part of the controller module.
+
+    Deals with displaying data.
+
+    :param args:
+        Command line arguments for data-display
+        Passed by main function
+
+    """
+    if args.sched:
+        # Stub
+        logger.info("displaying scheduling data")
+    if args.lib:
+        # Stub
+        logger.info("displaying library loading data")
+    if args.ipc:
+        # Stub
+        logger.info("displaying ipc scheduling data")
+    if args.mem:
+        # Stub
+        logger.info("displaying mem scheduling data")
 
 
 def args_parse(argv):
-    """Parse the command line arguments"""
+    """
+    Parse the command line arguments.
+
+    Called by main when the program is started.
+
+    Arguments that are created:
+
+        sched: CPU scheduling data
+        lib: library load times
+        ipc: ipc efficiency
+        mem: memory allocation/deallocation
+
+        time t: time in seconds to record data
+
+        -n: numerical representation of data
+        -g: graphical representation of data
+        
+    """
 
     # Create parser object
     parser = argparse.ArgumentParser(description='Collect and process performance data')
