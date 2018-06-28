@@ -1,16 +1,14 @@
 from subprocess import call, Popen
-from src.common import config, file
+from src.common import config
 
 
-def collect(t, f=99):
+def collect(t, f):
     """
     Collect system data using perf
     :param t:
-        The ime in seconds for which to collect the data.
+        The time in seconds for which to collect the data.
     :param f:
         The frequency in Hz of taking samples
-        The default value is 99 rather than 100 to avoid
-        recording in lockstep with some periodic activity.
 
     """
 
@@ -23,7 +21,7 @@ def collect_sched_all(t):
 
     This will get all the events in the scheduler.
     :param t:
-        time in seconds for which to collect the data.
+        The time in seconds for which to collect the data.
 
     """
     call(["perf", "sched", "record", "sleep", str(t)])
@@ -35,7 +33,7 @@ def collect_sched_enter_exit(t):
 
     This will get the enter and exit events in the scheduler.
     :param t:
-        time in seconds for which to collect the data.
+        The time in seconds for which to collect the data.
 
     """
     # At the moment same as sched_all
@@ -54,7 +52,7 @@ def map_sched():
     call(["perf", "sched", "map"])
 
 
-def get_sched_data(filename=None):
+def get_sched_data(filename):
     """
     Get the relevant scheduling data.
 
@@ -63,16 +61,13 @@ def get_sched_data(filename=None):
     Note: this outputs all given events regardless of type.
 
     :param filename:
-        Optional parameter for the user to decide how the
+        Parameter for the user to decide how the
         file should be stored.
 
     :return:
         string of sched event lines of the form pid:cpu:time.
 
     """
-    # If the user has not specified a file name, create a unique one
-    if filename is None:
-        filename = file.create_name()
 
     # Create file for recording output
     outfile = open(filename, "w")
@@ -82,7 +77,3 @@ def get_sched_data(filename=None):
     # Block if blocking is set by config module
     if config.is_blocking():
         sub_process.wait()
-
-
-if __name__ == "__main__":
-    collect(1)
