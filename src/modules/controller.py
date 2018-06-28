@@ -7,7 +7,7 @@ Handles interaction between the user and the middle level modules (mem, sched et
 import argparse
 import logging
 from src.modules import sched
-from src.common import file
+from src.common import file, config
 
 logger = logging.getLogger(__name__)
 
@@ -29,43 +29,56 @@ def main(argv):
         return
 
     # Use the user specified filename if there is one, otherwise create a unique one
-    if args.f is None:
+    if args.file is None:
         filename = file.create_name()
+        logger.info("Using default filename {} "
+                    "as no filename was specified".format(filename))
     else:
-        filename = args.f
+        filename = args.file
+
+    # Collect data for user specified amount of time, otherwise standard value
+    if args.time is None:
+        time = config.get_default_time()
+        logger.info("Using default time {}s "
+                    "as no time was specified".format(time))
+    else:
+        time = args.time
 
     if args.COMMAND == "collect":
-        collect(args, filename)
+        collect(args, filename, time)
+
     elif args.COMMAND == "display":
         display(args, filename)
 
 
-def collect(args, filename):
+def collect(args, filename, time):
     """
     Collection part of the controller module.
 
     Deals with data collection.
 
     :param args:
-        Command line arguments for data-collection
-        Passed by main function
+        Command line arguments for data-collection.
+        Passed by main function.
     :param filename:
         The location where the file is stored.
+    :param time:
+        The time in seconds for which to collect the data.
 
     """
     if args.sched:
-        logger.info("recording scheduling data for {} seconds".format(args.t))
-        sched.collect(args.t, filename)
+        logger.info("recording scheduling data for {} seconds".format(time))
+        sched.collect_all(time, filename)
 
     if args.lib:
         # Stub
-        logger.info("recording library loading data for {} seconds".format(args.t))
+        logger.info("recording library loading data for {} seconds".format(time))
     if args.ipc:
         # Stub
-        logger.info("recording ipc data for {} seconds".format(args.t))
+        logger.info("recording ipc data for {} seconds".format(time))
     if args.mem:
         # Stub
-        logger.info("recording memory data for {} seconds".format(args.t))
+        logger.info("recording memory data for {} seconds".format(time))
 
 
 def display(args, filename):
@@ -126,7 +139,7 @@ def args_parse(argv):
     module.add_argument("-l", "--lib", action="store_true", help="library module")
     module.add_argument("-i", "--ipc", action="store_true", help="ipc module")
     module.add_argument("-m", "--mem", action="store_true", help="memory module")
-    
+
     # Add flag and parameter for displaying type in case of display
     d_type = parser.add_mutually_exclusive_group()
     d_type.add_argument("-n", action="store_true", help="numerical representation")
