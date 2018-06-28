@@ -1,25 +1,20 @@
-from subprocess import call, check_output, Popen, PIPE
+from subprocess import call, Popen
+from src.common import config, file
 
 
-def collect(t, f=99, filename=None):
+def collect(t, f=99):
     """
     Collect system data using perf
     :param t:
-        The ime in seconds for which to collect the data
+        The ime in seconds for which to collect the data.
     :param f:
         The frequency in Hz of taking samples
         The default value is 99 rather than 100 to avoid
         recording in lockstep with some periodic activity.
-    :param filename:
-        Optional parameter for the user to decide how the file should be stored
 
     """
-    # create file for recording output. TODO: diff file names each time, also user option
-    outfile = open("my_file.txt", "w")
 
-    proc = Popen(["perf", "record", "-F", str(f), "-a", "-g" "--" "sleep", str(t)], stdout=outfile)
-    # if blocking:
-    #    proc.wait()
+    call(["perf", "record", "-F", str(f), "-a", "-g", "--", "sleep", str(t)])
 
 
 def collect_sched_all(t):
@@ -28,7 +23,7 @@ def collect_sched_all(t):
 
     This will get all the events in the scheduler.
     :param t:
-        time in seconds for which to collect the data
+        time in seconds for which to collect the data.
 
     """
     call(["perf", "sched", "record", "sleep", str(t)])
@@ -40,7 +35,7 @@ def collect_sched_enter_exit(t):
 
     This will get the enter and exit events in the scheduler.
     :param t:
-        time in seconds for which to collect the data
+        time in seconds for which to collect the data.
 
     """
     # At the moment same as sched_all
@@ -59,7 +54,7 @@ def map_sched():
     call(["perf", "sched", "map"])
 
 
-def get_sched_data():
+def get_sched_data(filename=None):
     """
     Get the relevant scheduling data.
 
@@ -67,11 +62,26 @@ def get_sched_data():
     to output a list of relevant scheduler events in an ordered fashion.
     Note: this outputs all given events regardless of type.
 
+    :param filename:
+        Optional parameter for the user to decide how the
+        file should be stored.
+
     :return:
-        string of sched event lines of the form pid:cpu:time
+        string of sched event lines of the form pid:cpu:time.
 
     """
-    call(["perf", "sched", "script", "-F", "pid", "cpu", "time"])
+    # If the user has not specified a file name, create a unique one
+    if filename is None:
+        filename = file.create_name()
+
+    # Create file for recording output
+    outfile = open(filename, "w")
+
+    sub_process = Popen(["perf", "sched", "script", "-F", "pid", "cpu", "time"], stdout=outfile)
+
+    # Block if blocking is set by config module
+    if config.is_blocking():
+        sub_process.wait()
 
 
 if __name__ == "__main__":
