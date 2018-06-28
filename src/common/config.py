@@ -1,6 +1,4 @@
-# TODO: Interact with a standardised config file on disk that the user can write to
-# For now, just have constants hardcoded in here
-
+# Constants
 blocking = False
 
 

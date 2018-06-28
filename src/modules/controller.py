@@ -52,7 +52,6 @@ def args_parse(argv):
 
     # Add string command parameter that specifies whether the action is collect or display
     parser.add_argument("COMMAND", type=str, help='The choices are: {collect, display}')
-    # TODO: find a way to make those the only possible options (possible?)
 
     logger.info("parsing input arguments")
 
