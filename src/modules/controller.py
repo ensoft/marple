@@ -6,6 +6,7 @@ Handles interaction between the user and the middle level modules (mem, sched et
 """
 import argparse
 import logging
+import os
 from src.modules import sched
 from src.common import file, config
 
@@ -22,11 +23,28 @@ def main(argv):
         command line arguments from call in main
 
     """
+    # Check whether user is root, otherwise exit
+    if os.geteuid() != 0:
+        exit("You need to have root privileges to run leap.")
+
+    # Parse arguments
     args = args_parse(argv)
 
-    if not (args.sched or args.lib or args.ipc or args.ipc or args.mem):
-        logger.error("At least one of the possible options needs to be specified!")
-        return
+    # Call the appropriate function
+    args.func(args)
+
+
+def collect(args):
+    """
+    Collection part of the controller module.
+
+    Deals with data collection.
+
+    :param args:
+        Command line arguments for data-collection.
+        Passed by main function.
+
+    """
 
     # Use the user specified filename if there is one, otherwise create a unique one
     if args.file is None:
@@ -44,28 +62,6 @@ def main(argv):
     else:
         time = args.time
 
-    if args.COMMAND == "collect":
-        collect(args, filename, time)
-
-    elif args.COMMAND == "display":
-        display(args, filename)
-
-
-def collect(args, filename, time):
-    """
-    Collection part of the controller module.
-
-    Deals with data collection.
-
-    :param args:
-        Command line arguments for data-collection.
-        Passed by main function.
-    :param filename:
-        The location where the file is stored.
-    :param time:
-        The time in seconds for which to collect the data.
-
-    """
     if args.sched:
         logger.info("recording scheduling data for {} seconds".format(time))
         sched.collect_all(time, filename)
@@ -81,7 +77,7 @@ def collect(args, filename, time):
         logger.info("recording memory data for {} seconds".format(time))
 
 
-def display(args, filename):
+def display(args):
     """
     Displaying part of the controller module.
 
@@ -90,10 +86,15 @@ def display(args, filename):
     :param args:
         Command line arguments for data-display
         Passed by main function
-    :param filename:
-        The location where the file is stored.
 
     """
+    # Use the user specified filename if there is one, otherwise create a unique one
+    if args.file is None:
+        filename = file.create_name()
+        logger.info("Using default filename {} "
+                    "as no filename was specified".format(filename))
+    else:
+        filename = args.file
 
     if args.sched:
         # Stub
@@ -130,31 +131,59 @@ def args_parse(argv):
     """
 
     # Create parser object
-    parser = argparse.ArgumentParser(description='Collect and process performance data')
+    parser = argparse.ArgumentParser(prog="leap", description='Collect and display performance data')
 
-    module = parser.add_mutually_exclusive_group()
+    # Create two sub-parsers for the two kinds of command, collect and display
+    subparsers = parser.add_subparsers(dest="command")
 
-    # Add options for the modules, optional but at least one (checked in main)
-    module.add_argument("-s", "--sched", action="store_true", help="scheduler module")
-    module.add_argument("-l", "--lib", action="store_true", help="library module")
-    module.add_argument("-i", "--ipc", action="store_true", help="ipc module")
-    module.add_argument("-m", "--mem", action="store_true", help="memory module")
+    # ---------------
+    
+    # Collect Parser
+    parser_collect = subparsers.add_parser("collect", help="Collect data to display")
 
-    # Add flag and parameter for displaying type in case of display
-    d_type = parser.add_mutually_exclusive_group()
-    d_type.add_argument("-n", action="store_true", help="numerical representation")
-    d_type.add_argument("-g", action="store_true", help="graphical representation")
-
-    # Add flag and parameter for time in case of collect
-    time = parser.add_argument_group()
-    time.add_argument("-t", "--time", type=int, help="time in seconds that data is collected")
+    # Add options for the modules
+    module_collect = parser_collect.add_mutually_exclusive_group(required=True)
+    module_collect.add_argument("-s", "--sched", action="store_true", help="scheduler module")
+    module_collect.add_argument("-l", "--lib", action="store_true", help="library module")
+    module_collect.add_argument("-i", "--ipc", action="store_true", help="ipc module")
+    module_collect.add_argument("-m", "--mem", action="store_true", help="memory module")
 
     # Add flag and parameter for filename
-    filename = parser.add_argument_group()
+    filename = parser_collect.add_argument_group()
     filename.add_argument("-f", "--file", type=str, help="Output file where collected data is stored")
 
-    # Add string command parameter that specifies whether the action is collect or display
-    parser.add_argument("COMMAND", type=str, help='The choices are: {collect, display}')
+    # Add flag and parameter for time
+    time = parser_collect.add_argument_group()
+    time.add_argument("-t", "--time", type=int, help="time in seconds that data is collected")
+
+    # Set default function
+    parser_collect.set_defaults(func=collect)
+
+    # ---------------
+
+    # Display Parser
+    parser_display = subparsers.add_parser("display", help="Display collected data in required format")
+
+    # Add options for the modules
+    module_display = parser_display.add_mutually_exclusive_group(required=True)
+    module_display.add_argument("-s", "--sched", action="store_true", help="scheduler module")
+    module_display.add_argument("-l", "--lib", action="store_true", help="library module")
+    module_display.add_argument("-i", "--ipc", action="store_true", help="ipc module")
+    module_display.add_argument("-m", "--mem", action="store_true", help="memory module")
+
+    # Add flag and parameter for displaying type in case of display
+    type_display = parser_display.add_mutually_exclusive_group(required=True)
+    type_display.add_argument("-n", action="store_true", help="numerical representation")
+    type_display.add_argument("-g", action="store_true", help="graphical representation")
+
+    # Add flag and parameter for filename
+    filename = parser_display.add_argument_group()
+    filename.add_argument("-f", "--file", type=str, help="Input file where collected data "
+                                                         "to display is stored")
+    # Set default function
+    parser_display.set_defaults(func=display)
+
+    # ---------------
 
     logger.info("parsing input arguments")
 
