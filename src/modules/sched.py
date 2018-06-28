@@ -1,12 +1,15 @@
 from src.interface import perf
 
 
-def collect(t=10):
+def collect_all(t, filename):
     """
     Uses perf module to collect scheduling data
 
     :param t:
-        time in seconds for the data to be collected
+        The time in seconds for which to collect the data.
+    :param filename:
+        The location where the file is stored.
 
     """
     perf.collect_sched_all(t)
+    perf.get_sched_data(filename)
