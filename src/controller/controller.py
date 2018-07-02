@@ -15,7 +15,9 @@ It calls the relevant functions for each command.
 import argparse
 import logging
 import os
+
 from . import sched
+from ..common import output
 from ..common import file, config
 
 COLLECTION_TIME = 10
@@ -36,6 +38,8 @@ def _collect(args):
         Passed by main function.
 
     """
+    logger.info("Collect function."
+                "Applying logic evaluating and applying input parameters")
     # Use the user specified filename if there is one,
     # otherwise create a unique one
     if args.file is None:
@@ -48,10 +52,11 @@ def _collect(args):
             i -= 1
 
         if os.path.isfile(filename):
-            logger.debug("Failed to generate unique filename! Exiting! Name: {}"
-                         .format(filename))
-            exit("Unable to create a unique filename. "
-                 "Please choose a filename and try again.")
+            output.error_("Unable to create a unique filename. "
+                          "Please choose a filename and try again.",
+                          "Failed to generate unique filename! Exiting! "
+                          "Name: {}".format(filename))
+            exit()
     else:
         filename = args.file
 
@@ -97,6 +102,9 @@ def _display(args):
         Passed by main function
 
     """
+    logger.info("Display function."
+                "Applying logic evaluating and applying input parameters")
+
     # Try to use the specified name, otherwise throw exception
     filename = args.file
     if filename is None or not os.path.isfile(filename):
@@ -134,6 +142,8 @@ def _args_parse(argv):
 
     """
 
+    logger.info("Enter _args_parse function. Creates parser parses input")
+
     # Create parser object
     parser = argparse.ArgumentParser(prog="leap",
                                      description="Collect and display "
@@ -168,6 +178,9 @@ def _parse_collect(subparsers):
         subparsers of the main parser, passed by _args_parse
 
     """
+
+    logger.info("enter parse_collect function")
+
     parser_collect = subparsers.add_parser("collect",
                                            help="Collect data to display")
 
@@ -214,6 +227,8 @@ def _parse_display(subparsers):
          subparsers of the main parser, passed by _args_parse
 
     """
+    logging.info("enter parse_display function")
+
     parser_display = subparsers.add_parser("display",
                                            help="Display collected data "
                                                 "in required format")
@@ -255,9 +270,12 @@ def main(argv):
         command line arguments from call in main
 
     """
+    logger.info("enter controller main function")
+
     # Check whether user is root, otherwise exit
     if os.geteuid() != 0:
-        exit("Error: You need to have root privileges to run leap.")
+        output.error_("Error: You need to have root privileges to run leap.")
+        exit()
 
     # Parse arguments
     logger.info("trying to parse input: {}".format(argv))
@@ -267,10 +285,12 @@ def main(argv):
     try:
         args.func(args)
     except FileExistsError:
-        logger.debug("filename already exists, exiting with an error")
-        exit("Error: A file with that name already exists. \n"
-             "Please choose a unique filename.")
+        output.error_("A file with that name already exists. \n"
+                      "Please choose a unique filename.",
+                      "filename already exists, exiting with an error")
+        exit()
     except FileNotFoundError:
-        logger.debug("file not found, exiting with an error")
-        exit("Error: No file with that name found. \n"
-             "Please choose a different filename, or collect new data.")
+        output.error_("Error: No file with that name found. \n"
+                      "Please choose a different filename, or collect new data.",
+                      "file not found, exiting with an error")
+        exit()
