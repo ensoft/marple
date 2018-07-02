@@ -232,9 +232,9 @@ def _parse_display(subparsers):
     # Add flag and parameter for displaying type in case of display
     type_display = parser_display.add_mutually_exclusive_group(required=True)
     type_display.add_argument("-n", action="store_true",
-                              help="numerical representation")
+                              help="numerical representation as a table")
     type_display.add_argument("-g", action="store_true",
-                              help="graphical representation")
+                              help="graphical representation as an image")
 
     # Add flag and parameter for filename
     filename = parser_display.add_argument_group()
@@ -260,6 +260,7 @@ def main(argv):
         exit("Error: You need to have root privileges to run leap.")
 
     # Parse arguments
+    logger.info("trying to parse input: {}".format(argv))
     args = _args_parse(argv)
 
     # Call the appropriate function, either collect or display
