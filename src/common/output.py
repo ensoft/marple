@@ -10,7 +10,8 @@ Provides functions for normal print output and errors.
 """
 
 import logging
-logger = logging.getLogger("leap_log")
+logger = logging.getLogger("common.output")
+logger.setLevel(logging.DEBUG)
 
 
 def print_(text):

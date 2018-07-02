@@ -17,12 +17,14 @@ import logging
 import os
 
 from . import sched
-from ..common import output
-from ..common import file, config
+import src.common.output as output
+import src.common.config as config
+import src.common.file as file
 
 COLLECTION_TIME = 10
 
-logger = logging.getLogger('leap-log')
+logger = logging.getLogger('controller.main')
+logger.setLevel(logging.DEBUG)
 
 __all__ = "main"
 
@@ -38,8 +40,9 @@ def _collect(args):
         Passed by main function.
 
     """
-    logger.info("Collect function."
+    logger.info("Collect function. "
                 "Applying logic evaluating and applying input parameters")
+
     # Use the user specified filename if there is one,
     # otherwise create a unique one
     if args.file is None:
@@ -61,7 +64,7 @@ def _collect(args):
         filename = args.file
 
     if os.path.isfile(filename):
-        logger.debug("file already exist. Filename: {}. Throwing exception"
+        logger.debug("File already exist. Filename: {}. Throwing exception"
                      .format(filename))
         raise FileExistsError
 
@@ -76,19 +79,19 @@ def _collect(args):
         time = args.time
 
     if args.sched:
-        logger.info("recording scheduling data for {} seconds".format(time))
+        logger.info("Recording scheduling data for {} seconds".format(time))
         sched.collect_all(time, filename)
 
     if args.lib:
         # Stub
-        logger.info("recording library loading data "
+        logger.info("Recording library loading data "
                     "for {} seconds".format(time))
     if args.ipc:
         # Stub
-        logger.info("recording ipc data for {} seconds".format(time))
+        logger.info("Recording ipc data for {} seconds".format(time))
     if args.mem:
         # Stub
-        logger.info("recording memory data for {} seconds".format(time))
+        logger.info("Recording memory data for {} seconds".format(time))
 
 
 def _display(args):
@@ -108,21 +111,21 @@ def _display(args):
     # Try to use the specified name, otherwise throw exception
     filename = args.file
     if filename is None or not os.path.isfile(filename):
-        logger.debug("file not found, throwing exception")
+        logger.debug("File not found, throwing exception")
         raise FileNotFoundError
 
     if args.sched:
         # Stub
-        logger.info("displaying scheduling data")
+        logger.info("Displaying scheduling data")
     elif args.lib:
         # Stub
-        logger.info("displaying library loading data")
+        logger.info("Displaying library loading data")
     elif args.ipc:
         # Stub
-        logger.info("displaying ipc scheduling data")
+        logger.info("Displaying ipc scheduling data")
     elif args.mem:
         # Stub
-        logger.info("displaying mem scheduling data")
+        logger.info("Displaying mem scheduling data")
 
 
 def _args_parse(argv):
@@ -156,7 +159,7 @@ def _args_parse(argv):
 
     _parse_display(subparsers)
 
-    logger.info("parsing input arguments")
+    logger.info("Parsing input arguments")
 
     return parser.parse_args(argv)
 
@@ -179,7 +182,7 @@ def _parse_collect(subparsers):
 
     """
 
-    logger.info("enter parse_collect function")
+    logger.info("Enter parse_collect function")
 
     parser_collect = subparsers.add_parser("collect",
                                            help="Collect data to display")
@@ -270,27 +273,22 @@ def main(argv):
         command line arguments from call in main
 
     """
-    logger.info("enter controller main function")
-
-    # Check whether user is root, otherwise exit
-    if os.geteuid() != 0:
-        output.error_("Error: You need to have root privileges to run leap.")
-        exit(1)
+    logger.info("Enter controller main function")
 
     # Parse arguments
-    logger.info("trying to parse input: {}".format(argv))
+    logger.info("Trying to parse input: {}".format(argv))
     args = _args_parse(argv)
 
     # Call the appropriate function, either collect or display
     try:
         args.func(args)
     except FileExistsError:
-        output.error_("A file with that name already exists. \n"
+        output.error_("A file with that name already exists. "
                       "Please choose a unique filename.",
-                      "filename already exists, exiting with an error")
+                      "filename already exists")
         exit(1)
     except FileNotFoundError:
-        output.error_("Error: No file with that name found. \n"
+        output.error_("Error: No file with that name found. "
                       "Please choose a different filename, or collect new data.",
-                      "file not found, exiting with an error")
+                      "file not found")
         exit(1)

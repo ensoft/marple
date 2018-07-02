@@ -13,7 +13,7 @@ Calls perf to collect data for different purposes.
 __all__ = ["collect", "collect_sched_all", "map_sched", "get_sched_data"]
 
 import subprocess
-from ..common import config
+import src.common.config as config
 
 
 def collect(time, frequency):
