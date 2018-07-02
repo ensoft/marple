@@ -15,7 +15,7 @@ import os
 import datetime
 import logging
 
-from .controller import controller
+from .controller import controller_main
 
 # create a unique and descriptive logfile using timiestamp and process id in the
 # standard linux log file directory
@@ -28,4 +28,4 @@ logger = logging.getLogger('leap-log')
 if __name__ == "__main__":
     # Call main function with command line arguments
     # Excluding argv[0] (program name)
-    controller.main(sys.argv[1:])
+    controller_main.main(sys.argv[1:])

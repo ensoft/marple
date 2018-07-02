@@ -56,7 +56,7 @@ def _collect(args):
                           "Please choose a filename and try again.",
                           "Failed to generate unique filename! Exiting! "
                           "Name: {}".format(filename))
-            exit()
+            exit(1)
     else:
         filename = args.file
 
@@ -275,7 +275,7 @@ def main(argv):
     # Check whether user is root, otherwise exit
     if os.geteuid() != 0:
         output.error_("Error: You need to have root privileges to run leap.")
-        exit()
+        exit(1)
 
     # Parse arguments
     logger.info("trying to parse input: {}".format(argv))
@@ -288,9 +288,9 @@ def main(argv):
         output.error_("A file with that name already exists. \n"
                       "Please choose a unique filename.",
                       "filename already exists, exiting with an error")
-        exit()
+        exit(1)
     except FileNotFoundError:
         output.error_("Error: No file with that name found. \n"
                       "Please choose a different filename, or collect new data.",
                       "file not found, exiting with an error")
-        exit()
+        exit(1)
