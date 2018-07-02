@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/controller/controller_main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/controller.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controller/controller_main.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -15,14 +15,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="controller_main.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/controller/controller_main.py">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/controller/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2839">
-              <caret line="274" column="32" selection-start-line="274" selection-start-column="28" selection-end-line="274" selection-end-column="32" />
-              <folding>
-                <element signature="e#437#452#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="342">
+              <caret line="18" column="19" selection-start-line="18" selection-start-column="19" selection-end-line="18" selection-end-column="19" />
             </state>
           </provider>
         </entry>
@@ -45,14 +42,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="425">
-              <caret line="17" column="34" lean-forward="true" selection-start-line="17" selection-start-column="34" selection-end-line="17" selection-end-column="34" />
-              <folding>
-                <element signature="e#24#34#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="393">
+              <caret line="17" column="18" lean-forward="true" selection-start-line="17" selection-start-column="18" selection-end-line="17" selection-end-column="18" />
             </state>
           </provider>
         </entry>
@@ -106,6 +100,7 @@
       <find>config</find>
       <find>exit</find>
       <find>root</find>
+      <find>exit()</find>
     </findStrings>
     <replaceStrings>
       <replace>'</replace>
@@ -116,6 +111,7 @@
       <replace>args</replace>
       <replace>subprocess.call</replace>
       <replace>subprocess.Popen</replace>
+      <replace>exit(1)</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -156,6 +152,7 @@
         <option value="$PROJECT_DIR$/src/controller/sched.py" />
         <option value="$PROJECT_DIR$/src/common/output.py" />
         <option value="$PROJECT_DIR$/src/controller/controller.py" />
+        <option value="$PROJECT_DIR$/src/controller/controller_main.py" />
         <option value="$PROJECT_DIR$/src/main.py" />
       </list>
     </option>
@@ -256,7 +253,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/controller/controller_main.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/controller/main.py" />
       <option name="PARAMETERS" value="--help" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -656,7 +653,28 @@
       <option name="project" value="LOCAL" />
       <updated>1530546942548</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00043" summary="Refactor controller script as controller_main">
+      <created>1530547181882</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1530547181882</updated>
+    </task>
+    <task id="LOCAL-00044" summary="Refactor controller script as controller_main">
+      <created>1530547228063</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1530547228063</updated>
+    </task>
+    <task id="LOCAL-00045" summary="exit code 1">
+      <created>1530547417922</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1530547417922</updated>
+    </task>
+    <option name="localTasksCounter" value="46" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -686,8 +704,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix filename parameter as non-optional.&#10;Correct docstrings." />
-    <MESSAGE value="Implement the only function so far that collects and saves data using perf." />
     <MESSAGE value="Update workspace (automatic)" />
     <MESSAGE value="Add filename parameter to controller parser.&#10;Make module choices mutually exclusive.&#10;Create filename here if not specified.&#10;Call functions using filename parameter." />
     <MESSAGE value="Change order and required parameter of representation option." />
@@ -711,7 +727,9 @@
     <MESSAGE value="Add output module to display output to the user and log" />
     <MESSAGE value="Correct comment at the top" />
     <MESSAGE value="Use output module for output to the user and errors." />
-    <option name="LAST_COMMIT_MESSAGE" value="Use output module for output to the user and errors." />
+    <MESSAGE value="Refactor controller script as controller_main" />
+    <MESSAGE value="exit code 1" />
+    <option name="LAST_COMMIT_MESSAGE" value="exit code 1" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/controller/sched.py">
@@ -735,19 +753,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
           <caret line="5" lean-forward="true" selection-start-line="5" selection-end-line="5" />
-          <folding>
-            <element signature="e#24#34#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/controller/controller_main.py">
+    <entry file="file://$PROJECT_DIR$/src/controller/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="570">
           <caret line="38" column="79" selection-start-line="38" selection-start-column="79" selection-end-line="38" selection-end-column="79" />
-          <folding>
-            <element signature="e#437#452#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -928,13 +940,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/common/data_converter.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="20">
-          <caret line="1" column="66" selection-start-line="1" selection-start-column="66" selection-end-line="1" selection-end-column="66" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/controller/sched.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="20">
@@ -952,6 +957,13 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/common/data_converter.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="66" selection-start-line="1" selection-start-column="66" selection-end-line="1" selection-end-column="66" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/common/output.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="456">
@@ -959,23 +971,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main.py">
+    <entry file="file://$PROJECT_DIR$/src/controller/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="17" column="34" lean-forward="true" selection-start-line="17" selection-start-column="34" selection-end-line="17" selection-end-column="34" />
-          <folding>
-            <element signature="e#24#34#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="342">
+          <caret line="18" column="19" selection-start-line="18" selection-start-column="19" selection-end-line="18" selection-end-column="19" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/controller/controller_main.py">
+    <entry file="file://$PROJECT_DIR$/src/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2839">
-          <caret line="274" column="32" selection-start-line="274" selection-start-column="28" selection-end-line="274" selection-end-column="32" />
-          <folding>
-            <element signature="e#437#452#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="393">
+          <caret line="17" column="18" lean-forward="true" selection-start-line="17" selection-start-column="18" selection-end-line="17" selection-end-column="18" />
         </state>
       </provider>
     </entry>
