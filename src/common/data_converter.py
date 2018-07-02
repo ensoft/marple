@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# controller.py - user interface, parses and applies commands
+# data_converter.py - converts data created by lower level modules
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# controller.py - user interface, parses and applies commands
+# sched.py - analyses scheduling performance
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 

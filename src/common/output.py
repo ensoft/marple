@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# controller.py - user interface, parses and applies commands
+# output.py - diplays output to the user and logs it.
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 
@@ -13,7 +13,7 @@ import logging
 logger = logging.getLogger("leap_log")
 
 
-def print_output(text):
+def print_(text):
     """
     Displays normal output to the user and logs it.
 
@@ -21,11 +21,11 @@ def print_output(text):
         The text to be displayed.
 
     """
-    print(text)
-    logger.debug("output to user: {}".format(text))
+    print("Error: {}".format(text))
+    logger.debug("Output to user: {}".format(text))
 
 
-def print_error(text, description):
+def error_(text, description):
     """
     Displays error messages to the user and logs them.
 
@@ -37,4 +37,4 @@ def print_error(text, description):
 
     """
     logger.error("Error: {}".format(description))
-    print_output(text)
+    print_(text)

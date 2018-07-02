@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 # -------------------------------------------------------------
-# controller.py - user interface, parses and applies commands
+# main.py - Initiates the program
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 
 """
-Main script, initiates the program.
+Initiates the program.
 
 """
 
@@ -17,9 +17,12 @@ import logging
 
 from . import controller
 
+# create a unique and descriptive logfile using timiestamp and process id in the
+# standard linux log file directory
 path = "/var/log/leap/" + datetime.date + datetime.time + os.getpid() + ".log"
-
 logging.basicConfig(path)
+
+# use leap log across the whole module
 logger = logging.getLogger('leap-log')
 
 if __name__ == "__main__":
