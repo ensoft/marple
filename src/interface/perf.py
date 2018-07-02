@@ -10,49 +10,38 @@ Calls perf to collect data for different purposes.
 
 """
 
-__all__ = ["collect", "collect_sched_all", "collect_sched_enter_exit",
-           "map_sched", "get_sched_data"]
+__all__ = ["collect", "collect_sched_all", "map_sched", "get_sched_data"]
 
-from subprocess import call, Popen
-from src.common import config
+import subprocess
+from ..common import config
 
 
-def collect(t, f):
+def collect(time, frequency):
     """
     Collect system data using perf
-    :param t:
+
+    :param time:
         The time in seconds for which to collect the data.
-    :param f:
+
+    :param frequency:
         The frequency in Hz of taking samples
 
     """
 
-    call(["perf", "record", "-F", str(f), "-a", "-g", "--", "sleep", str(t)])
+    subprocess.call(["perf", "record", "-F", str(frequency), "-a", "-g", "--",
+                     "sleep", str(time)])
 
 
-def collect_sched_all(t):
+def collect_sched_all(time):
     """
     Collect all CPU scheduling data using perf sched.
 
     This will get all the events in the scheduler.
-    :param t:
+    :param time:
         The time in seconds for which to collect the data.
 
     """
-    call(["perf", "sched", "record", "sleep", str(t)])
-
-
-def collect_sched_enter_exit(t):
-    """
-    Collect relevant CPU scheduling data using perf sched.
-
-    This will get the enter and exit events in the scheduler.
-    :param t:
-        The time in seconds for which to collect the data.
-
-    """
-    # At the moment same as sched_all
-    call(["perf", "sched", "record", "sleep", str(t)])
+    subprocess.call(["perf", "sched", "record", "sleep", str(time)])
 
 
 def map_sched():
@@ -64,7 +53,7 @@ def map_sched():
     on the right.
 
     """
-    call(["perf", "sched", "map"])
+    subprocess.call(["perf", "sched", "map"])
 
 
 def get_sched_data(filename):
@@ -87,8 +76,8 @@ def get_sched_data(filename):
     # Create file for recording output
     outfile = open(filename, "w")
 
-    sub_process = Popen(["perf", "sched", "script", "-F", "pid,cpu,time,event"],
-                        stdout=outfile)
+    sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
+                                    "pid,cpu,time,event"], stdout=outfile)
 
     # Block if blocking is set by config module
     if config.is_blocking():
