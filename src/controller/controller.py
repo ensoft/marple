@@ -18,6 +18,8 @@ import os
 from . import sched
 from ..common import file, config
 
+COLLECTION_TIME = 10
+
 logger = logging.getLogger('leap-log')
 
 __all__ = "main"
@@ -34,19 +36,35 @@ def _collect(args):
         Passed by main function.
 
     """
-
     # Use the user specified filename if there is one,
     # otherwise create a unique one
     if args.file is None:
         filename = file.create_name()
-        logger.info("Using default filename {} "
-                    "as no filename was specified".format(filename))
+        logger.info("Trying to generate default filename "
+                    "as no filename was specified")
+        i = 5
+        while os.path.isfile(filename) and i > 0:
+            filename = file.create_name()
+            i -= 1
+
+        if os.path.isfile(filename):
+            logger.debug("Failed to generate unique filename! Exiting! Name: {}"
+                         .format(filename))
+            exit("Unable to create a unique filename. "
+                 "Please choose a filename and try again.")
     else:
         filename = args.file
+
+    if os.path.isfile(filename):
+        logger.debug("file already exist. Filename: {}. Throwing exception"
+                     .format(filename))
+        raise FileExistsError
 
     # Collect data for user specified amount of time, otherwise standard value
     if args.time is None:
         time = config.get_default_time()
+        if time is None:
+            time = COLLECTION_TIME
         logger.info("Using default time {}s "
                     "as no time was specified".format(time))
     else:
@@ -79,14 +97,11 @@ def _display(args):
         Passed by main function
 
     """
-    # Use the user specified filename if there is one,
-    # otherwise create a unique one
-    if args.file is None:
-        filename = file.create_name()
-        logger.info("Using default filename {} "
-                    "as no filename was specified".format(filename))
-    else:
-        filename = args.file
+    # Try to use the specified name, otherwise throw exception
+    filename = args.file
+    if filename is None or not os.path.isfile(filename):
+        logger.debug("file not found, throwing exception")
+        raise FileNotFoundError
 
     if args.sched:
         # Stub
@@ -106,19 +121,16 @@ def _args_parse(argv):
     """
     Parse the command line arguments.
 
+    :param argv:
+        the arguments passed by the main function
+
+    :return:
+        an object containing the parsed command information
+
     Called by main when the program is started.
 
-    Arguments that are created:
-
-        sched: CPU scheduling data
-        lib: library load times
-        ipc: ipc efficiency
-        mem: memory allocation/deallocation
-
-        time t: time in seconds to record data
-
-        -n: numerical representation of data
-        -g: graphical representation of data
+    Calls functions _parse_collect and _parse_display to create subparsers
+    for collection and display respectively.
 
     """
 
@@ -129,10 +141,33 @@ def _args_parse(argv):
 
     # Create two sub-parsers for the two kinds of command, collect and display
     subparsers = parser.add_subparsers(dest="command")
-
-    # ---------------
     
-    # Collect Parser
+    _parse_collect(subparsers)
+
+    _parse_display(subparsers)
+
+    logger.info("parsing input arguments")
+
+    return parser.parse_args(argv)
+
+
+def _parse_collect(subparsers):
+    """
+    Parses a collect command.
+
+    Arguments that are created:
+
+        sched: CPU scheduling data
+        lib: library load times
+        ipc: ipc efficiency
+        mem: memory allocation/deallocation
+
+        time t: time in seconds to record data
+
+    :param subparsers:
+        subparsers of the main parser, passed by _args_parse
+
+    """
     parser_collect = subparsers.add_parser("collect",
                                            help="Collect data to display")
 
@@ -160,9 +195,25 @@ def _args_parse(argv):
     # Set default function
     parser_collect.set_defaults(func=_collect)
 
-    # ---------------
 
-    # Display Parser
+def _parse_display(subparsers):
+    """
+    Parses a display command.
+
+     Arguments that are created:
+
+        sched: CPU scheduling data
+        lib: library load times
+        ipc: ipc efficiency
+        mem: memory allocation/deallocation
+
+        -n: numerical representation of data
+        -g: graphical representation of data
+
+    :param subparsers:
+         subparsers of the main parser, passed by _args_parse
+
+    """
     parser_display = subparsers.add_parser("display",
                                            help="Display collected data "
                                                 "in required format")
@@ -193,12 +244,6 @@ def _args_parse(argv):
     # Set default function
     parser_display.set_defaults(func=_display)
 
-    # ---------------
-
-    logger.info("parsing input arguments")
-
-    return parser.parse_args(argv)
-
 
 def main(argv):
     """
@@ -212,10 +257,19 @@ def main(argv):
     """
     # Check whether user is root, otherwise exit
     if os.geteuid() != 0:
-        exit("You need to have root privileges to run leap.")
+        exit("Error: You need to have root privileges to run leap.")
 
     # Parse arguments
     args = _args_parse(argv)
 
     # Call the appropriate function, either collect or display
-    args.func(args)
+    try:
+        args.func(args)
+    except FileExistsError:
+        logger.debug("filename already exists, exiting with an error")
+        exit("Error: A file with that name already exists. \n"
+             "Please choose a unique filename.")
+    except FileNotFoundError:
+        logger.debug("file not found, exiting with an error")
+        exit("Error: No file with that name found. \n"
+             "Please choose a different filename, or collect new data.")
