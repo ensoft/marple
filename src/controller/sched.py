@@ -1,4 +1,16 @@
-from src.interface import perf
+# -------------------------------------------------------------
+# controller.py - user interface, parses and applies commands
+# June-July 2018 - Franz Nowak
+# -------------------------------------------------------------
+
+"""
+Analyses scheduling performance.
+
+Handles interaction of the controller with the interface modules.
+
+"""
+
+from ..interface import perf
 
 
 def collect_all(t, filename):

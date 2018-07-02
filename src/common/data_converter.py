@@ -1,6 +1,12 @@
+# -------------------------------------------------------------
+# controller.py - user interface, parses and applies commands
+# June-July 2018 - Franz Nowak
+# -------------------------------------------------------------
+
 """
 Converts data created by lower level modules
 to a format that can be used by displaying tools
+
 """
 
 
