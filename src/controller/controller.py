@@ -15,34 +15,15 @@ It calls the relevant functions for each command.
 import argparse
 import logging
 import os
-from src.modules import sched
-from src.common import file, config
+from . import sched
+from ..common import file, config
 
 logger = logging.getLogger('leap-log')
 
-
-def main(argv):
-    """
-    The main function of the controller.
-
-    Calls the middle level modules according to options selected by user.
-
-    :param argv:
-        command line arguments from call in main
-
-    """
-    # Check whether user is root, otherwise exit
-    if os.geteuid() != 0:
-        exit("You need to have root privileges to run leap.")
-
-    # Parse arguments
-    args = args_parse(argv)
-
-    # Call the appropriate function
-    args.func(args)
+__all__ = "main"
 
 
-def collect(args):
+def _collect(args):
     """
     Collection part of the controller module.
 
@@ -87,7 +68,7 @@ def collect(args):
         logger.info("recording memory data for {} seconds".format(time))
 
 
-def display(args):
+def _display(args):
     """
     Displaying part of the controller module.
 
@@ -121,7 +102,7 @@ def display(args):
         logger.info("displaying mem scheduling data")
 
 
-def args_parse(argv):
+def _args_parse(argv):
     """
     Parse the command line arguments.
 
@@ -177,7 +158,7 @@ def args_parse(argv):
                       help="time in seconds that data is collected")
 
     # Set default function
-    parser_collect.set_defaults(func=collect)
+    parser_collect.set_defaults(func=_collect)
 
     # ---------------
 
@@ -210,10 +191,31 @@ def args_parse(argv):
                           help="Input file where collected data "
                                "to display is stored")
     # Set default function
-    parser_display.set_defaults(func=display)
+    parser_display.set_defaults(func=_display)
 
     # ---------------
 
     logger.info("parsing input arguments")
 
     return parser.parse_args(argv)
+
+
+def main(argv):
+    """
+    The main function of the controller.
+
+    Calls the middle level modules according to options selected by user.
+
+    :param argv:
+        command line arguments from call in main
+
+    """
+    # Check whether user is root, otherwise exit
+    if os.geteuid() != 0:
+        exit("You need to have root privileges to run leap.")
+
+    # Parse arguments
+    args = _args_parse(argv)
+
+    # Call the appropriate function, either collect or display
+    args.func(args)
