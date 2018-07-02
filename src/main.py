@@ -15,7 +15,7 @@ import os
 import datetime
 import logging
 
-from . import controller
+from .controller import controller
 
 # create a unique and descriptive logfile using timiestamp and process id in the
 # standard linux log file directory
