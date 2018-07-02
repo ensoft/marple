@@ -1,3 +1,18 @@
+# -------------------------------------------------------------
+# perf.py - interacts with the perf command
+# June-July 2018 - Franz Nowak
+# -------------------------------------------------------------
+
+"""
+Interacts with the perf command
+
+Calls perf to collect data for different purposes.
+
+"""
+
+__all__ = ["collect", "collect_sched_all", "collect_sched_enter_exit",
+           "map_sched", "get_sched_data"]
+
 from subprocess import call, Popen
 from src.common import config
 
@@ -72,8 +87,11 @@ def get_sched_data(filename):
     # Create file for recording output
     outfile = open(filename, "w")
 
-    sub_process = Popen(["perf", "sched", "script", "-F", "pid,cpu,time,event"], stdout=outfile)
+    sub_process = Popen(["perf", "sched", "script", "-F", "pid,cpu,time,event"],
+                        stdout=outfile)
 
     # Block if blocking is set by config module
     if config.is_blocking():
         sub_process.wait()
+
+    outfile.close()
