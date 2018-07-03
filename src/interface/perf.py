@@ -14,7 +14,7 @@ __all__ = ["collect", "collect_sched_all", "map_sched", "get_sched_data"]
 
 import subprocess
 import src.common.config as config
-import src.converter.sched_event as sched_event
+from src.converter.sched_event import SchedEvent
 
 
 def collect(time, frequency):
@@ -83,6 +83,7 @@ def get_sched_data(filename):
         # Block if blocking is set by config module
         if config.is_blocking():
             sub_process.wait()
+
     # lazily return lines from the file as iterator
     with open(filename, "r") as infile:
         while True:
@@ -90,5 +91,5 @@ def get_sched_data(filename):
             if not event_data:
                 break
             (pid, cpu, time, event) = event_data.split()
-            event = sched_event(pid=pid, cpu=cpu, time=time, type=event)
+            event = SchedEvent(pid=pid, cpu=cpu, time=time, type=event)
             yield event

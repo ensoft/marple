@@ -2,8 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/res/LEAP Collect" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/res/LEAP Collect.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/res/LEAP Design" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/res/LEAP Design 2" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/res/LEAP Design 2.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/converter/sched_event.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/converter/sched_event.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interface/perf.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -66,11 +70,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="perf.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="perf.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="760">
-              <caret line="93" column="23" selection-start-line="93" selection-start-column="23" selection-end-line="93" selection-end-column="23" />
+            <state relative-caret-position="285">
+              <caret line="60" column="7" lean-forward="true" selection-start-line="60" selection-start-column="7" selection-end-line="60" selection-end-column="7" />
               <folding>
                 <element signature="e#373#390#0" expanded="true" />
               </folding>
@@ -78,11 +82,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="sched_event.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="sched_event.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/converter/sched_event.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="209">
-              <caret line="11" column="67" selection-start-line="11" selection-start-column="67" selection-end-line="11" selection-end-column="67" />
+            <state relative-caret-position="266">
+              <caret line="14" lean-forward="true" selection-start-line="14" selection-end-line="14" />
             </state>
           </provider>
         </entry>
@@ -204,6 +208,11 @@
             <path>
               <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
               <item name="LEAP" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LEAP" type="462c0819:PsiDirectoryNode" />
+              <item name="res" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
@@ -392,13 +401,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529938118939</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Add controller module">
-      <created>1530098369744</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1530098369744</updated>
     </task>
     <task id="LOCAL-00006" summary="Add frequency parameter to standard perf recording, remove it from perf sched recording">
       <created>1530106474421</created>
@@ -736,7 +738,14 @@
       <option name="project" value="LOCAL" />
       <updated>1530629119527</updated>
     </task>
-    <option name="localTasksCounter" value="54" />
+    <task id="LOCAL-00054" summary="Initialise event">
+      <created>1530629903592</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1530629903592</updated>
+    </task>
+    <option name="localTasksCounter" value="55" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -766,7 +775,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Correct the sub_process call to filter the events (comma separated)" />
     <MESSAGE value="Add event type to saved info in get_sched_data" />
     <MESSAGE value="Add subparsers for collect and display" />
     <MESSAGE value="Add function stubs for conversion" />
@@ -791,7 +799,8 @@
     <MESSAGE value="Add exception handling for all exceptions" />
     <MESSAGE value="Add lazy return of scheduling events" />
     <MESSAGE value="Create a scheduling event class" />
-    <option name="LAST_COMMIT_MESSAGE" value="Create a scheduling event class" />
+    <MESSAGE value="Initialise event" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initialise event" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/main.py">
@@ -1012,16 +1021,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="753">
-          <caret line="53" column="48" selection-start-line="53" selection-start-column="48" selection-end-line="53" selection-end-column="48" />
-          <folding>
-            <element signature="e#251#261#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/controller/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2896">
@@ -1037,20 +1036,30 @@
         <state relative-caret-position="-912" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
+    <entry file="file://$PROJECT_DIR$/src/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="760">
-          <caret line="93" column="23" selection-start-line="93" selection-start-column="23" selection-end-line="93" selection-end-column="23" />
+        <state relative-caret-position="753">
+          <caret line="53" column="48" selection-start-line="53" selection-start-column="48" selection-end-line="53" selection-end-column="48" />
           <folding>
-            <element signature="e#373#390#0" expanded="true" />
+            <element signature="e#251#261#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/converter/sched_event.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="209">
-          <caret line="11" column="67" selection-start-line="11" selection-start-column="67" selection-end-line="11" selection-end-column="67" />
+        <state relative-caret-position="266">
+          <caret line="14" lean-forward="true" selection-start-line="14" selection-end-line="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="60" column="7" lean-forward="true" selection-start-line="60" selection-start-column="7" selection-end-line="60" selection-end-column="7" />
+          <folding>
+            <element signature="e#373#390#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
