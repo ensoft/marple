@@ -289,6 +289,6 @@ def main(argv):
         exit(1)
     except FileNotFoundError:
         output.error_("Error: No file with that name found. "
-                      "Please choose a different filename, or collect new data.",
+                      "Please choose a different filename or collect new data.",
                       "file not found")
         exit(1)
