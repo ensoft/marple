@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/converter/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/converter/sched_event.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/converter/sched_event.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interface/perf.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -70,7 +70,7 @@
         <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="760">
-              <caret line="92" column="23" selection-start-line="92" selection-start-column="23" selection-end-line="92" selection-end-column="23" />
+              <caret line="93" column="23" selection-start-line="93" selection-start-column="23" selection-end-line="93" selection-end-column="23" />
               <folding>
                 <element signature="e#373#390#0" expanded="true" />
               </folding>
@@ -81,8 +81,8 @@
       <file leaf-file-name="sched_event.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/converter/sched_event.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="228">
-              <caret line="12" column="42" selection-start-line="12" selection-start-column="42" selection-end-line="12" selection-end-column="42" />
+            <state relative-caret-position="209">
+              <caret line="11" column="67" selection-start-line="11" selection-start-column="67" selection-end-line="11" selection-end-column="67" />
             </state>
           </provider>
         </entry>
@@ -180,8 +180,8 @@
         <option value="$PROJECT_DIR$/src/common/output.py" />
         <option value="$PROJECT_DIR$/src/main.py" />
         <option value="$PROJECT_DIR$/src/controller/main.py" />
-        <option value="$PROJECT_DIR$/src/interface/perf.py" />
         <option value="$PROJECT_DIR$/src/converter/sched_event.py" />
+        <option value="$PROJECT_DIR$/src/interface/perf.py" />
       </list>
     </option>
   </component>
@@ -392,20 +392,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529938118939</updated>
-    </task>
-    <task id="LOCAL-00003" summary="Add frequency argument to perf and sched">
-      <created>1530098226817</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1530098226817</updated>
-    </task>
-    <task id="LOCAL-00004" summary="Refactor packages to lowercase">
-      <created>1530098288019</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1530098288019</updated>
     </task>
     <task id="LOCAL-00005" summary="Add controller module">
       <created>1530098369744</created>
@@ -736,7 +722,21 @@
       <option name="project" value="LOCAL" />
       <updated>1530616817146</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="Add lazy return of scheduling events">
+      <created>1530629097794</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1530629097794</updated>
+    </task>
+    <task id="LOCAL-00053" summary="Create a scheduling event class">
+      <created>1530629119527</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1530629119527</updated>
+    </task>
+    <option name="localTasksCounter" value="54" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -766,8 +766,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add default time creation if none was specified.&#10;Fix bug on parameter parsing.&#10;Refactor access to time parameter." />
-    <MESSAGE value="Move Design to res folder." />
     <MESSAGE value="Correct the sub_process call to filter the events (comma separated)" />
     <MESSAGE value="Add event type to saved info in get_sched_data" />
     <MESSAGE value="Add subparsers for collect and display" />
@@ -791,7 +789,9 @@
     <MESSAGE value="Improve logging" />
     <MESSAGE value="Change logging directory to a leap directory in which to save pid specific logs" />
     <MESSAGE value="Add exception handling for all exceptions" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add exception handling for all exceptions" />
+    <MESSAGE value="Add lazy return of scheduling events" />
+    <MESSAGE value="Create a scheduling event class" />
+    <option name="LAST_COMMIT_MESSAGE" value="Create a scheduling event class" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/main.py">
@@ -1040,7 +1040,7 @@
     <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="760">
-          <caret line="92" column="23" selection-start-line="92" selection-start-column="23" selection-end-line="92" selection-end-column="23" />
+          <caret line="93" column="23" selection-start-line="93" selection-start-column="23" selection-end-line="93" selection-end-column="23" />
           <folding>
             <element signature="e#373#390#0" expanded="true" />
           </folding>
@@ -1049,8 +1049,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/converter/sched_event.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="228">
-          <caret line="12" column="42" selection-start-line="12" selection-start-column="42" selection-end-line="12" selection-end-column="42" />
+        <state relative-caret-position="209">
+          <caret line="11" column="67" selection-start-line="11" selection-start-column="67" selection-end-line="11" selection-end-column="67" />
         </state>
       </provider>
     </entry>

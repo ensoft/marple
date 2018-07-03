@@ -89,5 +89,6 @@ def get_sched_data(filename):
             event_data = infile.readline()
             if not event_data:
                 break
-            event = sched_event(event_data)
+            (pid, cpu, time, event) = event_data.split()
+            event = sched_event(pid=pid, cpu=cpu, time=time, type=event)
             yield event
