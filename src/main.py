@@ -16,16 +16,23 @@ import logging
 
 import controller.main as controller
 
+DIRECTORY = "/var/log/leap/"
+
+
 # Check whether user is root, otherwise exit
 if os.geteuid() != 0:
     exit("Error: You need to have root privileges to run leap.")
+
+# Check if leap logging directory exists, else create one
+if not os.path.exists(DIRECTORY):
+    os.makedirs(DIRECTORY)
 
 # create a unique and descriptive logfile using timiestamp and process id in the
 # standard linux log file directory
 logging.basicConfig(format="%(asctime)s %(name)-12s "
                            "%(levelname)-8s %(message)s",
                     datefmt="%m-%d %H:%M",
-                    filename="/var/log/leap.log", # + str(os.getpid()) + ".log",
+                    filename=DIRECTORY + "leap" + str(os.getpid()) + ".log",
                     filemode="w")
 
 # use leap log across the whole module

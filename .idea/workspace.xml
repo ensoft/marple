@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/franzn.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/franzn.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/controller_main.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -18,8 +18,11 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/controller/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="342">
-              <caret line="18" column="19" selection-start-line="18" selection-start-column="19" selection-end-line="18" selection-end-column="19" />
+            <state relative-caret-position="5453">
+              <caret line="290" column="60" selection-start-line="290" selection-start-column="60" selection-end-line="290" selection-end-column="60" />
+              <folding>
+                <element signature="e#431#446#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -27,8 +30,8 @@
       <file leaf-file-name="output.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/common/output.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="456">
-              <caret line="24" column="19" selection-start-line="24" selection-start-column="19" selection-end-line="24" selection-end-column="19" />
+            <state relative-caret-position="266">
+              <caret line="14" selection-start-line="14" selection-end-line="14" />
             </state>
           </provider>
         </entry>
@@ -45,8 +48,11 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="393">
-              <caret line="17" column="18" lean-forward="true" selection-start-line="17" selection-start-column="18" selection-end-line="17" selection-end-column="18" />
+            <state relative-caret-position="200">
+              <caret line="10" column="3" lean-forward="true" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
+              <folding>
+                <element signature="e#251#261#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -54,8 +60,8 @@
       <file leaf-file-name="sched.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/controller/sched.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="20">
-              <caret line="1" column="44" selection-start-line="1" selection-start-column="44" selection-end-line="1" selection-end-column="44" />
+            <state>
+              <caret column="63" selection-start-column="63" selection-end-column="63" />
             </state>
           </provider>
         </entry>
@@ -63,11 +69,8 @@
       <file leaf-file-name="perf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-684">
-              <caret line="7" selection-start-line="7" selection-end-line="7" />
-              <folding>
-                <element signature="e#412#429#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="285">
+              <caret line="15" column="24" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="24" />
             </state>
           </provider>
         </entry>
@@ -101,6 +104,10 @@
       <find>exit</find>
       <find>root</find>
       <find>exit()</find>
+      <find>logger</find>
+      <find>logger.info</find>
+      <find>logger.debug</find>
+      <find>ple</find>
     </findStrings>
     <replaceStrings>
       <replace>'</replace>
@@ -146,13 +153,14 @@
         <option value="$PROJECT_DIR$/src/modules/controller.py" />
         <option value="$PROJECT_DIR$/src/common/config.py" />
         <option value="$PROJECT_DIR$/src/common/file.py" />
-        <option value="$PROJECT_DIR$/src/interface/perf.py" />
         <option value="$PROJECT_DIR$/src/controller.py" />
         <option value="$PROJECT_DIR$/src/common/data_converter.py" />
-        <option value="$PROJECT_DIR$/src/controller/sched.py" />
-        <option value="$PROJECT_DIR$/src/common/output.py" />
         <option value="$PROJECT_DIR$/src/controller/controller.py" />
         <option value="$PROJECT_DIR$/src/controller/controller_main.py" />
+        <option value="$PROJECT_DIR$/src/controller/sched.py" />
+        <option value="$PROJECT_DIR$/src/interface/perf.py" />
+        <option value="$PROJECT_DIR$/src/common/output.py" />
+        <option value="$PROJECT_DIR$/src/controller/main.py" />
         <option value="$PROJECT_DIR$/src/main.py" />
       </list>
     </option>
@@ -674,7 +682,35 @@
       <option name="project" value="LOCAL" />
       <updated>1530547417922</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="Refactor controller.main to main">
+      <created>1530548630508</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1530548630508</updated>
+    </task>
+    <task id="LOCAL-00047" summary="Refactor controller.main to main">
+      <created>1530548647577</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1530548647577</updated>
+    </task>
+    <task id="LOCAL-00048" summary="Refactor controller.main to main">
+      <created>1530548726518</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1530548726518</updated>
+    </task>
+    <task id="LOCAL-00049" summary="Improve logging">
+      <created>1530552138819</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1530552138819</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -683,7 +719,7 @@
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
+      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" weight="0.32910052" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32910052" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.33015874" />
       <window_info anchor="bottom" id="Version Control" order="7" />
@@ -704,8 +740,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Update workspace (automatic)" />
-    <MESSAGE value="Add filename parameter to controller parser.&#10;Make module choices mutually exclusive.&#10;Create filename here if not specified.&#10;Call functions using filename parameter." />
     <MESSAGE value="Change order and required parameter of representation option." />
     <MESSAGE value="Add default time." />
     <MESSAGE value="Add default time creation if none was specified.&#10;Fix bug on parameter parsing.&#10;Refactor access to time parameter." />
@@ -729,23 +763,15 @@
     <MESSAGE value="Use output module for output to the user and errors." />
     <MESSAGE value="Refactor controller script as controller_main" />
     <MESSAGE value="exit code 1" />
-    <option name="LAST_COMMIT_MESSAGE" value="exit code 1" />
+    <MESSAGE value="Refactor controller.main to main" />
+    <MESSAGE value="Improve logging" />
+    <option name="LAST_COMMIT_MESSAGE" value="Improve logging" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/controller/sched.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="30" selection-start-column="30" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="150">
           <caret line="10" column="9" selection-start-line="10" selection-start-column="9" selection-end-line="10" selection-end-column="9" />
-          <folding>
-            <element signature="e#412#429#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -753,6 +779,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
           <caret line="5" lean-forward="true" selection-start-line="5" selection-end-line="5" />
+          <folding>
+            <element signature="e#251#261#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -760,6 +789,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="570">
           <caret line="38" column="79" selection-start-line="38" selection-start-column="79" selection-end-line="38" selection-end-column="79" />
+          <folding>
+            <element signature="e#431#446#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -887,9 +919,6 @@
         <state relative-caret-position="-1909" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/interface/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/../Exercise2/exercise2_framework.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -933,29 +962,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/common/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="437">
-          <caret line="23" selection-start-line="23" selection-end-line="23" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/src/interface/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/controller/sched.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="20">
-          <caret line="1" column="44" selection-start-line="1" selection-start-column="44" selection-end-line="1" selection-end-column="44" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-684">
-          <caret line="7" selection-start-line="7" selection-end-line="7" />
-          <folding>
-            <element signature="e#412#429#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/src/controller/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/src/common/data_converter.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -964,24 +975,51 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/controller/sched.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="63" selection-start-column="63" selection-end-column="63" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="15" column="24" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/common/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="437">
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/common/output.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="456">
-          <caret line="24" column="19" selection-start-line="24" selection-start-column="19" selection-end-line="24" selection-end-column="19" />
+        <state relative-caret-position="266">
+          <caret line="14" selection-start-line="14" selection-end-line="14" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/controller/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="342">
-          <caret line="18" column="19" selection-start-line="18" selection-start-column="19" selection-end-line="18" selection-end-column="19" />
+        <state relative-caret-position="5453">
+          <caret line="290" column="60" selection-start-line="290" selection-start-column="60" selection-end-line="290" selection-end-column="60" />
+          <folding>
+            <element signature="e#431#446#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="393">
-          <caret line="17" column="18" lean-forward="true" selection-start-line="17" selection-start-column="18" selection-end-line="17" selection-end-column="18" />
+        <state relative-caret-position="200">
+          <caret line="10" column="3" lean-forward="true" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
+          <folding>
+            <element signature="e#251#261#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
