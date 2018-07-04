@@ -64,7 +64,7 @@ while (my $currLine = <$fh>){
 	my $func = $4.'!'.$2; 
 	my $depth = length ($1);
 	my $selfTime = $3*1000; # selfTime in msec
-	
+
 	my $tempString = '';
 	$stack [$depth] = $func;
 	foreach my $i (0 .. $depth - 1) {
@@ -76,3 +76,4 @@ while (my $currLine = <$fh>){
 		print "$tempString";
 	}
 }
+
