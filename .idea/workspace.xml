@@ -2,13 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/res/LEAP Collect" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/res/LEAP Collect.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/res/LEAP Design" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/res/LEAP Design 2" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/res/LEAP Design 2.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interface/perf.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/res/LEAP Design 2" beforeDir="false" afterPath="$PROJECT_DIR$/res/LEAP Design 2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/res/LEAP Design 2.png" beforeDir="false" afterPath="$PROJECT_DIR$/res/LEAP Design 2.png" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -73,8 +69,8 @@
       <file leaf-file-name="perf.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="60" column="7" lean-forward="true" selection-start-line="60" selection-start-column="7" selection-end-line="60" selection-end-column="7" />
+            <state relative-caret-position="-836">
+              <caret line="10" column="3" lean-forward="true" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
               <folding>
                 <element signature="e#373#390#0" expanded="true" />
               </folding>
@@ -401,20 +397,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529938118939</updated>
-    </task>
-    <task id="LOCAL-00006" summary="Add frequency parameter to standard perf recording, remove it from perf sched recording">
-      <created>1530106474421</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1530106474421</updated>
-    </task>
-    <task id="LOCAL-00007" summary="Remove frequency parameter from collection function">
-      <created>1530106540247</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1530106540247</updated>
     </task>
     <task id="LOCAL-00008" summary="Add controller module with parsing facility.&#10;Add main script to call controller for parsing.&#10;Move modules into modules package">
       <created>1530116430907</created>
@@ -745,12 +727,25 @@
       <option name="project" value="LOCAL" />
       <updated>1530629903592</updated>
     </task>
-    <option name="localTasksCounter" value="55" />
+    <task id="LOCAL-00055" summary="Add graphics">
+      <created>1530633096868</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1530633096868</updated>
+    </task>
+    <task id="LOCAL-00056" summary="Change image size to 80%">
+      <created>1530633376619</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1530633376619</updated>
+    </task>
+    <option name="localTasksCounter" value="57" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -775,8 +770,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add event type to saved info in get_sched_data" />
-    <MESSAGE value="Add subparsers for collect and display" />
     <MESSAGE value="Add function stubs for conversion" />
     <MESSAGE value="Add comments and documentation, improve format" />
     <MESSAGE value="Add comments and documentation, eliminate unnecessary state" />
@@ -800,7 +793,9 @@
     <MESSAGE value="Add lazy return of scheduling events" />
     <MESSAGE value="Create a scheduling event class" />
     <MESSAGE value="Initialise event" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initialise event" />
+    <MESSAGE value="Add graphics" />
+    <MESSAGE value="Change image size to 80%" />
+    <option name="LAST_COMMIT_MESSAGE" value="Change image size to 80%" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/main.py">
@@ -1055,8 +1050,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/interface/perf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="60" column="7" lean-forward="true" selection-start-line="60" selection-start-column="7" selection-end-line="60" selection-end-column="7" />
+        <state relative-caret-position="-836">
+          <caret line="10" column="3" lean-forward="true" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
           <folding>
             <element signature="e#373#390#0" expanded="true" />
           </folding>
