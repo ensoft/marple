@@ -17,9 +17,9 @@ import logging
 import os
 
 from . import sched
-import src.common.output as output
-import src.common.config as config
-import src.common.file as file
+import collect.common.output as output
+import collect.common.config as config
+import collect.common.file as file
 
 COLLECTION_TIME = 10
 

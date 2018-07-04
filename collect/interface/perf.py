@@ -13,8 +13,8 @@ Calls perf to collect data for different purposes.
 __all__ = ["collect", "collect_sched_all", "map_sched", "get_sched_data"]
 
 import subprocess
-import src.common.config as config
-from src.converter.sched_event import SchedEvent
+import collect.common.config as config
+from collect.converter.sched_event import SchedEvent
 
 
 def collect(time, frequency):
