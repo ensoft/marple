@@ -1,35 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="Add Brendan Gregg's flamegraph tool">
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/LICENSE.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/files.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/flamegraph.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/jmaps" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/pkgsplit-perf.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/range-perf.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/record-test.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-aix.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-elfutils.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-gdb.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-go.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-instruments.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-jstack.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-ljp.awk" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-perf-sched.awk" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-perf.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-pmc.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-recursive.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-sample.awk" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-stap.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-vsprof.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-vtune.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-xdebug.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse.pl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/util/flamegraph/test.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/display/flamegraph.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/flamegraph.py" afterDir="false" />
+    <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/util/flamegraph/stackcollapse-vtune.pl" beforeDir="false" afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-vtune.pl" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -69,7 +42,7 @@
       <file leaf-file-name="flamegraph.pl" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/util/flamegraph/flamegraph.pl">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="9462">
+            <state relative-caret-position="202">
               <caret line="579" column="14" selection-start-line="579" selection-start-column="14" selection-end-line="579" selection-end-column="14" />
               <folding>
                 <element signature="n#!!doc" expanded="true" />
@@ -415,20 +388,6 @@
       <option name="presentableId" value="Default" />
       <updated>1529938118939</updated>
     </task>
-    <task id="LOCAL-00014" summary="Remove TODOs">
-      <created>1530182319673</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1530182319673</updated>
-    </task>
-    <task id="LOCAL-00015" summary="Explain main call">
-      <created>1530182510925</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1530182510925</updated>
-    </task>
     <task id="LOCAL-00016" summary="Split up the two different parts of the controller into different functions">
       <created>1530183286257</created>
       <option name="number" value="00016" />
@@ -758,7 +717,21 @@
       <option name="project" value="LOCAL" />
       <updated>1530718272443</updated>
     </task>
-    <option name="localTasksCounter" value="63" />
+    <task id="LOCAL-00063" summary="Add Brendan Gregg's Flamegraph tool">
+      <created>1530720712732</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1530720712732</updated>
+    </task>
+    <task id="LOCAL-00064" summary="Add Brendan Gregg's Flamegraph tool">
+      <created>1530720797383</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1530720797383</updated>
+    </task>
+    <option name="localTasksCounter" value="65" />
     <servers />
   </component>
   <component name="TodoView" selected-index="4">
@@ -773,8 +746,8 @@
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
-      <window_info anchor="bottom" id="TODO" order="6" visible="true" weight="0.32910052" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
+      <window_info active="true" anchor="bottom" id="TODO" order="6" visible="true" weight="0.32910052" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" weight="0.32910052" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32910052" />
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.32910052" />
@@ -806,7 +779,7 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Refactor medium level modules into the controller package" />
+    <option name="CHECK_NEW_TODO" value="false" />
     <MESSAGE value="Handle file exceptions" />
     <MESSAGE value="Change help for numerical/graphical representation&#10;Add logging of args" />
     <MESSAGE value="Add comments and docstrings" />
@@ -831,7 +804,10 @@
     <MESSAGE value="Refactor move files into packages named collect and display" />
     <MESSAGE value="Initial commit" />
     <MESSAGE value="Add Brendan Gregg's flamegraph tool" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add Brendan Gregg's flamegraph tool" />
+    <MESSAGE value="Add Brendan Gregg's Flamegraph tool" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add Brendan Gregg's Flamegraph tool" />
+    <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
+    <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/collect/controller/sched.py">
@@ -1064,7 +1040,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/util/flamegraph/flamegraph.pl">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="9462">
+        <state relative-caret-position="202">
           <caret line="579" column="14" selection-start-line="579" selection-start-column="14" selection-end-line="579" selection-end-column="14" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
