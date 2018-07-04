@@ -1,33 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/display/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/display/controller.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/display/flamegraph.py" afterDir="false" />
+    <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="Add Brendan Gregg's flamegraph tool">
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/LICENSE.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/files.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/flamegraph.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/jmaps" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/pkgsplit-perf.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/range-perf.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/record-test.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-aix.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-elfutils.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-gdb.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-go.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-instruments.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-jstack.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-ljp.awk" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-perf-sched.awk" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-perf.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-pmc.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-recursive.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-sample.awk" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-stap.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-vsprof.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-vtune.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-xdebug.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse.pl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/util/flamegraph/test.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/common/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/common/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/data_converter.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/common/data_converter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/file.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/common/file.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/output.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/common/output.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/perf_to_flame.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/common/perf_to_flame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/perf_to_g2.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/common/perf_to_g2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/disk_io.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/disk_io.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/ipc.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/ipc.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/libs.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/libs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/mem.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/mem.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controller/sched.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/sched.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/converter/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/converter/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/converter/sched_event.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/converter/sched_event.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/interface/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/interface/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/interface/ebpf.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/interface/ebpf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/interface/ftrace.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/interface/ftrace.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/interface/perf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/flamegraph.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/flamegraph.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -55,25 +57,42 @@
           <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
-      <file leaf-file-name="flamegraph.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="flamegraph.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/display/flamegraph.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="361">
+              <caret line="19" lean-forward="true" selection-start-line="19" selection-end-line="19" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="flamegraph.pl" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/util/flamegraph/flamegraph.pl">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="9462">
+              <caret line="579" column="14" selection-start-line="579" selection-start-column="14" selection-end-line="579" selection-end-column="14" />
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="g2.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/display/g2.py">
           <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
-      <file leaf-file-name="output.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/collect/common/output.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="266">
-              <caret line="14" selection-start-line="14" selection-end-line="14" />
-            </state>
-          </provider>
+      <file leaf-file-name="table.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/display/table.py">
+          <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
       <file leaf-file-name="data_converter.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/collect/common/data_converter.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="19">
-              <caret line="1" column="66" selection-start-line="1" selection-start-column="66" selection-end-line="1" selection-end-column="66" />
+            <state>
+              <caret selection-end-line="3" selection-end-column="63" />
             </state>
           </provider>
         </entry>
@@ -95,27 +114,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state>
               <caret column="63" selection-start-column="63" selection-end-column="63" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="perf.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/collect/interface/perf.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="190">
-              <caret line="10" column="3" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
-              <folding>
-                <element signature="e#373#390#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sched_event.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/collect/converter/sched_event.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="266">
-              <caret line="14" selection-start-line="14" selection-end-line="14" />
             </state>
           </provider>
         </entry>
@@ -209,13 +207,15 @@
         <option value="$PROJECT_DIR$/src/converter/sched_event.py" />
         <option value="$PROJECT_DIR$/src/interface/perf.py" />
         <option value="$PROJECT_DIR$/display/controller.py" />
+        <option value="$PROJECT_DIR$/display/g2.py" />
+        <option value="$PROJECT_DIR$/display/table.py" />
         <option value="$PROJECT_DIR$/display/flamegraph.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="224" />
-    <option name="y" value="27" />
+    <option name="x" value="453" />
+    <option name="y" value="352" />
     <option name="width" value="1380" />
     <option name="height" value="1000" />
   </component>
@@ -237,17 +237,23 @@
             <path>
               <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
               <item name="LEAP" type="462c0819:PsiDirectoryNode" />
-              <item name="collect" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
-              <item name="LEAP" type="462c0819:PsiDirectoryNode" />
               <item name="display" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
               <item name="LEAP" type="462c0819:PsiDirectoryNode" />
               <item name="res" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LEAP" type="462c0819:PsiDirectoryNode" />
+              <item name="util" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LEAP" type="462c0819:PsiDirectoryNode" />
+              <item name="util" type="462c0819:PsiDirectoryNode" />
+              <item name="flamegraph" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
@@ -408,20 +414,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529938118939</updated>
-    </task>
-    <task id="LOCAL-00012" summary="Add a common.config file that contains an API to get default or configuration parameters.">
-      <created>1530180927557</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1530180927557</updated>
-    </task>
-    <task id="LOCAL-00013" summary="Allow the get sched_data_function to store output to a file">
-      <created>1530181850832</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1530181850832</updated>
     </task>
     <task id="LOCAL-00014" summary="Remove TODOs">
       <created>1530182319673</created>
@@ -752,17 +744,40 @@
       <option name="project" value="LOCAL" />
       <updated>1530700799620</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="Refactor move files into packages named collect and display">
+      <created>1530718245105</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1530718245106</updated>
+    </task>
+    <task id="LOCAL-00062" summary="Initial commit">
+      <created>1530718272442</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1530718272443</updated>
+    </task>
+    <option name="localTasksCounter" value="63" />
     <servers />
+  </component>
+  <component name="TodoView" selected-index="4">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
-      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="TODO" order="6" visible="true" weight="0.32910052" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" weight="0.32910052" />
-      <window_info anchor="bottom" id="Version Control" order="7" visible="true" weight="0.32910052" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32910052" />
+      <window_info anchor="bottom" id="Version Control" order="7" weight="0.32910052" />
       <window_info anchor="bottom" id="Python Console" order="7" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.33015874" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -775,7 +790,6 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32910052" />
     </layout>
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -792,9 +806,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Optimise imports, remove dead weight, use more descriptive parameter names" />
-    <MESSAGE value="Improve file handling" />
-    <MESSAGE value="Refactor the controller to be in the main src directory,&#10;Add comments and documentation, use project-wide logging" />
     <MESSAGE value="Refactor medium level modules into the controller package" />
     <MESSAGE value="Handle file exceptions" />
     <MESSAGE value="Change help for numerical/graphical representation&#10;Add logging of args" />
@@ -817,33 +828,12 @@
     <MESSAGE value="Add Design vector graphic" />
     <MESSAGE value="Scale down design" />
     <MESSAGE value="Readd vector graphic" />
-    <option name="LAST_COMMIT_MESSAGE" value="Readd vector graphic" />
+    <MESSAGE value="Refactor move files into packages named collect and display" />
+    <MESSAGE value="Initial commit" />
+    <MESSAGE value="Add Brendan Gregg's flamegraph tool" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add Brendan Gregg's flamegraph tool" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/collect/controller/sched.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="7" selection-start-line="7" selection-end-line="7" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Readme.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor>
-            <caret column="6" lean-forward="true" selection-start-column="6" selection-end-column="6" />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/collect/interface/perf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="900">
-          <caret line="60" column="16" selection-start-line="60" selection-start-column="16" selection-end-line="60" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/collect/controller/sched.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="75">
@@ -1032,13 +1022,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/collect/common/data_converter.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="19">
-          <caret line="1" column="66" selection-start-line="1" selection-start-column="66" selection-end-line="1" selection-end-column="66" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/collect/common/output.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="266">
@@ -1059,8 +1042,35 @@
     <entry file="file://$PROJECT_DIR$/display/controller.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/display/flamegraph.py">
+    <entry file="file://$PROJECT_DIR$/display/g2.py">
       <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/display/table.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/collect/common/data_converter.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret selection-end-line="3" selection-end-column="63" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/display/flamegraph.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="361">
+          <caret line="19" lean-forward="true" selection-start-line="19" selection-end-line="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/flamegraph/flamegraph.pl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9462">
+          <caret line="579" column="14" selection-start-line="579" selection-start-column="14" selection-end-line="579" selection-end-column="14" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
     </entry>
   </component>
 </project>
