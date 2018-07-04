@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/res/LEAP Design 2" beforeDir="false" afterPath="$PROJECT_DIR$/res/LEAP Design 2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/res/LEAP Design 2.png" beforeDir="false" afterPath="$PROJECT_DIR$/res/LEAP Design 2.png" afterDir="false" />
-    </list>
+    <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -398,27 +394,6 @@
       <option name="presentableId" value="Default" />
       <updated>1529938118939</updated>
     </task>
-    <task id="LOCAL-00008" summary="Add controller module with parsing facility.&#10;Add main script to call controller for parsing.&#10;Move modules into modules package">
-      <created>1530116430907</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1530116430907</updated>
-    </task>
-    <task id="LOCAL-00009" summary="Add logging and comments">
-      <created>1530174465138</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1530174465142</updated>
-    </task>
-    <task id="LOCAL-00010" summary="Redirect the output from the general collect command to a file">
-      <created>1530180376148</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1530180376148</updated>
-    </task>
     <task id="LOCAL-00011" summary="Add common.file module, a util to name files uniquely">
       <created>1530180628442</created>
       <option name="number" value="00011" />
@@ -741,18 +716,39 @@
       <option name="project" value="LOCAL" />
       <updated>1530633376619</updated>
     </task>
-    <option name="localTasksCounter" value="57" />
+    <task id="LOCAL-00057" summary="Change image to have Datum Objects">
+      <created>1530700491557</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1530700491558</updated>
+    </task>
+    <task id="LOCAL-00058" summary="Add Design vector graphic">
+      <created>1530700611010</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1530700611010</updated>
+    </task>
+    <task id="LOCAL-00059" summary="Scale down design">
+      <created>1530700706333</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1530700706333</updated>
+    </task>
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" weight="0.32910052" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32910052" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.33015874" />
-      <window_info anchor="bottom" id="Version Control" order="7" />
+      <window_info active="true" anchor="bottom" id="Version Control" order="7" visible="true" weight="0.32910052" />
       <window_info anchor="bottom" id="Python Console" order="7" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" weight="0.32910052" />
@@ -770,9 +766,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add function stubs for conversion" />
-    <MESSAGE value="Add comments and documentation, improve format" />
-    <MESSAGE value="Add comments and documentation, eliminate unnecessary state" />
     <MESSAGE value="Add documentation and comments, improve format" />
     <MESSAGE value="Optimise imports, remove dead weight, use more descriptive parameter names" />
     <MESSAGE value="Improve file handling" />
@@ -795,7 +788,10 @@
     <MESSAGE value="Initialise event" />
     <MESSAGE value="Add graphics" />
     <MESSAGE value="Change image size to 80%" />
-    <option name="LAST_COMMIT_MESSAGE" value="Change image size to 80%" />
+    <MESSAGE value="Change image to have Datum Objects" />
+    <MESSAGE value="Add Design vector graphic" />
+    <MESSAGE value="Scale down design" />
+    <option name="LAST_COMMIT_MESSAGE" value="Scale down design" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/main.py">
