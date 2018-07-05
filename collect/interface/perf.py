@@ -10,11 +10,13 @@ Calls perf to collect data for different purposes.
 
 """
 
-__all__ = ["collect", "collect_sched_all", "map_sched", "get_sched_data"]
-
+import os
 import subprocess
 import collect.common.config as config
+import collect.common.file as file
 from collect.converter.sched_event import SchedEvent
+
+__all__ = ["collect", "collect_sched", "map_sched", "get_sched_data"]
 
 
 def collect(time, frequency):
@@ -33,7 +35,7 @@ def collect(time, frequency):
                      "sleep", str(time)])
 
 
-def collect_sched_all(time):
+def collect_sched(time):
     """
     Collect all CPU scheduling data using perf sched.
 
@@ -57,24 +59,19 @@ def map_sched():
     subprocess.call(["perf", "sched", "map"])
 
 
-def get_sched_data(filename):
+def get_sched_data():
     """
     Get the relevant scheduling data.
 
-    This uses the previously by collect_sched collected data
-    to output a list of relevant scheduler events in an ordered fashion.
-    Note: this outputs all given events regardless of type.
-
-    :param filename:
-        Parameter for the user to decide how the
-        file should be stored.
+    Creates and returns an iterator of scheduling event objects.
 
     :return:
-        string of sched event lines of the form pid:cpu:time.
+        iterator of SchedEvent objects
 
     """
+    # Create temporary file for recording output
+    filename = file.create_name()
 
-    # Create file for recording output
     with open(filename, "w") as outfile:
 
         sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
@@ -84,6 +81,29 @@ def get_sched_data(filename):
         if config.is_blocking():
             sub_process.wait()
 
+    iterator = _data_gen(filename)
+
+    # delete file after use
+    os.remove(filename)
+
+    return iterator
+
+
+def _data_gen(filename):
+    """
+    Generator of SchedEvent objects from file
+
+    Reads in the provided file, parses it and converts it into SchedEvent
+    objects.
+
+    :param filename:
+        Parameter for the user to decide how the
+        file should be stored.
+
+    :return
+        SchedEvent object Iterator
+
+    """
     # lazily return lines from the file as iterator
     with open(filename, "r") as infile:
         while True:

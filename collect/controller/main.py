@@ -80,7 +80,7 @@ def _collect(args):
 
     if args.sched:
         logger.info("Recording scheduling data for {} seconds".format(time))
-        sched.collect_all(time, filename)
+        sched.collect_all(time)
 
     if args.lib:
         # Stub
