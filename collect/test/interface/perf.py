@@ -1,33 +1,72 @@
-import unittest
 import os
+import shutil
+import unittest
+
 import collect.interface.perf as perf
+import collect.converter.sched_event as sched_event
+import collect.test.util as util
 
-# TEST_DATA = os.path.dirname(os.path.abspath(__file__))+"/perf.data"
+
+# -----------------------------------------------------------------------------
+# Globals
+#
+
+_THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+_DATA_DIR = os.path.join(_THIS_DIR, "data")
+
+_SCHED_EVENTS = ["abc"]
 
 
-class PerfTest(unittest.TestCase):
-    """
-    Unit test of the interface.perf module.
+# -----------------------------------------------------------------------------
+# Helpers
+#
 
-    Warning: test uses path name of the test module via __file__
-    which does not work if it is called using exec or execfile.
+class _BaseTest(util.BaseTest):
+    """Base test class for perf testing."""
+    pass
 
-    """
-    def test_sched_data_pos(self):
-        """positive test: use provided perf.data file"""
-        perf.collect(1, 99)
-        perf.get_sched_data()
-        self.assertRaises(FileExistsError)
 
-    def test_sched_data_neg(self):
-        """negative test: no perf.data file available"""
-        pass
+# -----------------------------------------------------------------------------
+# Tests
+#
+
+class DataGenTest(_BaseTest):
+    """Test class for the _data_gen() generator."""
+
+    def setUp(self):
+        """Per-test set-up"""
+        super().setUp()
 
     def tearDown(self):
-        # if os.path.exists(TEST_DATA):
-            pass
-            # os.remove(TEST_DATA)
+        """Per-test tear-down"""
+        super().tearDown()
 
+    def test_basic(self):
+        """
+        Basic test for _data_gen().
+        
+        Write some formatted data to a temporary file, and check that _data_gen
+        correctly converts it.
+        
+        """
+        # Expected event data
+        expected = [sched_event.SchedEvent("name1", "12345", "[001]", "1232454", "event1"),
+                    sched_event.SchedEvent("name2", "67890", "[003]", "67899", "event2")]
 
-if __name__ == "__main__":
-    unittest.main()
+        filename = self._TEST_DIR + "data_gen_test"
+
+        # Create a file with formatted data
+        with open(filename, "w") as file_:
+            for entry in expected:
+                file_.write(" ".join(entry) + "\n")
+
+        # Run _data_gen() to get a generator of items.
+        actual = list(perf._data_gen(filename))
+
+        self.assertEqual(expected, actual)
+
+    def test_sched_data_neg(self):
+        """Test when data_gen is passed an invalid file."""
+        with self.assertRaises(FileNotFoundError):
+            list(perf._data_gen(self._TEST_DIR + "this/file/definitely/doesnt/exist"))
+

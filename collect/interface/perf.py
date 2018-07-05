@@ -75,16 +75,13 @@ def get_sched_data():
     with open(filename, "w") as outfile:
 
         sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
-                                        "pid,cpu,time,event"], stdout=outfile)
+                                        "comm,pid,cpu,time,event"], stdout=outfile)
 
         # Block if blocking is set by config module
         if config.is_blocking():
             sub_process.wait()
 
     iterator = _data_gen(filename)
-
-    # delete file after use
-    os.remove(filename)
 
     return iterator
 
@@ -110,6 +107,8 @@ def _data_gen(filename):
             event_data = infile.readline()
             if not event_data:
                 break
-            (pid, cpu, time, event) = event_data.split()
-            event = SchedEvent(pid=pid, cpu=cpu, time=time, type=event)
+            (name, pid, cpu, time, event) = event_data.split()
+            event = SchedEvent(name=name, pid=pid, cpu=cpu, time=time, type=event)
             yield event
+
+    os.remove(filename)
