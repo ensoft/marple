@@ -18,12 +18,12 @@
 #
 # Level,Function Name,Inclusive Samples,Exclusive Samples,Inclusive Samples %,Exclusive Samples %,Module Name,
 # 1,"main","8,735",0,100.00,0.00,"an_executable.exe",
-# 2,"testing::UnitTest::Run","8,735",0,100.00,0.00,"an_executable.exe",
+# 2,"test::UnitTest::Run","8,735",0,100.00,0.00,"an_executable.exe",
 # 3,"boost::trim_end_iter_select<std::iterator<std::val<std::types<char> > >,boost::is_classifiedF>",306,16,3.50,0.18,"an_executable.exe",
 #
 # OUTPUT EXAMPLE :
 #
-# main;testing::UnitTest::Run;boost::trim_end_iter_select<std::iterator<std::val<std::types<char>>>,boost::is_classifiedF> 306
+# main;test::UnitTest::Run;boost::trim_end_iter_select<std::iterator<std::val<std::types<char>>>,boost::is_classifiedF> 306
 
 use strict;
 

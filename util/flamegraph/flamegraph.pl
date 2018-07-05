@@ -25,7 +25,7 @@
 #
 # An optional extra column of counts can be provided to generate a differential
 # flame graph of the counts, colored red for more, and blue for less.  This
-# can be useful when using flame graphs for non-regression testing.
+# can be useful when using flame graphs for non-regression test.
 # See the header comment in the difffolded.pl program for instructions.
 #
 # The input functions can optionally have annotations at the end of each
