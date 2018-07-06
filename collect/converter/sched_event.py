@@ -8,7 +8,7 @@
 import collections
 
 
-class SchedEvent(collections.namedtuple("_SchedEvent", "name, pid, cpu,"
+class SchedEvent(collections.namedtuple("_SchedEvent", "name, pid, cpu," #int cpu!
                                                        "time, type")):
     """Represents a single scheduler event."""
 

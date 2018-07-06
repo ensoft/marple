@@ -50,8 +50,10 @@ class DataGenTest(_BaseTest):
         
         """
         # Expected event data
-        expected = [sched_event.SchedEvent("name1", "12345", "[001]", "1232454", "event1"),
-                    sched_event.SchedEvent("name2", "67890", "[003]", "67899", "event2")]
+        expected = [sched_event.SchedEvent("name1", "12345", "[001]", "1232454",
+                                           "event1"),
+                    sched_event.SchedEvent("name2", "67890", "[003]", "67899",
+                                           "event2")]
 
         filename = self._TEST_DIR + "data_gen_test"
 
@@ -68,5 +70,6 @@ class DataGenTest(_BaseTest):
     def test_sched_data_neg(self):
         """Test when data_gen is passed an invalid file."""
         with self.assertRaises(FileNotFoundError):
-            list(perf._data_gen(self._TEST_DIR + "this/file/definitely/doesnt/exist"))
+            list(perf._data_gen(self._TEST_DIR + "this/file/definitely/doesnt/"
+                                                 "exist"))
 
