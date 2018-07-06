@@ -12,8 +12,8 @@ Calls perf to collect data for different purposes.
 
 import os
 import subprocess
-import collect.common.config as config
-import collect.common.file as file
+import common.config as config
+import common.file as file
 from collect.converter.sched_event import SchedEvent
 
 __all__ = ["collect", "collect_sched", "map_sched", "get_sched_data"]

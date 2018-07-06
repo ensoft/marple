@@ -3,6 +3,7 @@
     <words>
       <w>asctime</w>
       <w>deallocation</w>
+      <w>flamegraph</w>
       <w>levelname</w>
       <w>nowak</w>
       <w>sched</w>

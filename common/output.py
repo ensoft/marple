@@ -22,7 +22,7 @@ def print_(text):
         The text to be displayed.
 
     """
-    print("Error: {}".format(text))
+    print("{}".format(text))
     logger.debug("Output to user: {}".format(text))
 
 
