@@ -2,7 +2,7 @@ import unittest
 import os
 import collect.interface.perf as perf
 
-TEST_DATA = os.path.dirname(os.path.abspath(__file__))+"/perf.data"
+# TEST_DATA = os.path.dirname(os.path.abspath(__file__))+"/perf.data"
 
 
 class PerfTest(unittest.TestCase):
@@ -15,6 +15,7 @@ class PerfTest(unittest.TestCase):
     """
     def test_sched_data_pos(self):
         """positive test: use provided perf.data file"""
+        perf.collect(1, 99)
         perf.get_sched_data()
         self.assertRaises(FileExistsError)
 
@@ -23,7 +24,7 @@ class PerfTest(unittest.TestCase):
         pass
 
     def tearDown(self):
-        if os.path.exists(TEST_DATA):
+        # if os.path.exists(TEST_DATA):
             pass
             # os.remove(TEST_DATA)
 

@@ -2,16 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/collect/test/controller.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/collect/test/interface/perf.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/LEAP.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/LEAP.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/controller/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/controller/sched.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/sched.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/interface/perf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/flamegraph/flamegraph.pl" beforeDir="false" afterPath="$PROJECT_DIR$/util/flamegraph/flamegraph.pl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/flamegraph/stackcollapse-vsprof.pl" beforeDir="false" afterPath="$PROJECT_DIR$/util/flamegraph/stackcollapse-vsprof.pl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/collect/common/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/common/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/collect/test/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/test/interface/perf.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -25,7 +20,7 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/collect/controller/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-722">
+            <state relative-caret-position="532">
               <caret line="82" column="30" selection-start-line="82" selection-start-column="30" selection-end-line="82" selection-end-column="30" />
               <folding>
                 <element signature="e#431#446#0" expanded="true" />
@@ -37,7 +32,7 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/collect/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="695">
+            <state relative-caret-position="855">
               <caret line="53" column="48" selection-start-line="53" selection-start-column="48" selection-end-line="53" selection-end-column="48" />
               <folding>
                 <element signature="e#251#261#0" expanded="true" />
@@ -54,8 +49,8 @@
       <file leaf-file-name="perf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/collect/test/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="163">
-              <caret line="16" column="56" selection-start-line="16" selection-start-column="56" selection-end-line="16" selection-end-column="56" />
+            <state relative-caret-position="494">
+              <caret line="26" column="10" selection-start-line="26" selection-start-column="10" selection-end-line="26" selection-end-column="10" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
               </folding>
@@ -66,11 +61,17 @@
       <file leaf-file-name="perf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/collect/interface/perf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1007">
-              <caret line="21" column="11" selection-start-line="21" selection-start-column="11" selection-end-line="21" selection-end-column="11" />
-              <folding>
-                <element signature="e#297#306#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="798">
+              <caret line="46" selection-start-line="46" selection-end-line="46" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="config.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/collect/common/config.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="304">
+              <caret line="16" column="16" selection-start-line="16" selection-start-column="16" selection-end-line="16" selection-end-column="16" />
             </state>
           </provider>
         </entry>
@@ -189,10 +190,11 @@
         <option value="$PROJECT_DIR$/util/flamegraph/stackcollapse-vtune.pl" />
         <option value="$PROJECT_DIR$/collect/testing/controller.py" />
         <option value="$PROJECT_DIR$/collect/testing/interface/perf.py" />
-        <option value="$PROJECT_DIR$/collect/test/interface/perf.py" />
         <option value="$PROJECT_DIR$/collect/interface/perf.py" />
         <option value="$PROJECT_DIR$/collect/controller/main.py" />
         <option value="$PROJECT_DIR$/collect/controller/sched.py" />
+        <option value="$PROJECT_DIR$/collect/common/config.py" />
+        <option value="$PROJECT_DIR$/collect/test/interface/perf.py" />
       </list>
     </option>
   </component>
@@ -267,7 +269,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$USER_HOME$/venv/LEAP/LEAPsu" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/collect/main.py" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
@@ -291,7 +293,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for perf.PerfTest">
+  <component name="RunManager" selected="Python.main">
     <configuration name="main (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="LEAP" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -318,11 +320,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/collect" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/main.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/collect/main.py" />
       <option name="PARAMETERS" value="collect -s -t 10 -f test.txt" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -374,16 +376,16 @@
     </configuration>
     <list>
       <item itemvalue="Python.main" />
-      <item itemvalue="Python tests.Unittests for perf.PerfTest" />
-      <item itemvalue="Python tests.Unittests for perf.PerfTest.test_sched_data" />
       <item itemvalue="Python.perf (1)" />
       <item itemvalue="Python.main (1)" />
+      <item itemvalue="Python tests.Unittests for perf.PerfTest" />
+      <item itemvalue="Python tests.Unittests for perf.PerfTest.test_sched_data" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.main" />
         <item itemvalue="Python tests.Unittests for perf.PerfTest" />
         <item itemvalue="Python.main (1)" />
-        <item itemvalue="Python.main" />
         <item itemvalue="Python.perf (1)" />
         <item itemvalue="Python tests.Unittests for perf.PerfTest.test_sched_data" />
       </list>
@@ -399,20 +401,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529938118939</updated>
-    </task>
-    <task id="LOCAL-00018" summary="Fix filename parameter as non-optional.&#10;Correct docstrings.">
-      <created>1530185254095</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1530185254095</updated>
-    </task>
-    <task id="LOCAL-00019" summary="Implement the only function so far that collects and saves data using perf.">
-      <created>1530185320064</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1530185320064</updated>
     </task>
     <task id="LOCAL-00020" summary="Update workspace (automatic)">
       <created>1530185399938</created>
@@ -743,31 +731,24 @@
       <option name="project" value="LOCAL" />
       <updated>1530721265748</updated>
     </task>
-    <option name="localTasksCounter" value="67" />
+    <task id="LOCAL-00067" summary="Add first Module Unit Tests">
+      <created>1530807685379</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1530807685380</updated>
+    </task>
+    <task id="LOCAL-00068" summary="Split the function that makes the iterator into two.">
+      <created>1530807722948</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1530807722948</updated>
+    </task>
+    <option name="localTasksCounter" value="69" />
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 15h 25m 12s.xml">
-      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 15h 37m 48s.xml">
-      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 15h 38m 25s.xml">
-      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 15h 39m 42s.xml">
-      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 01m 11s.xml">
-      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 01m 33s.xml">
-      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 02m 35s.xml">
-      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
-    </history-entry>
     <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 05m 07s.xml">
       <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
     </history-entry>
@@ -775,6 +756,27 @@
       <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
     </history-entry>
     <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 09m 22s.xml">
+      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 24m 53s.xml">
+      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 30m 01s.xml">
+      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 32m 32s.xml">
+      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 34m 27s.xml">
+      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 35m 14s.xml">
+      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 39m 47s.xml">
+      <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_perf_PerfTest - 2018.07.05 at 17h 40m 28s.xml">
       <configuration name="Unittests for perf.PerfTest" configurationId="tests" />
     </history-entry>
   </component>
@@ -791,23 +793,23 @@
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2153265" />
       <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.49865085" weight="0.32910052" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.5008095" side_tool="true" weight="0.33015874" />
-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49973017" weight="0.32910052" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.4991905" visible="true" weight="0.33015874" />
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.32910052" />
       <window_info anchor="bottom" id="Python Console" order="7" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4991905" weight="0.33015874" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.49973017" weight="0.32910052" />
-      <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49973017" weight="0.32910052" />
     </layout>
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -825,8 +827,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Handle file exceptions" />
-    <MESSAGE value="Change help for numerical/graphical representation&#10;Add logging of args" />
     <MESSAGE value="Add comments and docstrings" />
     <MESSAGE value="Add output module to display output to the user and log" />
     <MESSAGE value="Correct comment at the top" />
@@ -850,11 +850,13 @@
     <MESSAGE value="Initial commit" />
     <MESSAGE value="Add Brendan Gregg's flamegraph tool" />
     <MESSAGE value="Add Brendan Gregg's Flamegraph tool" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add Brendan Gregg's Flamegraph tool" />
+    <MESSAGE value="Add first Module Unit Tests" />
+    <MESSAGE value="Split the function that makes the iterator into two." />
+    <option name="LAST_COMMIT_MESSAGE" value="Split the function that makes the iterator into two." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="1" />
+      <option name="time" value="2" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
@@ -1011,13 +1013,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/collect/common/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="437">
-          <caret line="23" selection-start-line="23" selection-end-line="23" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/display/controller.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -1042,29 +1037,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/collect/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="695">
-          <caret line="53" column="48" selection-start-line="53" selection-start-column="48" selection-end-line="53" selection-end-column="48" />
-          <folding>
-            <element signature="e#251#261#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/collect/test/interface/perf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="163">
-          <caret line="16" column="56" selection-start-line="16" selection-start-column="56" selection-end-line="16" selection-end-column="56" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/collect/test/controller.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file:///usr/lib/python3.6/subprocess.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="193">
@@ -1079,19 +1051,46 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/collect/common/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="304">
+          <caret line="16" column="16" selection-start-line="16" selection-start-column="16" selection-end-line="16" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/collect/interface/perf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1007">
-          <caret line="21" column="11" selection-start-line="21" selection-start-column="11" selection-end-line="21" selection-end-column="11" />
+        <state relative-caret-position="798">
+          <caret line="46" selection-start-line="46" selection-end-line="46" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/collect/test/interface/perf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="494">
+          <caret line="26" column="10" selection-start-line="26" selection-start-column="10" selection-end-line="26" selection-end-column="10" />
           <folding>
-            <element signature="e#297#306#0" expanded="true" />
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/collect/test/controller.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/collect/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="855">
+          <caret line="53" column="48" selection-start-line="53" selection-start-column="48" selection-end-line="53" selection-end-column="48" />
+          <folding>
+            <element signature="e#251#261#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/collect/controller/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-722">
+        <state relative-caret-position="532">
           <caret line="82" column="30" selection-start-line="82" selection-start-column="30" selection-end-line="82" selection-end-column="30" />
           <folding>
             <element signature="e#431#446#0" expanded="true" />
