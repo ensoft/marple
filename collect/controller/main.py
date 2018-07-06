@@ -107,9 +107,9 @@ def _not_implemented(name):
         name of the function that has not been implemented.
 
     """
-    output.error_("The collect command {} is currently not implemented. "
-                  "Try a different command.".format(name),
-                  "The collect function {} is not yet implemented. Exiting."
+    output.error_("The collect command \"{}\" is currently not implemented. "
+                  "Please try a different command.".format(name),
+                  "The collect function \"{}\" is not yet implemented. Exiting."
                   .format(name))
 
 

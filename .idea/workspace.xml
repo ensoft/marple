@@ -2,18 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6b7fc97e-2072-4e46-91d9-8a044635be21" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/franzn.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/franzn.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/common/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/common/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/common/data_converter.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/data_converter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/common/file.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/file.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/common/output.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/output.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/common/perf_to_flame.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/perf_to_flame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/common/perf_to_g2.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/perf_to_g2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/collect/controller/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/controller/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/interface/perf.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect/interface/perf.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/display/controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/controller.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -25,11 +15,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/collect/controller/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="266">
-              <caret line="189" column="11" selection-start-line="189" selection-start-column="8" selection-end-line="189" selection-end-column="11" />
+            <state relative-caret-position="247">
+              <caret line="110" column="27" selection-start-line="110" selection-start-column="27" selection-end-line="110" selection-end-column="27" />
               <folding>
                 <element signature="e#431#446#0" expanded="true" />
               </folding>
@@ -40,8 +30,8 @@
       <file leaf-file-name="controller.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/display/controller.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="361">
-              <caret line="159" column="18" selection-start-line="159" selection-start-column="8" selection-end-line="159" selection-end-column="18" />
+            <state relative-caret-position="399">
+              <caret line="74" column="27" selection-start-line="74" selection-start-column="27" selection-end-line="74" selection-end-column="27" />
               <folding>
                 <element signature="e#1#16#0" expanded="true" />
               </folding>
@@ -49,14 +39,23 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="266">
-              <caret line="63" column="69" selection-start-line="63" selection-start-column="69" selection-end-line="63" selection-end-column="69" />
+            <state relative-caret-position="923">
+              <caret line="75" lean-forward="true" selection-start-line="75" selection-end-line="75" />
               <folding>
                 <element signature="e#251#261#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="output.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/common/output.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="456">
+              <caret line="24" column="11" selection-start-line="24" selection-start-column="11" selection-end-line="24" selection-end-column="11" />
             </state>
           </provider>
         </entry>
@@ -88,8 +87,8 @@
       <find>sched</find>
       <find>display</find>
       <find>collect</find>
-      <find>output.err</find>
       <find>out</find>
+      <find>output.err</find>
     </findStrings>
     <replaceStrings>
       <replace>'</replace>
@@ -155,9 +154,10 @@
         <option value="$PROJECT_DIR$/collect/controller/sched.py" />
         <option value="$PROJECT_DIR$/collect/common/config.py" />
         <option value="$PROJECT_DIR$/collect/test/interface/perf.py" />
-        <option value="$PROJECT_DIR$/collect/controller/main.py" />
-        <option value="$PROJECT_DIR$/display/controller.py" />
         <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/common/output.py" />
+        <option value="$PROJECT_DIR$/display/controller.py" />
+        <option value="$PROJECT_DIR$/collect/controller/main.py" />
       </list>
     </option>
   </component>
@@ -205,6 +205,11 @@
               <item name="LEAP" type="462c0819:PsiDirectoryNode" />
               <item name="collect" type="462c0819:PsiDirectoryNode" />
               <item name="interface" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LEAP" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LEAP" type="462c0819:PsiDirectoryNode" />
+              <item name="common" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -345,13 +350,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529938118939</updated>
-    </task>
-    <task id="LOCAL-00021" summary="Add filename parameter to controller parser.&#10;Make module choices mutually exclusive.&#10;Create filename here if not specified.&#10;Call functions using filename parameter.">
-      <created>1530185497248</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1530185497248</updated>
     </task>
     <task id="LOCAL-00022" summary="Change order and required parameter of representation option.">
       <created>1530185725779</created>
@@ -689,7 +687,14 @@
       <option name="project" value="LOCAL" />
       <updated>1530870067697</updated>
     </task>
-    <option name="localTasksCounter" value="70" />
+    <task id="LOCAL-00070" summary="Rewrite parser to have separate one for collect and display.&#10;Restructure to have consistent hierarchy between modules.">
+      <created>1530875097827</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1530875097827</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -771,7 +776,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Add output module to display output to the user and log" />
     <MESSAGE value="Correct comment at the top" />
     <MESSAGE value="Use output module for output to the user and errors." />
     <MESSAGE value="Refactor controller script as controller_main" />
@@ -796,7 +800,8 @@
     <MESSAGE value="Add first Module Unit Tests" />
     <MESSAGE value="Split the function that makes the iterator into two." />
     <MESSAGE value="Set blocking to true. Breaks things if main is called through a shell script, because perf does not return" />
-    <option name="LAST_COMMIT_MESSAGE" value="Set blocking to true. Breaks things if main is called through a shell script, because perf does not return" />
+    <MESSAGE value="Rewrite parser to have separate one for collect and display.&#10;Restructure to have consistent hierarchy between modules." />
+    <option name="LAST_COMMIT_MESSAGE" value="Rewrite parser to have separate one for collect and display.&#10;Restructure to have consistent hierarchy between modules." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -916,13 +921,6 @@
     <entry file="file://$PROJECT_DIR$/../Exercise2/exercise2_framework.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/common/output.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="266">
-          <caret line="14" selection-start-line="14" selection-end-line="14" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/util/flamegraph/stackcollapse-vtune.pl">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1387">
@@ -1022,10 +1020,27 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/common/output.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="456">
+          <caret line="24" column="11" selection-start-line="24" selection-start-column="11" selection-end-line="24" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="923">
+          <caret line="75" lean-forward="true" selection-start-line="75" selection-end-line="75" />
+          <folding>
+            <element signature="e#251#261#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/display/controller.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="159" column="18" selection-start-line="159" selection-start-column="8" selection-end-line="159" selection-end-column="18" />
+        <state relative-caret-position="399">
+          <caret line="74" column="27" selection-start-line="74" selection-start-column="27" selection-end-line="74" selection-end-column="27" />
           <folding>
             <element signature="e#1#16#0" expanded="true" />
           </folding>
@@ -1034,20 +1049,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/collect/controller/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="266">
-          <caret line="189" column="11" selection-start-line="189" selection-start-column="8" selection-end-line="189" selection-end-column="11" />
+        <state relative-caret-position="247">
+          <caret line="110" column="27" selection-start-line="110" selection-start-column="27" selection-end-line="110" selection-end-column="27" />
           <folding>
             <element signature="e#431#446#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="266">
-          <caret line="63" column="69" selection-start-line="63" selection-start-column="69" selection-end-line="63" selection-end-column="69" />
-          <folding>
-            <element signature="e#251#261#0" expanded="true" />
           </folding>
         </state>
       </provider>
