@@ -81,6 +81,8 @@ def _collect(args):
     if args.sched:
         logger.info("Recording scheduling data for {} seconds".format(time))
         sched.collect_all(time)
+        # TODO: Do something with filename,
+        # i.e. store output to file when converter is finished.
 
     if args.lib:
         # Stub
@@ -127,7 +129,7 @@ def _args_parse(argv):
         time t: time in seconds to record data
 
     :param argv:
-        the arguments passed by the main function
+        a list of arguments passed by the main function
 
     :return:
         an object containing the parsed command information
@@ -174,7 +176,7 @@ def main(argv):
     Calls the middle level modules according to options selected by user.
 
     :param argv:
-        command line arguments from call in main
+        a list of command line arguments from call in main module
 
     """
     logger.info("Enter controller main function")
