@@ -68,4 +68,3 @@ class SchedTest(_BaseTest):
             with self.assertRaises(SystemExit):
                 collect_parser.main(["--sched", "-f", "test_name"])
             self.assertFalse(collect_sched.called)
-
