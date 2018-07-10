@@ -19,7 +19,7 @@ __all__ = (
 
 
 class BaseTest(unittest.TestCase):
-    _TEST_DIR = "/tmp/leap-test/"
+    _TEST_DIR = "/tmp/marple-test/"
 
     def setUp(self):
         """Per-test set-up"""

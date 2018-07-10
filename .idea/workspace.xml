@@ -155,6 +155,7 @@
       <find>output.err</find>
       <find>fullf</find>
       <find>main</find>
+      <find>leap</find>
     </findStrings>
     <replaceStrings>
       <replace>'</replace>
@@ -166,6 +167,7 @@
       <replace>subprocess.call</replace>
       <replace>subprocess.Popen</replace>
       <replace>exit(1)</replace>
+      <replace>marple</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">

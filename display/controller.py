@@ -104,7 +104,7 @@ def _args_parse(argv):
     logger.info("Enter _args_parse function. Creates parser.")
 
     # Create parser object
-    parser = argparse.ArgumentParser(prog="leap display",
+    parser = argparse.ArgumentParser(prog="marple display",
                                      description="Display collected data "
                                      "in required format")
 

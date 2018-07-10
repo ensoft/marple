@@ -141,7 +141,7 @@ def _args_parse(argv):
     logger.info("Enter _args_parse function. Creates parser.")
 
     # Create parser object
-    parser = argparse.ArgumentParser(prog="leap collect",
+    parser = argparse.ArgumentParser(prog="marple collect",
                                      description="Collect performance data")
 
     # Add options for the modules

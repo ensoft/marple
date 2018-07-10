@@ -14,13 +14,13 @@ import sys
 import unittest
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
-leap_dir = os.path.dirname(os.path.dirname(this_dir))
+marple_dir = os.path.dirname(os.path.dirname(this_dir))
 
 try:
     import collect
 except ImportError:
     # Try to manipulate the pythonpath
-    sys.path.append(leap_dir)
+    sys.path.append(marple_dir)
     import collect.test
 
 
