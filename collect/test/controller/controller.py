@@ -42,7 +42,7 @@ class _ParseTest(_BaseTest):
 class SchedTest(_ParseTest):
     def test_sched_collect(self):
         """Check that asking for sched calls the right function"""
-        self.check_calls(["--sched", "-t", 13], sched, "collect_all", 13)
+        self.check_calls(["--sched", "-t", "13"], sched, "collect_all", 13)
 
     @patch.object(sched, 'collect_all')
     def test_sched_collect_config_time(self, collect_sched):
