@@ -1,15 +1,3 @@
 .idea/
-collect/interface/__pycache__/
-collect/controller/__pycache__/
-collect/converter/__pycache__/
-collect/test/__pycache__/
-collect/test/controller/__pycache__/
-collect/test/interface/__pycache__/
-collect/__init__.pyc
-collect/__pycache__/
-collect/controller/__pycache__/
-collect/interface/__init__.pyc
-collect/interface/__pycache__/
-collect/interface/perf.pyc
-common/__pycache__/
-display/__pycache__/
+__pycache__/
+*.pyc
