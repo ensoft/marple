@@ -16,10 +16,11 @@ import argparse
 import logging
 import os
 
-from . import sched
+from . import cpu
 import common.output as output
 import common.config as config
 import common.file as file
+import collect.converter.main as converter
 
 COLLECTION_TIME = 10
 
@@ -29,7 +30,7 @@ logger.setLevel(logging.DEBUG)
 __all__ = "main"
 
 
-def _collect(args):
+def _collect_and_store(args):
     """
     Collection part of the controller module.
 
@@ -78,25 +79,28 @@ def _collect(args):
     else:
         time = args.time
 
-    if args.sched:
-        logger.info("Recording scheduling data for {} seconds".format(time))
-        sched.collect_all(time)
-        # TODO: Do something with filename,
-        # i.e. store output to file when converter is finished.
-
-    if args.lib:
+    if args.cpu:
+        logger.info("Recording cpu scheduling data for {} seconds".format(time))
+        cpu.collect_all(time)
+        converter.create_cpu_event_data(filename)
+    elif args.ipc:
+        # Stub
+        logger.info("Recording ipc data for {} seconds".format(time))
+        _not_implemented("ipc")
+    elif args.lib:
         # Stub
         logger.info("Recording library loading data "
                     "for {} seconds".format(time))
         _not_implemented("lib")
-    if args.ipc:
-        # Stub
-        logger.info("Recording ipc data for {} seconds".format(time))
-        _not_implemented("ipc")
-    if args.mem:
+    elif args.mem:
         # Stub
         logger.info("Recording memory data for {} seconds".format(time))
         _not_implemented("mem")
+    elif args.stack:
+        # Stub
+        logger.info("Recording stack data for {} seconds".format(time))
+        _not_implemented("stack")
+        # TODO
 
 
 def _not_implemented(name):
@@ -121,18 +125,20 @@ def _args_parse(argv):
 
     Arguments that are created:
 
-        sched: CPU scheduling data
-        lib: library load times
+        cpu: CPU scheduling data
         ipc: ipc efficiency
-        mem: memory allocation/deallocation
+        lib: library load times
+        mem: memory allocation/ deallocation
+        stack: stack tracing
 
+        file f: the filename of the file that stores the output
         time t: time in seconds to record data
 
     :param argv:
-        a list of arguments passed by the main function
+        a list of arguments passed by the main function.
 
     :return:
-        an object containing the parsed command information
+        an object containing the parsed command information.
 
     Called by main when the program is started.
 
@@ -146,14 +152,17 @@ def _args_parse(argv):
 
     # Add options for the modules
     module_collect = parser.add_mutually_exclusive_group(required=True)
-    module_collect.add_argument("-s", "--sched", action="store_true",
-                                help="scheduler module")
-    module_collect.add_argument("-l", "--lib", action="store_true",
-                                help="library module")
+
+    module_collect.add_argument("-c", "--cpu", action="store_true",
+                                help="cpu scheduling data")
     module_collect.add_argument("-i", "--ipc", action="store_true",
-                                help="ipc module")
+                                help="ipc efficiency")
+    module_collect.add_argument("-l", "--lib", action="store_true",
+                                help="library load times")
     module_collect.add_argument("-m", "--mem", action="store_true",
-                                help="memory module")
+                                help="memory allocation/ deallocation")
+    module_collect.add_argument("-s", "--stack", action="store_true",
+                                help="stack tracing")
 
     # Add flag and parameter for filename
     filename = parser.add_argument_group()
@@ -187,7 +196,7 @@ def main(argv):
 
     # Call the appropriate functions to collect input
     try:
-        _collect(args)
+        _collect_and_store(args)
     except FileExistsError:
         output.error_("A file with that name already exists. "
                       "Please choose a unique filename.",

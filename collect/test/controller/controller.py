@@ -5,7 +5,7 @@ import collect.test.util as util
 import os.path as path
 import common.config as config
 import common.file as file
-import collect.controller.sched as sched
+import collect.controller.cpu as sched
 import collect.controller.main as collect_parser
 
 # -----------------------------------------------------------------------------
