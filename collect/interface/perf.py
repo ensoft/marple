@@ -98,7 +98,7 @@ def get_sched_data():
         iterator of SchedEvent objects
 
 
-    TODO: return intermediate filename for further processing and then deletion?
+    TODO: delete file after use
 
     """
     # Create temporary file for recording output
