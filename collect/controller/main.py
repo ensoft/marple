@@ -17,12 +17,14 @@ import logging
 import os
 
 from . import cpu
+from . import stack
 import common.output as output
 import common.config as config
 import common.file as file
 import collect.converter.main as converter
 
 COLLECTION_TIME = 10
+COLLECTION_FREQUENCY = 99
 
 logger = logging.getLogger('collect.controller.main')
 logger.setLevel(logging.DEBUG)
@@ -69,19 +71,25 @@ def _collect_and_store(args):
                      .format(filename))
         raise FileExistsError
 
-    # Collect data for user specified amount of time, otherwise standard value
+    # Use user specified time for data collection, otherwise standard value
     if args.time is None:
         time = config.get_default_time()
         if time is None:
             time = COLLECTION_TIME
-        logger.info("Using default time {}s "
+        logger.info("Using default time {} s "
                     "as no time was specified".format(time))
     else:
         time = args.time
 
+    # Use default frequency for data collection
+    frequency = config.get_default_frequency()
+    if frequency is None:
+        frequency = COLLECTION_FREQUENCY
+    logger.info("Using default frequency {} Hz ".format(frequency))
+
     if args.cpu:
         logger.info("Recording cpu scheduling data for {} seconds".format(time))
-        cpu.collect_all(time)
+        cpu.collect(time)
         converter.create_cpu_event_data(filename)
     elif args.ipc:
         # Stub
@@ -99,8 +107,8 @@ def _collect_and_store(args):
     elif args.stack:
         # Stub
         logger.info("Recording stack data for {} seconds".format(time))
-        _not_implemented("stack")
-        # TODO
+        stack.collect(time, frequency)
+        converter.create_stack_data(filename)
 
 
 def _not_implemented(name):

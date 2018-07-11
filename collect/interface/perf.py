@@ -57,6 +57,24 @@ def collect_sched(time):
     subprocess.call(["perf", "sched", "record", "sleep", str(time)])
 
 
+def get_stack_data():
+    """
+    Convert collected perf data to formatted stack data.
+
+    :return:
+        The temporary file that holds the output.
+
+    """
+    # Create temporary file for storing output
+    _filename = file.create_name()
+
+    with open(_filename, "w") as outfile:
+        subprocess.Popen(["perf", "script", ">", _filename],
+                         stdout=outfile)
+
+    return _filename
+
+
 def map_sched():
     """
     Display the collected scheduling data as a map.

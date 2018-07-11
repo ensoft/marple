@@ -31,8 +31,10 @@ def create_stack_data(generator, filename):
     # @Sort by keys (recursively by ascending index)
     pass
 
-    # @Write to file
-    pass
+    # Write to file
+    with open(filename, "w") as out:
+        for key in cnt.keys():
+            out.write(";".join(key) + " {}\n".format(cnt[key]))
 
 
 def create_cpu_event_data(generator, filename):
@@ -45,6 +47,7 @@ def create_cpu_event_data(generator, filename):
         The name of the file into which to store the output.
 
     """
-
     # @Write to file
-    pass
+    with open(filename, "w") as out:
+        for event in generator:
+            out.write(str(event) + "\n")

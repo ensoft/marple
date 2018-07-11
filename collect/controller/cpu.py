@@ -13,7 +13,7 @@ Handles interaction of the controller with the interface modules.
 import collect.interface.perf as perf
 
 
-def collect_all(time):
+def collect(time):
     """
     Uses perf module to collect scheduling data
 
