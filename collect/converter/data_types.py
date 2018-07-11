@@ -19,6 +19,7 @@ class SchedEvent(NamedTuple):
     type: str
 
     def __init__(self):
+        """Format the cpu attribute to int."""
         # strip off brackets (for perf output)
         if re.match("\[\d+\]", self.cpu) is not None:
             re.sub("\[", "", self.cpu)
