@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# output.py - diplays output to the user and logs it.
+# output.py - displays output to the user and logs it.
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 

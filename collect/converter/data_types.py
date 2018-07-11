@@ -16,3 +16,8 @@ class SchedEvent(NamedTuple):
     time: str
     type: str
 
+
+class StackEvent(NamedTuple):
+    """Represents a single call stack"""
+    # Could have more attributes if needed
+    stack: list

@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# perf.py - interacts with the perf command
+# perf.py - interacts with the perf tracing tool
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 
