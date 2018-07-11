@@ -19,6 +19,8 @@ def collect(time, frequency):
 
     :param time:
         The time in seconds for which to collect the data.
+    :param frequency:
+        The frequency in Hertz with which to collect the data.
 
     :return:
         A generator of stack event objects.
@@ -26,5 +28,5 @@ def collect(time, frequency):
     """
     perf.collect(time, frequency)
     _filename = perf.get_stack_data()
-    with(open(_filename, "r")) as tempfile:
-        return perf.parse(tempfile)
+
+    return perf.parse(_filename)

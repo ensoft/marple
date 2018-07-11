@@ -89,8 +89,8 @@ def _collect_and_store(args):
 
     if args.cpu:
         logger.info("Recording cpu scheduling data for {} seconds".format(time))
-        cpu.collect(time)
-        converter.create_cpu_event_data(filename)
+        generator = cpu.collect(time)
+        converter.create_cpu_event_data(generator=generator, filename=filename)
     elif args.ipc:
         # Stub
         logger.info("Recording ipc data for {} seconds".format(time))
@@ -107,8 +107,8 @@ def _collect_and_store(args):
     elif args.stack:
         # Stub
         logger.info("Recording stack data for {} seconds".format(time))
-        stack.collect(time, frequency)
-        converter.create_stack_data(filename)
+        generator = stack.collect(time, frequency)
+        converter.create_stack_data(generator=generator, filename=filename)
 
 
 def _not_implemented(name):
