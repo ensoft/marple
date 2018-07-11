@@ -64,7 +64,7 @@ def _collect_and_store(args):
                           "Name: {}".format(filename))
             exit(1)
     else:
-        filename = args.file
+        filename = "out/" + args.file
 
     if os.path.isfile(filename):
         logger.debug("File already exist. Filename: {}. Throwing exception"

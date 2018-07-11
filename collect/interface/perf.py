@@ -68,9 +68,11 @@ def get_stack_data():
     # Create temporary file for storing output
     _filename = file.create_name()
 
+    sp = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
     with open(_filename, "w") as outfile:
-        subprocess.Popen(["perf", "script"],
-                         stdout=outfile)
+        logger.error(sp.stderr.read().decode())
+        outfile.write(sp.stdout.read().decode())
 
     return _filename
 
@@ -97,22 +99,21 @@ def get_sched_data():
     :return:
         iterator of SchedEvent objects
 
-
-    TODO: delete file after use
-
     """
     # Create temporary file for recording output
     _filename = file.create_name()
 
+    sp = subprocess.Popen(["perf", "sched", "script", "-F",
+                          "comm,pid,cpu,time,event"],
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+
     with open(_filename, "w") as outfile:
-
-        sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
-                                        "comm,pid,cpu,time,event"],
-                                       stdout=outfile)
-
+        logger.error(sp.stderr.read().decode())
+        outfile.write(sp.stdout.read().decode())
         # Block if blocking is set by config module
         if config.is_blocking():
-            sub_process.wait()
+            sp.wait()
 
     iterator = _sched_data_gen(_filename)
 
@@ -139,11 +140,18 @@ def _sched_data_gen(_filename):
             event_data = infile.readline()
             if not event_data:
                 break
-            (name, pid, cpu, time, event) = event_data.split()
 
-            event = SchedEvent(name=name, pid=int(pid), cpu=_cpu_to_int(cpu),
-                               time=time, type=event)
-            yield event
+            if len(event_data.split()) == 5:
+                # TODO: Use regex
+                (name, pid, cpu, time, event) = event_data.split()
+                event = SchedEvent(name=name, pid=int(pid),
+                                   cpu=_cpu_to_int(cpu),
+                                   time=time, type=event)
+                yield event
+            else:
+                logger.debug("Error while splitting event_data: wrong number "
+                             "of arguments: {} expected 5: "
+                             "(name, pid, cpu, time, event)".format(event_data))
 
     os.remove(_filename)
 
@@ -158,7 +166,6 @@ def _cpu_to_int(cpu):
     """
     # strip off brackets (for perf output)
     if re.search("\[\d+\]", cpu) is not None:
-        logger.info("Removing brackets")
         cpu = re.sub("\[(\d+)\]", r"\1", cpu)
 
     # convert to int
@@ -210,7 +217,7 @@ def parse(_filename):
                     continue
                 stack.insert(0, pname)
                 if stack:
-                    yield stack
+                    yield tuple(stack)
                 stack = []
                 pname = None
                 continue
@@ -266,13 +273,15 @@ def parse(_filename):
                 else:
                     pname = comm
 
-                # original perl script has transliteration here: $pname =~ tr/ /_/;
+                # original perl script has transliteration here:
+                # $pname =~ tr/ /_/;
 
             #
             # stack line
             #
             elif re.match("\s*(\w+)\s*(.+)\((\S*)\)", line) is not None:
-                # Matches the other lines of a stack, i.e. the ones above the base.
+                # Matches the other lines of a stack,
+                # i.e. the ones above the base.
                 # e.g ffffffffabe0c31d _intel_pmu_enable_ ([kernel.kallsyms])
                 m = re.match("\s*(\w+)\s*(.+)\((\S*)\)", line)
 
@@ -280,11 +289,12 @@ def parse(_filename):
                 if pname is None:
                     continue
 
-                pc, rawfunc, mod = m.group(1), m.group(2), m.group(3)
+                pc, rawfunc, mod = m.group(1), m.group(2).rstrip(), m.group(3)
 
                 # Linux 4.8 included symbol offsets in perf script output by
                 # default, eg:
-                # 7fffb84c9afc cpu_startup_entry+0x800047c022ec ([kernel.kallsyms])
+                # 7fffb84c9afc cpu_startup_entry+0x800047c022ec
+                # ([kernel.kallsyms])
                 # strip these off:
                 re.sub("\+0x[\da-f]+$", "", rawfunc)
 
@@ -294,7 +304,7 @@ def parse(_filename):
                 if re.match("\(", rawfunc):
                     continue
 
-                inline = []
+                inline = ""
                 for func in re.split("->", rawfunc):
                     if func == "[unknown]":
                         # use module name instead, if known
@@ -310,7 +320,7 @@ def parse(_filename):
                         # Mark as inlined
                         func += "_[i]"
 
-                    inline.append(func)
+                    inline += func
 
                 stack.insert(0, inline)
 

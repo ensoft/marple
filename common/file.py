@@ -17,6 +17,7 @@ import uuid
 
 def create_name():
     """Create a new unique generic name for a file"""
-    return str(uuid.uuid4())
+    # TODO: only create filename, add tmp as needed when creating the file
+    return "tmp/" + str(uuid.uuid4()) + ".tmp"
 
-# Add: provide a prefix for the name, timestamp, etc.
+# Add later: provide a prefix for the name, timestamp, etc.

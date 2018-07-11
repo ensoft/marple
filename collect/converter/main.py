@@ -10,7 +10,11 @@ Gets the data that was collected by an interface module and converted into
 formatted objects and writes them into a file that was provided by the user.
 
 """
+import logging
 from collections import Counter
+
+logger = logging.getLogger("converter.main")
+logger.setLevel(logging.DEBUG)
 
 
 def create_stack_data(generator, filename):
@@ -23,18 +27,19 @@ def create_stack_data(generator, filename):
         The name of the file into which to store the output.
 
     """
+    logger.info("Enter create_stack_data")
+    logger.info("Counting number of stack occurrences")
     # Count stack occurrences
-    cnt = Counter()
-    for line in generator:
-        cnt[line] += 1
-
+    cnt = Counter(generator)
+    logger.info("Sort stacks")
     # @Sort by keys (recursively by ascending index)
     pass
-
+    logger.info("Writing folded stacks to file")
     # Write to file
     with open(filename, "w") as out:
-        for key in cnt.keys():
-            out.write(";".join(key) + " {}\n".format(cnt[key]))
+        for key, val in cnt.items():
+            out.write(";".join(key) + " {}\n".format(val))
+    logger.info("Done.")
 
 
 def create_cpu_event_data(generator, filename):

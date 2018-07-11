@@ -28,5 +28,4 @@ def collect(time, frequency):
     """
     perf.collect(time, frequency)
     _filename = perf.get_stack_data()
-
     return perf.parse(_filename)
