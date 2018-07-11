@@ -28,8 +28,9 @@ class SchedEvent(NamedTuple):
         # convert to int
         try:
             self.cpu = int(self.cpu)
-        except ValueError as verr:
+        except ValueError:
             output.error("Unexpected formatting error. "
                          "Please refer to log for details.",
-                         "Wrong format detected, cpu in sched event "
-                         "is not a number")
+                         "Wrong format detected, cpu in sched event: {} "
+                         "is not a number, i.e. cannot be converted to int"
+                         .format(str(self)))
