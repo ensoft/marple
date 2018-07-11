@@ -4,10 +4,8 @@
 # -------------------------------------------------------------
 
 """Data types for intermediate formats used in later data processing."""
-import re
-from typing import NamedTuple
 
-from common import output
+from typing import NamedTuple
 
 
 class SchedEvent(NamedTuple):
@@ -18,19 +16,3 @@ class SchedEvent(NamedTuple):
     time: str
     type: str
 
-    def __init__(self):
-        """Format the cpu attribute to int."""
-        # strip off brackets (for perf output)
-        if re.match("\[\d+\]", self.cpu) is not None:
-            re.sub("\[", "", self.cpu)
-            re.sub("\]", "", self.cpu)
-
-        # convert to int
-        try:
-            self.cpu = int(self.cpu)
-        except ValueError:
-            output.error("Unexpected formatting error. "
-                         "Please refer to log for details.",
-                         "Wrong format detected, cpu in sched event: {} "
-                         "is not a number, i.e. cannot be converted to int"
-                         .format(str(self)))
