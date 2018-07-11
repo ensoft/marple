@@ -23,7 +23,7 @@ def create_stack_data(filename):
     pass
 
 
-def create_event_data(filename):
+def create_cpu_event_data(filename):
     """
     Save the event data from the generator into a file.
 
