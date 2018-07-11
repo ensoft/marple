@@ -159,8 +159,7 @@ def _cpu_to_int(cpu):
     # strip off brackets (for perf output)
     if re.search("\[\d+\]", cpu) is not None:
         logger.info("Removing brackets")
-        cpu = re.sub("\[", "", cpu)
-        cpu = re.sub("\]", "", cpu)
+        cpu = re.sub("\[(\d+)\]", r"\1", cpu)
 
     # convert to int
     try:
