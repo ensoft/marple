@@ -16,11 +16,14 @@ import logging
 import os
 
 import common.output as output
+from . import flamegraph as flamegraph
 
 logger = logging.getLogger('display.controller')
 logger.setLevel(logging.DEBUG)
 
 __all__ = "main"
+
+FLAME_IMAGE = "flame.svg"
 
 
 def _display(args):
@@ -43,22 +46,29 @@ def _display(args):
         logger.debug("File not found, throwing exception")
         raise FileNotFoundError
 
-    if args.sched:
+    if args.cpu:
         # Stub
-        logger.info("Displaying scheduling data")
-        _not_implemented("sched")
+        logger.info("Displaying cpu scheduling data")
+        _not_implemented("cpu")
+    elif args.ipc:
+        # Stub
+        logger.info("Displaying ipc data")
+        _not_implemented("ipc")
     elif args.lib:
         # Stub
         logger.info("Displaying library loading data")
-        _not_implemented("sched")
-    elif args.ipc:
-        # Stub
-        logger.info("Displaying ipc scheduling data")
-        _not_implemented("sched")
+        _not_implemented("lib")
     elif args.mem:
         # Stub
-        logger.info("Displaying mem scheduling data")
-        _not_implemented("sched")
+        logger.info("Displaying memory allocation data")
+        _not_implemented("mem")
+    elif args.stack:
+        logger.info("Displaying stack tracing data")
+        if args.n:
+            _not_implemented("stack -n")
+        else:
+            flamegraph.make(filename, FLAME_IMAGE)
+            flamegraph.show(FLAME_IMAGE)
 
 
 def _not_implemented(name):
@@ -83,13 +93,16 @@ def _args_parse(argv):
 
     Arguments that are created:
 
-            sched: CPU scheduling data
-            lib: library load times
-            ipc: ipc efficiency
-            mem: memory allocation/deallocation
+        cpu: CPU scheduling data
+        ipc: ipc efficiency
+        lib: library load times
+        mem: memory allocation/ deallocation
+        stack: stack tracing
 
-            -n: numerical representation of data
-            -g: graphical representation of data
+        file f: the filename of the file that stores the output
+
+        -n: numerical representation of data
+        -g: graphical representation of data
 
     :param argv:
         the arguments passed by the main function
@@ -111,14 +124,17 @@ def _args_parse(argv):
     # -----
     # Add options for the modules
     module_display = parser.add_mutually_exclusive_group(required=True)
-    module_display.add_argument("-s", "--sched", action="store_true",
-                                help="scheduler module")
-    module_display.add_argument("-l", "--lib", action="store_true",
-                                help="library module")
+
+    module_display.add_argument("-c", "--cpu", action="store_true",
+                                help="cpu scheduling data")
     module_display.add_argument("-i", "--ipc", action="store_true",
-                                help="ipc module")
+                                help="ipc efficiency")
+    module_display.add_argument("-l", "--lib", action="store_true",
+                                help="library load times")
     module_display.add_argument("-m", "--mem", action="store_true",
-                                help="memory module")
+                                help="memory allocation/ deallocation")
+    module_display.add_argument("-s", "--stack", action="store_true",
+                                help="stack tracing")
 
     # Add flag and parameter for displaying type in case of display
     type_display = parser.add_mutually_exclusive_group(required=True)
