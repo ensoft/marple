@@ -25,6 +25,9 @@ __all__ = ["collect", "collect_sched", "map_sched", "get_sched_data"]
 INCLUDE_TID = False
 INCLUDE_PID = False
 
+# Directory for temporary files
+TMP_DIR = "tmp/"
+
 logger = logging.getLogger("collect.interface.perf")
 logger.setLevel(logging.DEBUG)
 
@@ -66,7 +69,7 @@ def get_stack_data():
 
     """
     # Create temporary file for storing output
-    _filename = file.create_name()
+    _filename = TMP_DIR + file.create_temp_name()
 
     sp = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
@@ -101,7 +104,7 @@ def get_sched_data():
 
     """
     # Create temporary file for recording output
-    _filename = file.create_name()
+    _filename = TMP_DIR + file.create_temp_name()
 
     sp = subprocess.Popen(["perf", "sched", "script", "-F",
                           "comm,pid,cpu,time,event"],

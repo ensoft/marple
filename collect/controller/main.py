@@ -25,6 +25,8 @@ import collect.converter.main as converter
 
 COLLECTION_TIME = 10
 COLLECTION_FREQUENCY = 99
+OUT_DIR = "out/"
+TMP_DIR = "tmp/"
 
 logger = logging.getLogger('collect.controller.main')
 logger.setLevel(logging.DEBUG)
@@ -46,16 +48,22 @@ def _collect_and_store(args):
     logger.info("Collect function. "
                 "Applying logic evaluating and applying input parameters")
 
+    if not os.path.isdir(TMP_DIR):
+        os.mkdir(TMP_DIR)
+    if not os.path.isdir(OUT_DIR):
+        os.mkdir(OUT_DIR)
+
     # Use the user specified filename if there is one,
     # otherwise create a unique one
     if args.file is None:
-        filename = file.create_name()
+        filename = OUT_DIR + file.create_out_name("collect", ending=".data")
         logger.info("Trying to generate default filename "
                     "as no filename was specified")
-        i = 5
-        while os.path.isfile(filename) and i > 0:
-            filename = file.create_name()
-            i -= 1
+        i = 1
+        while os.path.isfile(filename):
+            filename = OUT_DIR + file.create_out_name("collect", i,
+                                                      ending=".data")
+            i += 1
 
         if os.path.isfile(filename):
             output.error_("Unable to create a unique filename. "
@@ -64,12 +72,16 @@ def _collect_and_store(args):
                           "Name: {}".format(filename))
             exit(1)
     else:
-        filename = "out/" + args.file
+        filename = OUT_DIR + args.file
 
     if os.path.isfile(filename):
         logger.debug("File already exist. Filename: {}. Throwing exception"
                      .format(filename))
         raise FileExistsError
+
+    # Save latest filename to temporary file for display module
+    with open(TMP_DIR + "filename", "w") as fn:
+        fn.write(filename)
 
     # Use user specified time for data collection, otherwise standard value
     if args.time is None:

@@ -65,7 +65,7 @@ class SchedTest(_ParseTest):
     @patch.object(sched, 'collect')
     def test_sched_collect_create_filename(self, collect_sched):
         """Check that file default function is called to create filename"""
-        with patch.object(file, "create_name") \
+        with patch.object(file, "create_temp_name") \
                 as get_filename_mock:
             collect_parser.main(["--sched"])
             get_filename_mock.assert_called_once()
@@ -74,7 +74,7 @@ class SchedTest(_ParseTest):
     @patch.object(sched, 'collect')
     def test_sched_collect_auto_filename_exists(self, collect_sched):
         """Check that it retries 5 times if auto create filename fails"""
-        with patch.object(file, "create_name") \
+        with patch.object(file, "create_temp_name") \
                 as get_filename_mock, \
                 patch.object(path, "isfile", return_value=True) \
                 as is_file_mock:

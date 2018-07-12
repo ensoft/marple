@@ -16,6 +16,7 @@ import logging
 import os
 
 import common.output as output
+from common import file
 from . import flamegraph as flamegraph
 
 logger = logging.getLogger('display.controller')
@@ -23,8 +24,8 @@ logger.setLevel(logging.DEBUG)
 
 __all__ = "main"
 
+TMP_DIR = "tmp/"
 OUT_DIR = "out/"
-FLAME_IMAGE = OUT_DIR + "flame.svg"
 
 
 def _display(args):
@@ -38,12 +39,20 @@ def _display(args):
         Passed by main function
 
     """
-    logger.info("Display function."
+    logger.info("Display function. "
                 "Applying logic evaluating and applying input parameters")
 
-    # Try to use the specified name, otherwise throw exception
-    filename = OUT_DIR + args.file
-    if filename is None or not os.path.isfile(os.fspath(filename)):
+    if args.file is None:
+        try:
+            with open(TMP_DIR + "filename", "r") as fn:
+                filename = fn.readline()
+        except FileNotFoundError as fnfe:
+            logger.debug("Could not find filename helper file")
+            raise FileNotFoundError(fnfe)
+    else:
+        # Try to use the specified name, otherwise throw exception
+        filename = OUT_DIR + args.file
+    if not os.path.isfile(os.fspath(filename)):
         logger.debug("File not found (filename={}), throwing "
                      "exception".format(filename))
         raise FileNotFoundError
@@ -69,8 +78,10 @@ def _display(args):
         if args.n:
             _not_implemented("stack -n")
         else:
-            flamegraph.make(filename, FLAME_IMAGE)
-            flamegraph.show(FLAME_IMAGE)
+            image_filename = OUT_DIR + file.create_out_name("display",
+                                                            ending=".svg")
+            flamegraph.make(filename, image_filename)
+            flamegraph.show(image_filename)
 
 
 def _not_implemented(name):
@@ -103,8 +114,9 @@ def _args_parse(argv):
 
         file f: the filename of the file that stores the output
 
+        -g: graphical representation of data (default)
         -n: numerical representation of data
-        -g: graphical representation of data
+
 
     :param argv:
         the arguments passed by the main function
@@ -139,11 +151,13 @@ def _args_parse(argv):
                                 help="stack tracing")
 
     # Add flag and parameter for displaying type in case of display
-    type_display = parser.add_mutually_exclusive_group(required=True)
+    type_display = parser.add_mutually_exclusive_group()
+    type_display.add_argument("-g", action="store_true",
+                              help="graphical representation as an image ("
+                                   "default)")
     type_display.add_argument("-n", action="store_true",
                               help="numerical representation as a table")
-    type_display.add_argument("-g", action="store_true",
-                              help="graphical representation as an image")
+
 
     # Add flag and parameter for filename
     filename = parser.add_argument_group()
