@@ -23,13 +23,11 @@ def create_temp_name():
 def create_out_name(module, number=None, ending=None):
     """Create a generic output name with number"""
 
-    name = "out-" + module
+    name = "out-" + str(module)
 
     if number is not None:
-        name += number
+        name += str(number)
     if ending is not None:
-        name += ending
+        name += str(ending)
 
     return name
-
-# Add later: provide a prefix for the name, timestamp, etc.
