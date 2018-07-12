@@ -71,8 +71,8 @@ def get_stack_data():
     sp = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
     with open(_filename, "w") as outfile:
-        logger.error(sp.stderr.read().decode())
         outfile.write(sp.stdout.read().decode())
+        logger.error(sp.stderr.read().decode())
 
     return _filename
 
@@ -109,8 +109,8 @@ def get_sched_data():
                           stderr=subprocess.PIPE)
 
     with open(_filename, "w") as outfile:
-        logger.error(sp.stderr.read().decode())
         outfile.write(sp.stdout.read().decode())
+        logger.error(sp.stderr.read().decode())
         # Block if blocking is set by config module
         if config.is_blocking():
             sp.wait()
