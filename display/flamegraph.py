@@ -12,6 +12,11 @@ Flamegraph tool.
 import os
 import subprocess
 
+DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
+              __file__)))) + "/"
+
+FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
+
 
 def make(in_filename, out_filename):
     """
@@ -23,10 +28,8 @@ def make(in_filename, out_filename):
         The name of the image file that will be created.
 
     """
-    display_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     with open(out_filename, "w") as out:
-        subprocess.Popen([str(display_dir) + "/util/flamegraph/flamegraph.pl",
-                         in_filename], stdout=out)
+        subprocess.Popen([FLAMEGRAPH_DIR, in_filename], stdout=out)
 
 
 def show(image):
@@ -37,5 +40,6 @@ def show(image):
         The image file containing the flamegraph.
 
     """
-    subprocess.call(["firefox", image])
+    subprocess.call(["su", "-", "-c",  "firefox " + DISPLAY_DIR + image,
+                     "franzn"])
 

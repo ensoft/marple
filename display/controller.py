@@ -23,7 +23,8 @@ logger.setLevel(logging.DEBUG)
 
 __all__ = "main"
 
-FLAME_IMAGE = "flame.svg"
+OUT_DIR = "out/"
+FLAME_IMAGE = OUT_DIR + "flame.svg"
 
 
 def _display(args):
@@ -41,9 +42,10 @@ def _display(args):
                 "Applying logic evaluating and applying input parameters")
 
     # Try to use the specified name, otherwise throw exception
-    filename = args.file
-    if filename is None or not os.path.isfile(filename):
-        logger.debug("File not found, throwing exception")
+    filename = OUT_DIR + args.file
+    if filename is None or not os.path.isfile(os.fspath(filename)):
+        logger.debug("File not found (filename={}), throwing "
+                     "exception".format(filename))
         raise FileNotFoundError
 
     if args.cpu:
@@ -172,8 +174,9 @@ def main(argv):
     # Call the appropriate functions to display input
     try:
         _display(args)
-    except FileNotFoundError:
-        output.error_("Error: No file with that name found. "
-                      "Please choose a different filename or collect new data.",
-                      "file not found")
+    except FileNotFoundError as fnfe:
+        output.error_("Error: No file with name {} found. "
+                      "Please choose a different filename or collect new data."
+                      .format(fnfe.filename),
+                      "file not found error: {}".format(fnfe.filename))
         exit(1)
