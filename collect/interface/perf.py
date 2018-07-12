@@ -244,7 +244,7 @@ def parse(_filename):
                     # No tid found
                     tid = pid
                     pid = "?"
-                m = re.search("(\S+)", line)
+                m = re.search("(\S+):\s*$", line)
                 if m is not None:
                     # By default only show events of the first encountered
                     # event type. Merging together different types, such as
@@ -299,7 +299,7 @@ def parse(_filename):
                 # 7fffb84c9afc cpu_startup_entry+0x800047c022ec
                 # ([kernel.kallsyms])
                 # strip these off:
-                re.sub("\+0x[\da-f]+$", "", rawfunc)
+                rawfunc = re.sub("\+0x[\da-f]+$", "", rawfunc)
 
                 # Original perl script adds inline here if required by user
 
@@ -313,7 +313,7 @@ def parse(_filename):
                         # use module name instead, if known
                         if mod != "[unknown]":
                             func = mod
-                            re.sub(".*/", "", func)
+                            func = re.sub(".*/", "", func)
 
                         # Original perl script has option to include address.
                     # Original perl script has some optional tidying up here for
