@@ -10,7 +10,6 @@ Handles interaction of the controller with the interface modules and writes
     the converted data to file.
 
 """
-
 __all__ = ["sched_collect_and_store"]
 
 import logging

@@ -12,7 +12,6 @@ Sets up logging, calls the appropriate controller (collect or display) and
 deals with exceptions.
 
 """
-
 __all__ = ["main"]
 
 import sys

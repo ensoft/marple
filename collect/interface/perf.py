@@ -4,11 +4,14 @@
 # -------------------------------------------------------------
 
 """
-Interacts with the perf command
+Interacts with the perf tracing tool.
 
-Calls perf to collect data for different purposes.
+Calls perf to collect data, format it, and has functions that create data
+    object generators.
 
 """
+__all__ = ["collect", "collect_sched", "get_stack_data", "get_sched_data",
+           "parse"]
 
 import logging
 import os
@@ -22,8 +25,6 @@ from common import (
 )
 from ..converter.data_types import SchedEvent
 
-__all__ = ["collect", "collect_sched", "get_sched_data"]
-
 # Constants for perf to stacks conversion
 INCLUDE_TID = False
 INCLUDE_PID = False
@@ -32,15 +33,16 @@ logger = logging.getLogger("collect.interface.perf")
 logger.setLevel(logging.DEBUG)
 
 
-def collect(time, frequency):
+def collect(time, frequency, cpufilter=None):
     """
     Collect system data using perf
 
     :param time:
         The time in seconds for which to collect the data.
-
     :param frequency:
-        The frequency in Hz of taking samples
+        The frequency in Hz of taking samples.
+    :param cpufilter:
+        Optional parameter to filter for specific cpu core.
 
     """
 
@@ -77,7 +79,7 @@ def get_stack_data():
         outfile.write(sp.stdout.read().decode())
         logger.error(sp.stderr.read().decode())
 
-    return filename
+    return _stack_collapse(filename)
 
 
 def get_sched_data():
@@ -105,19 +107,17 @@ def get_sched_data():
         if config.is_blocking():
             sp.wait()
 
-    iterator = _sched_data_gen(filename)
-
-    return iterator
+    return _sched_data_gen(filename)
 
 
-def _sched_data_gen(_filename):
+def _sched_data_gen(filename):
     """
     Generator of SchedEvent objects from file
 
     Reads in the provided file, parses it and converts it into SchedEvent
     objects.
 
-    :param _filename:
+    :param filename:
         The name of the temporary file that stores the data
         before further processing.
 
@@ -125,7 +125,7 @@ def _sched_data_gen(_filename):
         SchedEvent object Iterator
     """
     # lazily return lines from the file as iterator
-    with open(_filename, "r") as infile:
+    with open(filename, "r") as infile:
         while True:
             event_data = infile.readline()
             if not event_data:
@@ -143,7 +143,7 @@ def _sched_data_gen(_filename):
                              "of arguments: {} expected 5: "
                              "(name, pid, cpu, time, event)".format(event_data))
 
-    os.remove(_filename)
+    os.remove(filename)
 
 
 def _cpu_to_int(cpu):
@@ -172,7 +172,7 @@ def _cpu_to_int(cpu):
                         "integer")
 
 
-def parse(_filename):
+def _stack_collapse(filename):
     """
     Goes through input line by line to fold the stacks.
 
@@ -182,7 +182,7 @@ def parse(_filename):
     single stacks lazily and without counting them.
     This is in order to integrate it with the marple program structure.
 
-    :param _filename:
+    :param filename:
         A text file or similar input containing lines of stack data
         output from perf.
 
@@ -198,7 +198,7 @@ def parse(_filename):
     event_warning = False
 
     logger.info("Starting to convert perf output to stacks")
-    with(open(_filename, "r")) as input_:
+    with(open(filename, "r")) as input_:
         for line in input_:
             # If end of stack, save cached data.
             if re.match("^$", line) is not None:

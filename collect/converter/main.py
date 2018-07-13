@@ -10,6 +10,8 @@ Gets the data that was collected by an interface module and converted into
 formatted objects and writes them into a file that was provided by the user.
 
 """
+__all__ = ["create_stack_data", "create_cpu_event_data"]
+
 import logging
 import collections
 

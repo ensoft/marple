@@ -10,8 +10,6 @@ Parses user input and calls to the appropriate functions (
 cpu data collection, stack data collection, etc).
 
 """
-
-
 __all__ = "main"
 
 import argparse

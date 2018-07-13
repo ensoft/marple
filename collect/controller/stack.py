@@ -10,6 +10,8 @@ Handles interaction of the controller with the interface modules and writes
     the converted data to file.
 
 """
+__all__ = ["collect_and_store"]
+
 import logging
 
 from common import config
@@ -41,11 +43,8 @@ def collect_and_store(time, filename):
     # Collect raw data using perf
     perf.collect(time, frequency)
 
-    # Extract the relevant stack data
-    stack_data_file = perf.get_stack_data()
-
     # Collapse the stack, create stack object generator
-    stack_data_formatted = perf.parse(stack_data_file)
+    stack_data_formatted = perf.get_stack_data()
 
     # Create file from the folded stack objects
     converter.create_stack_data(generator=stack_data_formatted, 

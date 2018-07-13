@@ -8,6 +8,7 @@ Displays output to the user and logs it.
 
 Provides functions for normal print output and errors.
 """
+__all__ = ["print_", "error_"]
 
 import logging
 

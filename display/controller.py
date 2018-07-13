@@ -10,14 +10,12 @@ Handles interaction between the output modules (flamegraph, g2, etc.)
 It calls the relevant functions for each command.
 
 """
-import os
-
 __all__ = "main"
 
 import argparse
 import logging
 
-from common import file, exceptions
+from common import file
 from . import flamegraph
 
 logger = logging.getLogger('display.controller')
