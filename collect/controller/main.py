@@ -10,25 +10,26 @@ Parses user input and calls to the appropriate functions (
 cpu data collection, stack data collection, etc).
 
 """
-import os
 
-from common import output
-from common.exceptions import AbortedException
 
 __all__ = "main"
 
 import argparse
 import logging
+import os
 
 from ...common import (
     config,
-    file
+    exceptions,
+    file,
+    output
 )
 from ..converter import main as converter
 from . import (
     cpu,
     stack
 )
+
 
 # COLLECTION_TIME - int constant specifying the default data collection time
 _COLLECTION_TIME = 10
@@ -57,7 +58,7 @@ def _collect_and_store(args):
                           "Overwrite?".format(args.file))
             answer = input()
             if answer != "y" and answer != "yes":
-                raise AbortedException
+                raise exceptions.AbortedException
         filename = args.file
     else:
         filename = file.find_unique_out_filename("collect", ending=".data")

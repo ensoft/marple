@@ -10,8 +10,8 @@ Handles interaction of the controller with the interface modules.
 
 """
 
-import collect.interface.perf as perf
-from common import config
+from ...common import config
+from ..interface import perf
 
 # COLLECTION_FREQUENCY - int constant specifying the default sample frequency
 _COLLECTION_FREQUENCY = 99

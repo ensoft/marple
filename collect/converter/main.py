@@ -11,7 +11,7 @@ formatted objects and writes them into a file that was provided by the user.
 
 """
 import logging
-from collections import Counter
+import collections
 
 logger = logging.getLogger("converter.main")
 logger.setLevel(logging.DEBUG)
@@ -30,7 +30,7 @@ def create_stack_data(generator, filename):
     logger.info("Enter create_stack_data")
     logger.info("Counting number of stack occurrences")
     # Count stack occurrences
-    cnt = Counter(generator)
+    cnt = collections.Counter(generator)
     logger.info("Sort stacks")
     # @Sort by keys (recursively by ascending index)
     pass

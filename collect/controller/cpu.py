@@ -10,7 +10,7 @@ Handles interaction of the controller with the interface modules.
 
 """
 
-import collect.interface.perf as perf
+from ..interface import perf
 
 
 def collect(time):

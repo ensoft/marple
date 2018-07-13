@@ -20,7 +20,7 @@ import os
 import uuid
 import logging
 
-from common import paths
+from . import paths
 
 logger = logging.getLogger("common.file")
 logger.setLevel(logging.DEBUG)
