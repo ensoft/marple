@@ -10,8 +10,7 @@ Calls perf to collect data, format it, and has functions that create data
     object generators.
 
 """
-__all__ = ["collect", "collect_sched", "get_stack_data", "get_sched_data",
-           "parse"]
+__all__ = ["collect", "collect_sched", "get_stack_data", "get_sched_data"]
 
 import logging
 import os
