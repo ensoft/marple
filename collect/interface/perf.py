@@ -32,7 +32,7 @@ logger = logging.getLogger("collect.interface.perf")
 logger.setLevel(logging.DEBUG)
 
 
-def collect(time, frequency, cpufilter=None):
+def collect(time, frequency, cpufilter="-a"):
     """
     Collect system data using perf
 
@@ -45,8 +45,8 @@ def collect(time, frequency, cpufilter=None):
 
     """
 
-    subprocess.call(["perf", "record", "-F", str(frequency), "-a", "-g", "--",
-                     "sleep", str(time)])
+    subprocess.call(["perf", "record", "-F", str(frequency), cpufilter, "-g",
+                     "--", "sleep", str(time)])
 
 
 def collect_sched(time):
