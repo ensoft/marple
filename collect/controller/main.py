@@ -1,104 +1,70 @@
 # -------------------------------------------------------------
-# controller/main.py - user interface, parses and applies collect commands
+# main.py - user interface, parses and applies collect commands
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 
 """
 Controller script - user interface, parses and applies collect commands
 
-Handles interaction between the user and the middle level
-functionality (mem, sched etc).
-It calls the relevant functions for each command.
+Parses user input and calls to the appropriate functions (
+cpu data collection, stack data collection, etc).
 
 """
 
+__all__ = "main"
+
 import argparse
 import logging
-import os
 
-from . import cpu
-from . import stack
-import common.output as output
-import common.config as config
-import common.file as file
-import collect.converter.main as converter
+from ...common import (
+    config,
+    file
+)
+from ..converter import main as converter
+from . import (
+    cpu,
+    stack
+)
 
-COLLECTION_TIME = 10
-COLLECTION_FREQUENCY = 99
-OUT_DIR = "out/"
-TMP_DIR = "tmp/"
+# COLLECTION_TIME - int constant for the default value of data collection time
+_COLLECTION_TIME = 10
+# COLLECTION_FREQUENCY - int constant storing the default sample frequency
+_COLLECTION_FREQUENCY = 99
 
 logger = logging.getLogger('collect.controller.main')
 logger.setLevel(logging.DEBUG)
 
-__all__ = "main"
-
 
 def _collect_and_store(args):
     """
-    Collection part of the controller module.
-
-    Deals with data collection.
+    Calls the relevant functions that user chose and stores output in file.
 
     :param args:
         Command line arguments for data-collection.
         Passed by main function.
 
     """
-    logger.info("Collect function. "
-                "Applying logic evaluating and applying input parameters")
+    logger.info("Enter collect and store function. Applying logic evaluating "
+                "and applying input parameters: {}"
+                .format(args))
 
-    if not os.path.isdir(TMP_DIR):
-        os.mkdir(TMP_DIR)
-    if not os.path.isdir(OUT_DIR):
-        os.mkdir(OUT_DIR)
-
-    # Use the user specified filename if there is one,
-    # otherwise create a unique one
-    if args.file is None:
-        filename = OUT_DIR + file.create_out_name("collect", ending=".data")
-        logger.info("Trying to generate default filename "
-                    "as no filename was specified")
-        i = 1
-        while os.path.isfile(filename):
-            filename = OUT_DIR + file.create_out_name("collect", i,
-                                                      ending=".data")
-            i += 1
-
-        if os.path.isfile(filename):
-            output.error_("Unable to create a unique filename. "
-                          "Please choose a filename and try again.",
-                          "Failed to generate unique filename! Exiting! "
-                          "Name: {}".format(filename))
-            exit(1)
-    else:
-        filename = OUT_DIR + args.file
-
-    if os.path.isfile(filename):
-        logger.debug("File already exist. Filename: {}. Throwing exception"
-                     .format(filename))
-        raise FileExistsError
+    # Use user specified filename if it exist, otherwise create a unique one
+    filename = \
+        file.create_out_filename(args.file) if args.file is not None else \
+        file.find_unique_out_filename("collect", ending=".data")
 
     # Save latest filename to temporary file for display module
-    with open(TMP_DIR + "filename", "w") as fn:
-        fn.write(filename)
+    file.export_out_filename(filename)
 
     # Use user specified time for data collection, otherwise standard value
-    if args.time is None:
-        time = config.get_default_time()
-        if time is None:
-            time = COLLECTION_TIME
-        logger.info("Using default time {} s "
-                    "as no time was specified".format(time))
-    else:
-        time = args.time
+    time = args.time if args.time is not None else config.get_default_time() \
+        if config.get_default_time() is not None else _COLLECTION_TIME
 
     # Use default frequency for data collection
-    frequency = config.get_default_frequency()
-    if frequency is None:
-        frequency = COLLECTION_FREQUENCY
-    logger.info("Using default frequency {} Hz ".format(frequency))
+    frequency = config.get_default_frequency() if \
+        config.get_default_frequency() is not None else _COLLECTION_FREQUENCY
 
+    # Call appropriate function based on user input
     if args.cpu:
         logger.info("Recording cpu scheduling data for {} seconds".format(time))
         generator = cpu.collect(time)
@@ -106,37 +72,21 @@ def _collect_and_store(args):
     elif args.ipc:
         # Stub
         logger.info("Recording ipc data for {} seconds".format(time))
-        _not_implemented("ipc")
+        raise NotImplementedError("ipc")
     elif args.lib:
         # Stub
         logger.info("Recording library loading data "
                     "for {} seconds".format(time))
-        _not_implemented("lib")
+        raise NotImplementedError("lib")
     elif args.mem:
         # Stub
         logger.info("Recording memory data for {} seconds".format(time))
-        _not_implemented("mem")
+        raise NotImplementedError("mem")
     elif args.stack:
         # Stub
         logger.info("Recording stack data for {} seconds".format(time))
         generator = stack.collect(time, frequency)
         converter.create_stack_data(generator=generator, filename=filename)
-
-
-def _not_implemented(name):
-    """
-    Displays error message and exits due to unimplemented functionality.
-
-    Debugging function to give an error when something unfinished is called.
-
-    :param name:
-        name of the function that has not been implemented.
-
-    """
-    output.error_("The collect command \"{}\" is currently not implemented. "
-                  "Please try a different command.".format(name),
-                  "The collect function \"{}\" is not yet implemented. Exiting."
-                  .format(name))
 
 
 def _args_parse(argv):
@@ -208,22 +158,10 @@ def main(argv):
         a list of command line arguments from call in main module
 
     """
-    logger.info("Enter controller main function")
+    logger.info("Enter controller main function with arguments {}".format(argv))
 
     # Parse arguments
-    logger.info("Trying to parse input: {}".format(argv))
     args = _args_parse(argv)
 
     # Call the appropriate functions to collect input
-    try:
-        _collect_and_store(args)
-    except FileExistsError:
-        output.error_("A file with that name already exists. "
-                      "Please choose a unique filename.",
-                      "filename already exists")
-        exit(1)
-    except FileNotFoundError:
-        output.error_("Error: No file with that name found. "
-                      "Please choose a different filename or collect new data.",
-                      "file not found")
-        exit(1)
+    _collect_and_store(args)

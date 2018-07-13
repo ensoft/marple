@@ -17,11 +17,12 @@ import logging
 import collect.controller.main as collect_controller
 import display.controller as display_controller
 import common.output as output
+from common import paths
 
 logger = logging.getLogger('main')
 logger.setLevel(logging.DEBUG)
 
-DIRECTORY = "/var/log/marple/"
+LOG_DIRECTORY = paths.VAR_DIR + "log/marple/"
 
 # Check whether user is root, otherwise exit
 if os.geteuid() != 0:
@@ -29,15 +30,15 @@ if os.geteuid() != 0:
 
 try:
     # Check if marple logging directory exists, else create one
-    if not os.path.exists(DIRECTORY):
-        os.makedirs(DIRECTORY)
+    if not os.path.exists(LOG_DIRECTORY):
+        os.makedirs(LOG_DIRECTORY)
 
-    # create a unique and descriptive logfile using timiestamp and process id
+    # create a unique and descriptive logfile using timestamp and process id
     # in the standard linux log file directory
     logging.basicConfig(format="%(asctime)s %(name)-12s "
                                "%(levelname)-8s %(message)s",
                         datefmt="%m-%d %H:%M",
-                        filename=DIRECTORY + "marple" + str(os.getpid()) +
+                        filename=LOG_DIRECTORY + "marple" + str(os.getpid()) +
                                 ".log",
                         filemode="w")
 
@@ -50,16 +51,20 @@ except PermissionError:
     exit("Fatal Error: Failed to set up logging due to missing privileges "
          "to the log directory!\n Make sure you have root privileges and that "
          "you are allowed to access the log directory as root.")
+
 except Exception as ex:
     # if setting up the logging fails there is something wrong with the system
     exit("Fatal Error: Failed to set up logging! {}".format(str(ex)))
 
+
 if __name__ == "__main__":
     logger.info("Application started.")
     try:
-        # Call main function with command line arguments
-        # Excluding argv[0] (program name: marple)
-        # and argv[1] (function name: {collect,display})
+        # Create the relevant file directories the program uses
+        paths.mkdirs()
+
+        # Call main function with command line arguments excluding argv[0]
+        # (program name: marple) and argv[1] (function name: {collect,display})
         if len(sys.argv) < 2:
             output.print_("usage: marple COMMAND\n The COMMAND "
                           "can be either \"collect\" or \"display\"")
@@ -70,7 +75,22 @@ if __name__ == "__main__":
         else:
             output.print_("usage: marple COMMAND\n The COMMAND "
                           "can be either \"collect\" or \"display\"")
+
+    except NotImplementedError as nie:
+        # if the requested function is not implemented, exit with an error
+        exit("The command \"{}\" is currently not implemented. "
+             "Please try a different command.".format(nie.args[0]))
+
+    except FileExistsError as fee:
+        # If the output filename requested by the user already exists
+        exit("Error: A file with the name {} already exists. Please choose a "
+             "unique filename.".format(fee.filename))
+    except FileNotFoundError as fnfe:
+        exit("Error: No file named {} found. Please choose a different "
+             "filename or collect new data.".format(fnfe.filename))
+
     except Exception as ex:
-        # If anything goes wrong, handle it here
+        # If anything else goes wrong, handle it here
         output.error_("An unexpected error occurred. Check log for details",
                       str(ex))
+        exit(1)

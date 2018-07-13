@@ -24,8 +24,8 @@ logger.setLevel(logging.DEBUG)
 
 __all__ = "main"
 
-TMP_DIR = "tmp/"
-OUT_DIR = "out/"
+TMP_DIR = "tmp/" #/tmp/
+OUT_DIR = "out/" #config into etc
 
 
 def _display(args):
@@ -44,7 +44,7 @@ def _display(args):
 
     if args.file is None:
         try:
-            with open(TMP_DIR + "filename", "r") as fn:
+            with open(TMP_DIR + "filename", "r") as fn: #maybe var not tmp.
                 filename = fn.readline()
         except FileNotFoundError as fnfe:
             logger.debug("Could not find filename helper file")
@@ -60,44 +60,28 @@ def _display(args):
     if args.cpu:
         # Stub
         logger.info("Displaying cpu scheduling data")
-        _not_implemented("cpu")
+        raise NotImplementedError("display cpu data")
     elif args.ipc:
         # Stub
         logger.info("Displaying ipc data")
-        _not_implemented("ipc")
+        raise NotImplementedError("display ipc data")
     elif args.lib:
         # Stub
         logger.info("Displaying library loading data")
-        _not_implemented("lib")
+        raise NotImplementedError("display library data")
     elif args.mem:
         # Stub
         logger.info("Displaying memory allocation data")
-        _not_implemented("mem")
+        raise NotImplementedError("display memory data")
     elif args.stack:
         logger.info("Displaying stack tracing data")
         if args.n:
-            _not_implemented("stack -n")
+            raise NotImplementedError("display-numeric stack data")
         else:
             image_filename = OUT_DIR + file.create_out_name("display",
                                                             ending=".svg")
             flamegraph.make(filename, image_filename)
             flamegraph.show(image_filename)
-
-
-def _not_implemented(name):
-    """
-    Displays error message and exits due to unimplemented functionality.
-
-    Debugging function to give an error when something unfinished is called.
-
-    :param name:
-        name of the function that has not been implemented.
-
-    """
-    output.error_("The display command \"{}\" is currently not implemented. "
-                  "Please try a different command.".format(name),
-                  "The display function \"{}\" is not yet implemented. Exiting."
-                  .format(name))
 
 
 def _args_parse(argv):
