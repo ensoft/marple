@@ -12,7 +12,9 @@ Can also export them to disk.
 
 """
 
-__all__ = ["create_unique_temp_filename"] #TODO
+__all__ = ["find_unique_out_filename", "create_out_filename_generic",
+           "create_unique_temp_filename", "import_out_filename",
+           "export_out_filename"]
 
 import os
 import uuid
@@ -40,13 +42,13 @@ def find_unique_out_filename(module, ending=None):
 
     filename = create_out_filename_generic(module, ending=ending)
 
-    i = 1  # put into function inside createfilename
-    while os.path.isfile(paths.OUT_DIR + filename):
+    i = 1
+    while os.path.isfile(filename):
         filename = create_out_filename_generic("collect", number=i,
                                                ending=".data")
         i += 1
 
-    return paths.OUT_DIR + filename
+    return filename
 
 
 def create_out_filename_generic(module, number=None, ending=None):
