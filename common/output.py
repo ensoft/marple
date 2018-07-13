@@ -10,6 +10,7 @@ Provides functions for normal print output and errors.
 """
 
 import logging
+
 logger = logging.getLogger("common.output")
 logger.setLevel(logging.DEBUG)
 

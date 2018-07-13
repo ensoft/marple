@@ -16,9 +16,9 @@ __all__ = ["find_unique_out_filename", "create_out_filename_generic",
            "create_unique_temp_filename", "import_out_filename",
            "export_out_filename"]
 
+import logging
 import os
 import uuid
-import logging
 
 from . import paths
 

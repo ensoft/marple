@@ -10,14 +10,17 @@ Calls perf to collect data for different purposes.
 
 """
 
+import logging
 import os
 import re
-import logging
 import subprocess
-import common.config as config
-import common.file as file
-from collect.converter.data_types import SchedEvent
-from common import output
+
+from ...common import (
+    config,
+    file,
+    output
+)
+from ..converter.data_types import SchedEvent
 
 __all__ = ["collect", "collect_sched", "map_sched", "get_sched_data"]
 
