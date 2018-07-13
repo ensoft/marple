@@ -10,6 +10,10 @@ Parses user input and calls to the appropriate functions (
 cpu data collection, stack data collection, etc).
 
 """
+import os
+
+from common import output
+from common.exceptions import AbortedException
 
 __all__ = "main"
 
@@ -26,10 +30,8 @@ from . import (
     stack
 )
 
-# COLLECTION_TIME - int constant for the default value of data collection time
+# COLLECTION_TIME - int constant specifying the default dat collection time
 _COLLECTION_TIME = 10
-# COLLECTION_FREQUENCY - int constant storing the default sample frequency
-_COLLECTION_FREQUENCY = 99
 
 logger = logging.getLogger('collect.controller.main')
 logger.setLevel(logging.DEBUG)
@@ -49,9 +51,16 @@ def _collect_and_store(args):
                 .format(args))
 
     # Use user specified filename if it exist, otherwise create a unique one
-    filename = \
-        file.create_out_filename(args.file) if args.file is not None else \
-        file.find_unique_out_filename("collect", ending=".data")
+    if args.file is not None:
+        if os.path.isfile(args.file):
+            output.print_("A file named {} already exists! "
+                          "Overwrite?".format(args.file))
+            answer = input()
+            if answer != "y" and answer != "yes":
+                raise AbortedException
+        filename = args.file
+    else:
+        filename = file.find_unique_out_filename("collect", ending=".data")
 
     # Save latest filename to temporary file for display module
     file.export_out_filename(filename)
@@ -59,10 +68,6 @@ def _collect_and_store(args):
     # Use user specified time for data collection, otherwise standard value
     time = args.time if args.time is not None else config.get_default_time() \
         if config.get_default_time() is not None else _COLLECTION_TIME
-
-    # Use default frequency for data collection
-    frequency = config.get_default_frequency() if \
-        config.get_default_frequency() is not None else _COLLECTION_FREQUENCY
 
     # Call appropriate function based on user input
     if args.cpu:
@@ -85,15 +90,15 @@ def _collect_and_store(args):
     elif args.stack:
         # Stub
         logger.info("Recording stack data for {} seconds".format(time))
-        generator = stack.collect(time, frequency)
+        generator = stack.collect(time)
         converter.create_stack_data(generator=generator, filename=filename)
 
 
 def _args_parse(argv):
     """
-    Parses a collect command.
+    Creates a parser that parses the collect command.
 
-    Arguments that are created:
+    Arguments that are created in the parser object:
 
         cpu: CPU scheduling data
         ipc: ipc efficiency

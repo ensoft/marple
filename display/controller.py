@@ -10,22 +10,18 @@ Handles interaction between the output modules (flamegraph, g2, etc.)
 It calls the relevant functions for each command.
 
 """
+import os
+
+__all__ = "main"
 
 import argparse
 import logging
-import os
 
-import common.output as output
-from common import file
+from common import file, output
 from . import flamegraph as flamegraph
 
 logger = logging.getLogger('display.controller')
 logger.setLevel(logging.DEBUG)
-
-__all__ = "main"
-
-TMP_DIR = "tmp/" #/tmp/
-OUT_DIR = "out/" #config into etc
 
 
 def _display(args):
@@ -42,20 +38,10 @@ def _display(args):
     logger.info("Display function. "
                 "Applying logic evaluating and applying input parameters")
 
-    if args.file is None:
-        try:
-            with open(TMP_DIR + "filename", "r") as fn: #maybe var not tmp.
-                filename = fn.readline()
-        except FileNotFoundError as fnfe:
-            logger.debug("Could not find filename helper file")
-            raise FileNotFoundError(fnfe)
-    else:
-        # Try to use the specified name, otherwise throw exception
-        filename = OUT_DIR + args.file
-    if not os.path.isfile(os.fspath(filename)):
-        logger.debug("File not found (filename={}), throwing "
-                     "exception".format(filename))
-        raise FileNotFoundError
+    # Try to use the specified name, otherwise use last one created by collect
+    input_filename = args.file if args.file is not None else \
+        file.import_out_filename()
+    output_filename = file.find_unique_out_filename("display", ending=".svg")
 
     if args.cpu:
         # Stub
@@ -78,17 +64,15 @@ def _display(args):
         if args.n:
             raise NotImplementedError("display-numeric stack data")
         else:
-            image_filename = OUT_DIR + file.create_out_name("display",
-                                                            ending=".svg")
-            flamegraph.make(filename, image_filename)
-            flamegraph.show(image_filename)
+            flamegraph.make(input_filename, output_filename)
+            flamegraph.show(output_filename)
 
 
 def _args_parse(argv):
     """
-    Parses a display command.
+    Create a parser that parses the display command.
 
-    Arguments that are created:
+    Arguments that are created in the parser object:
 
         cpu: CPU scheduling data
         ipc: ipc efficiency
@@ -119,7 +103,6 @@ def _args_parse(argv):
                                      description="Display collected data "
                                      "in required format")
 
-    # -----
     # Add options for the modules
     module_display = parser.add_mutually_exclusive_group(required=True)
 
@@ -142,7 +125,6 @@ def _args_parse(argv):
     type_display.add_argument("-n", action="store_true",
                               help="numerical representation as a table")
 
-
     # Add flag and parameter for filename
     filename = parser.add_argument_group()
     filename.add_argument("-f", "--file", type=str,
@@ -163,18 +145,11 @@ def main(argv):
         command line arguments from call in main
 
     """
-    logger.info("Enter controller main function")
+    logger.info("Enter controller main function with arguments {}".format(argv))
 
     # Parse arguments
-    logger.info("Trying to parse input: {}".format(argv))
     args = _args_parse(argv)
 
     # Call the appropriate functions to display input
-    try:
-        _display(args)
-    except FileNotFoundError as fnfe:
-        output.error_("Error: No file with name {} found. "
-                      "Please choose a different filename or collect new data."
-                      .format(fnfe.filename),
-                      "file not found error: {}".format(fnfe.filename))
-        exit(1)
+    _display(args)
+

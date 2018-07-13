@@ -11,27 +11,17 @@ generate a unique generic filename including the appropriate directory name.
 Can also export them to disk.
 
 """
+
+__all__ = ["create_unique_temp_filename"] #TODO
+
 import os
+import uuid
+import logging
 
 from common import paths
 
-__all__ = ["create_unique_temp_filename"]
-
-import uuid
-
-
-def create_out_filename(filename):
-    """
-    Creates a file filename in the out directory.
-
-    Makes an output file filename from the output directory and the user
-        specified filename. Raises an error if the filename already exists.
-
-    """
-    if os.path.isfile(paths.OUT_DIR + filename):
-        raise FileExistsError
-
-    return paths.OUT_DIR + filename
+logger = logging.getLogger("common.file")
+logger.setLevel(logging.DEBUG)
 
 
 def find_unique_out_filename(module, ending=None):
@@ -52,7 +42,8 @@ def find_unique_out_filename(module, ending=None):
 
     i = 1  # put into function inside createfilename
     while os.path.isfile(paths.OUT_DIR + filename):
-        filename = create_out_filename_generic("collect", number=i, ending=".data")
+        filename = create_out_filename_generic("collect", number=i,
+                                               ending=".data")
         i += 1
 
     return paths.OUT_DIR + filename
@@ -96,3 +87,15 @@ def export_out_filename(filename):
     
     with open(paths.VAR_DIR + "filename", "w") as fn:
         fn.write(filename)
+
+
+def import_out_filename():
+    """Gets the output filename from disk"""
+
+    try:
+        with open(paths.VAR_DIR + "filename", "r") as fn:
+            return fn.readline()
+    except FileNotFoundError as fnfe:
+        logger.debug("Unable to find filename helper file in {}"
+                     .format(paths.VAR_DIR))
+        raise

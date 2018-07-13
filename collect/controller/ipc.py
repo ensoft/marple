@@ -11,7 +11,7 @@ Handles interaction of the controller with the interface modules.
 """
 
 
-def collect(time):
+def collect(time=None):
     """Uses one of the interface modules to collect ipc data."""
     # @Choose interface and implement
     pass

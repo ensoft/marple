@@ -11,9 +11,13 @@ Handles interaction of the controller with the interface modules.
 """
 
 import collect.interface.perf as perf
+from common import config
+
+# COLLECTION_FREQUENCY - int constant specifying the default sample frequency
+_COLLECTION_FREQUENCY = 99
 
 
-def collect(time, frequency):
+def collect(time):
     """
     Uses perf module to collect call stack tracing data
 
@@ -26,6 +30,11 @@ def collect(time, frequency):
         A generator of stack event objects.
 
     """
+
+    # Use default frequency for data collection
+    frequency = config.get_default_frequency() if \
+        config.get_default_frequency() is not None else _COLLECTION_FREQUENCY
+
     perf.collect(time, frequency)
     _filename = perf.get_stack_data()
     return perf.parse(_filename)

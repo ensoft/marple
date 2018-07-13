@@ -8,6 +8,9 @@
 """
 Initiates the program.
 
+Sets up logging, calls the appropriate controller (collect or display) and
+deals with exceptions.
+
 """
 
 import sys
@@ -18,6 +21,7 @@ import collect.controller.main as collect_controller
 import display.controller as display_controller
 import common.output as output
 from common import paths
+from .common.exceptions import AbortedException
 
 logger = logging.getLogger('main')
 logger.setLevel(logging.DEBUG)
@@ -60,9 +64,6 @@ except Exception as ex:
 if __name__ == "__main__":
     logger.info("Application started.")
     try:
-        # Create the relevant file directories the program uses
-        paths.mkdirs()
-
         # Call main function with command line arguments excluding argv[0]
         # (program name: marple) and argv[1] (function name: {collect,display})
         if len(sys.argv) < 2:
@@ -76,6 +77,9 @@ if __name__ == "__main__":
             output.print_("usage: marple COMMAND\n The COMMAND "
                           "can be either \"collect\" or \"display\"")
 
+    except AbortedException:
+        # If the user decides to abort
+        exit("Aborted.")
     except NotImplementedError as nie:
         # if the requested function is not implemented, exit with an error
         exit("The command \"{}\" is currently not implemented. "
