@@ -79,19 +79,29 @@ if __name__ == "__main__":
 
     except AbortedException:
         # If the user decides to abort
-        exit("Aborted.")
+        output.error_("Aborted.", "Execution was aborted by the user.")
+        exit(1)
+
     except NotImplementedError as nie:
         # if the requested function is not implemented, exit with an error
-        exit("The command \"{}\" is currently not implemented. "
-             "Please try a different command.".format(nie.args[0]))
+        output.error_("The command \"{}\" is currently not implemented. "
+                      "Please try a different command.".format(nie.args[0]),
+                      "Exited with a NotImplementedError.")
+        exit(1)
 
     except FileExistsError as fee:
         # If the output filename requested by the user already exists
-        exit("Error: A file with the name {} already exists. Please choose a "
-             "unique filename.".format(fee.filename))
+        output.error_("A file with the name {} already exists. Please "
+                      "choose a unique filename.".format(fee.filename),
+                      "Exited with a FileExistsError.")
+        exit(1)
+
     except FileNotFoundError as fnfe:
-        exit("Error: No file named {} found. Please choose a different "
-             "filename or collect new data.".format(fnfe.filename))
+        # If no input file was found
+        output.error_("Error: No file named {} found. Please choose a "
+                      "different filename or collect new data.".format(
+                       fnfe.filename), "Exited with a FileNotFoundError.")
+        exit(1)
 
     except Exception as ex:
         # If anything else goes wrong, handle it here

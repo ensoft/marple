@@ -30,7 +30,7 @@ from . import (
     stack
 )
 
-# COLLECTION_TIME - int constant specifying the default dat collection time
+# COLLECTION_TIME - int constant specifying the default data collection time
 _COLLECTION_TIME = 10
 
 logger = logging.getLogger('collect.controller.main')
