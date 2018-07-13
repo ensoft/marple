@@ -24,9 +24,12 @@ from ...common import (
     file,
     output
 )
-from ..converter import main as converter
 from . import (
     cpu,
+    diskIO,
+    ipc,
+    libs,
+    mem,
     stack
 )
 
@@ -72,27 +75,15 @@ def _collect_and_store(args):
 
     # Call appropriate function based on user input
     if args.cpu:
-        logger.info("Recording cpu scheduling data for {} seconds".format(time))
-        generator = cpu.collect(time)
-        converter.create_cpu_event_data(generator=generator, filename=filename)
+        cpu.sched_collect_and_store(time, filename)
     elif args.ipc:
-        # Stub
-        logger.info("Recording ipc data for {} seconds".format(time))
-        raise NotImplementedError("ipc")
+        ipc.collect_and_store(time, filename)
     elif args.lib:
-        # Stub
-        logger.info("Recording library loading data "
-                    "for {} seconds".format(time))
-        raise NotImplementedError("lib")
+        libs.collect_and_store(time, filename)
     elif args.mem:
-        # Stub
-        logger.info("Recording memory data for {} seconds".format(time))
-        raise NotImplementedError("mem")
+        mem.collect_and_store(time, filename)
     elif args.stack:
-        # Stub
-        logger.info("Recording stack data for {} seconds".format(time))
-        generator = stack.collect(time)
-        converter.create_stack_data(generator=generator, filename=filename)
+        stack.collect_and_store(time, filename)
 
 
 def _args_parse(argv):
@@ -102,6 +93,7 @@ def _args_parse(argv):
     Arguments that are created in the parser object:
 
         cpu: CPU scheduling data
+        disk: disk I/O data
         ipc: ipc efficiency
         lib: library load times
         mem: memory allocation/ deallocation
@@ -131,6 +123,8 @@ def _args_parse(argv):
 
     module_collect.add_argument("-c", "--cpu", action="store_true",
                                 help="cpu scheduling data")
+    module_collect.add_argument("-d", "--disk", action="store_true",
+                                help="disk I/O data")
     module_collect.add_argument("-i", "--ipc", action="store_true",
                                 help="ipc efficiency")
     module_collect.add_argument("-l", "--lib", action="store_true",

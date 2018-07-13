@@ -1,33 +1,36 @@
 # -------------------------------------------------------------
-# cpu.py - analyses scheduling performance
+# stack.py - does stack tracing
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 
 """
-Analyses scheduling performance.
+Does stack tracing.
 
-Handles interaction of the controller with the interface modules.
+Handles interaction of the controller with the interface modules and writes 
+    the converted data to file.
 
 """
+import logging
 
 from ...common import config
+from ..converter import main as converter
 from ..interface import perf
 
 # COLLECTION_FREQUENCY - int constant specifying the default sample frequency
 _COLLECTION_FREQUENCY = 99
 
+logger = logging.getLogger("collect.controller.stack")
+logger.setLevel(logging.DEBUG)
 
-def collect(time):
+
+def collect_and_store(time, filename):
     """
-    Uses perf module to collect call stack tracing data
+    Uses interface modules to collect call stack tracing data.
 
     :param time:
         The time in seconds for which to collect the data.
-    :param frequency:
-        The frequency in Hertz with which to collect the data.
-
-    :return:
-        A generator of stack event objects.
+    :param filename:
+        The name of the file in which to store the output.
 
     """
 
@@ -35,6 +38,15 @@ def collect(time):
     frequency = config.get_default_frequency() if \
         config.get_default_frequency() is not None else _COLLECTION_FREQUENCY
 
+    # Collect raw data using perf
     perf.collect(time, frequency)
-    _filename = perf.get_stack_data()
-    return perf.parse(_filename)
+
+    # Extract the relevant stack data
+    stack_data_file = perf.get_stack_data()
+
+    # Collapse the stack, create stack object generator
+    stack_data_formatted = perf.parse(stack_data_file)
+
+    # Create file from the folded stack objects
+    converter.create_stack_data(generator=stack_data_formatted, 
+                                filename=filename)

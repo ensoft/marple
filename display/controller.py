@@ -44,22 +44,17 @@ def _display(args):
 
     if args.cpu:
         # Stub
-        logger.info("Displaying cpu scheduling data")
         raise NotImplementedError("display cpu data")
     elif args.ipc:
         # Stub
-        logger.info("Displaying ipc data")
         raise NotImplementedError("display ipc data")
     elif args.lib:
         # Stub
-        logger.info("Displaying library loading data")
         raise NotImplementedError("display library data")
     elif args.mem:
         # Stub
-        logger.info("Displaying memory allocation data")
         raise NotImplementedError("display memory data")
     elif args.stack:
-        logger.info("Displaying stack tracing data")
         if args.n:
             raise NotImplementedError("display-numeric stack data")
         else:
@@ -74,6 +69,7 @@ def _args_parse(argv):
     Arguments that are created in the parser object:
 
         cpu: CPU scheduling data
+        disk: disk I/O data
         ipc: ipc efficiency
         lib: library load times
         mem: memory allocation/ deallocation
@@ -107,6 +103,8 @@ def _args_parse(argv):
 
     module_display.add_argument("-c", "--cpu", action="store_true",
                                 help="cpu scheduling data")
+    module_display.add_argument("-d", "--disk", action="store_true",
+                                help="disk I/O data")
     module_display.add_argument("-i", "--ipc", action="store_true",
                                 help="ipc efficiency")
     module_display.add_argument("-l", "--lib", action="store_true",

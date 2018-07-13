@@ -6,23 +6,42 @@
 """
 Analyses scheduling performance.
 
-Handles interaction of the controller with the interface modules.
+Handles interaction of the controller with the interface modules and writes
+    the converted data to file.
 
 """
 
+__all__ = ["sched_collect_and_store"]
+
+import logging
+
+from ..converter import main as converter
 from ..interface import perf
 
+logger = logging.getLogger("collect.controller.cpu")
+logger.setLevel(logging.DEBUG)
 
-def collect(time):
+
+def sched_collect_and_store(time, filename):
     """
-    Uses perf module to collect scheduling data
+    Uses interface modules to collect cpu scheduling data.
 
     :param time:
         The time in seconds for which to collect the data.
-
-    :return:
-        A generator of scheduling event objects.
+    :param filename:
+        The name of the file in which to store the output.
 
     """
+
+    logger.info("Enter sched_collect_and_record. Recording cpu scheduling data "
+                "for {} seconds. Output filename: {}".format(time, filename))
+
+    # Collect relevant data using perf
     perf.collect_sched(time)
-    return perf.get_sched_data()
+
+    # Create SchedEvent object generator
+    sched_data_formatted = perf.get_sched_data()
+
+    # Create file from the SchedEvent objects
+    converter.create_cpu_event_data(generator=sched_data_formatted,
+                                    filename=filename)
