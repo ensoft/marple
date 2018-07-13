@@ -69,7 +69,7 @@ def get_stack_data():
 
     """
     # Create temporary file for storing output
-    _filename = TMP_DIR + file.create_unique_temp_name()
+    _filename = TMP_DIR + file.create_unique_temp_filename()
 
     sp = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
@@ -104,7 +104,7 @@ def get_sched_data():
 
     """
     # Create temporary file for recording output
-    _filename = TMP_DIR + file.create_unique_temp_name()
+    _filename = TMP_DIR + file.create_unique_temp_filename()
 
     sp = subprocess.Popen(["perf", "sched", "script", "-F",
                           "comm,pid,cpu,time,event"],
