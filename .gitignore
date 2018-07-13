@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 tmp/
 out/
-perf.data*
+*.data*
+*.svg

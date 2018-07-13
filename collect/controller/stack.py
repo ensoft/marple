@@ -12,7 +12,7 @@ Handles interaction of the controller with the interface modules and writes
 """
 import logging
 
-from ...common import config
+from common import config
 from ..converter import main as converter
 from ..interface import perf
 

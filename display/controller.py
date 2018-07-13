@@ -10,13 +10,14 @@ Handles interaction between the output modules (flamegraph, g2, etc.)
 It calls the relevant functions for each command.
 
 """
+import os
 
 __all__ = "main"
 
 import argparse
 import logging
 
-from ..common import file
+from common import file, exceptions
 from . import flamegraph
 
 logger = logging.getLogger('display.controller')
@@ -37,10 +38,13 @@ def _display(args):
     logger.info("Display function. "
                 "Applying logic evaluating and applying input parameters")
 
-    # Try to use the specified name, otherwise use last one created by collect
-    input_filename = args.file if args.file is not None else \
+    # Try to use the specified input file, otherwise use last one created
+    input_filename = args.infile if args.infile is not None else \
         file.import_out_filename()
-    output_filename = file.find_unique_out_filename("display", ending=".svg")
+    # Use user output filename specified, otherwise create a unique one
+    #   Do not let the user decide because they might overwrite the input!
+    output_filename = args.outfile if args.outfile is not None else \
+        file.find_unique_out_filename("display", ending=".svg")
 
     if args.cpu:
         # Stub
@@ -75,10 +79,11 @@ def _args_parse(argv):
         mem: memory allocation/ deallocation
         stack: stack tracing
 
-        file f: the filename of the file that stores the output
+        infile i: the filename of the file containing the input
+        outfile o: the filename of the file that stores the output
 
-        -g: graphical representation of data (default)
-        -n: numerical representation of data
+        g: graphical representation of data (default)
+        n: numerical representation of data
 
 
     :param argv:
@@ -102,17 +107,17 @@ def _args_parse(argv):
     module_display = parser.add_mutually_exclusive_group(required=True)
 
     module_display.add_argument("-c", "--cpu", action="store_true",
-                                help="cpu scheduling data")
+                                help="gather cpu scheduling events")
     module_display.add_argument("-d", "--disk", action="store_true",
-                                help="disk I/O data")
-    module_display.add_argument("-i", "--ipc", action="store_true",
-                                help="ipc efficiency")
+                                help="monitor disk input/output")
+    module_display.add_argument("-p", "--ipc", action="store_true",
+                                help="trace inter-process communication")
     module_display.add_argument("-l", "--lib", action="store_true",
-                                help="library load times")
+                                help="gather library load times")
     module_display.add_argument("-m", "--mem", action="store_true",
-                                help="memory allocation/ deallocation")
+                                help="trace memory allocation/ deallocation")
     module_display.add_argument("-s", "--stack", action="store_true",
-                                help="stack tracing")
+                                help="gather general call stack tracing data")
 
     # Add flag and parameter for displaying type in case of display
     type_display = parser.add_mutually_exclusive_group()
@@ -122,11 +127,16 @@ def _args_parse(argv):
     type_display.add_argument("-n", action="store_true",
                               help="numerical representation as a table")
 
-    # Add flag and parameter for filename
+    # Add flag and parameter for input filename
     filename = parser.add_argument_group()
-    filename.add_argument("-f", "--file", type=str,
+    filename.add_argument("-i", "--infile", type=str,
                           help="Input file where collected data "
                                "to display is stored")
+
+    # Add flag and parameter for output filename
+    filename = parser.add_argument_group()
+    filename.add_argument("-o", "--outfile", type=str,
+                          help="Output file where the graph is stored")
 
     logger.info("Parsing input arguments")
     return parser.parse_args(argv)

@@ -15,8 +15,8 @@ __all__ = ["sched_collect_and_store"]
 
 import logging
 
-from ..converter import main as converter
-from ..interface import perf
+from collect.converter import main as converter
+from collect.interface import perf
 
 logger = logging.getLogger("collect.controller.cpu")
 logger.setLevel(logging.DEBUG)

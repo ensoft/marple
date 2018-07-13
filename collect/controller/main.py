@@ -18,11 +18,10 @@ import argparse
 import logging
 import os
 
-from ...common import (
+from common import (
     config,
     exceptions,
-    file,
-    output
+    file
 )
 from . import (
     cpu,
@@ -54,15 +53,15 @@ def _collect_and_store(args):
                 "and applying input parameters: {}"
                 .format(args))
 
-    # Use user specified filename if it exist, otherwise create a unique one
-    if args.file is not None:
-        if os.path.isfile(args.file):
-            output.print_("A file named {} already exists! "
-                          "Overwrite?".format(args.file))
+    # Use user output filename specified, otherwise create a unique one
+    if args.outfile is not None:
+        if os.path.isfile(args.outfile):
+            print("A file named {} already exists! Overwrite? ".format(
+                args.outfile), end='')
             answer = input()
             if answer != "y" and answer != "yes":
                 raise exceptions.AbortedException
-        filename = args.file
+        filename = args.outfile
     else:
         filename = file.find_unique_out_filename("collect", ending=".data")
 
@@ -76,6 +75,8 @@ def _collect_and_store(args):
     # Call appropriate function based on user input
     if args.cpu:
         cpu.sched_collect_and_store(time, filename)
+    elif args.disk:
+        diskIO.collect_and_store(time, filename)
     elif args.ipc:
         ipc.collect_and_store(time, filename)
     elif args.lib:
@@ -99,7 +100,7 @@ def _args_parse(argv):
         mem: memory allocation/ deallocation
         stack: stack tracing
 
-        file f: the filename of the file that stores the output
+        outfile o: the filename of the file that stores the output
         time t: time in seconds to record data
 
     :param argv:
@@ -122,21 +123,21 @@ def _args_parse(argv):
     module_collect = parser.add_mutually_exclusive_group(required=True)
 
     module_collect.add_argument("-c", "--cpu", action="store_true",
-                                help="cpu scheduling data")
+                                help="gather cpu scheduling events")
     module_collect.add_argument("-d", "--disk", action="store_true",
-                                help="disk I/O data")
-    module_collect.add_argument("-i", "--ipc", action="store_true",
-                                help="ipc efficiency")
+                                help="monitor disk input/output")
+    module_collect.add_argument("-p", "--ipc", action="store_true",
+                                help="trace inter-process communication")
     module_collect.add_argument("-l", "--lib", action="store_true",
-                                help="library load times")
+                                help="gather library load times")
     module_collect.add_argument("-m", "--mem", action="store_true",
-                                help="memory allocation/ deallocation")
+                                help="trace memory allocation/ deallocation")
     module_collect.add_argument("-s", "--stack", action="store_true",
-                                help="stack tracing")
+                                help="gather general call stack tracing data")
 
     # Add flag and parameter for filename
     filename = parser.add_argument_group()
-    filename.add_argument("-f", "--file", type=str,
+    filename.add_argument("-o", "--outfile", type=str,
                           help="Output file where collected data is stored")
 
     # Add flag and parameter for time

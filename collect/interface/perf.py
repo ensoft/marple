@@ -15,21 +15,18 @@ import os
 import re
 import subprocess
 
-from ...common import (
+from common import (
     config,
     file,
     output
 )
 from ..converter.data_types import SchedEvent
 
-__all__ = ["collect", "collect_sched", "map_sched", "get_sched_data"]
+__all__ = ["collect", "collect_sched", "get_sched_data"]
 
 # Constants for perf to stacks conversion
 INCLUDE_TID = False
 INCLUDE_PID = False
-
-# Directory for temporary files
-TMP_DIR = "tmp/"
 
 logger = logging.getLogger("collect.interface.perf")
 logger.setLevel(logging.DEBUG)
@@ -72,28 +69,15 @@ def get_stack_data():
 
     """
     # Create temporary file for storing output
-    _filename = TMP_DIR + file.create_unique_temp_filename()
+    filename = file.create_unique_temp_filename()
 
     sp = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
-    with open(_filename, "w") as outfile:
+    with open(filename, "w") as outfile:
         outfile.write(sp.stdout.read().decode())
         logger.error(sp.stderr.read().decode())
 
-    return _filename
-
-
-def map_sched():
-    """
-    Display the collected scheduling data as a map.
-
-    Each columns represents a CPU core, each entry is
-    a process whose name can be found in the legend
-    on the right.
-
-    """
-    # TODO: Move to visualiser, or convert to intermediate format
-    subprocess.call(["perf", "sched", "map"])
+    return filename
 
 
 def get_sched_data():
@@ -107,21 +91,21 @@ def get_sched_data():
 
     """
     # Create temporary file for recording output
-    _filename = TMP_DIR + file.create_unique_temp_filename()
+    filename = file.create_unique_temp_filename()
 
     sp = subprocess.Popen(["perf", "sched", "script", "-F",
                           "comm,pid,cpu,time,event"],
                           stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
 
-    with open(_filename, "w") as outfile:
+    with open(filename, "w") as outfile:
         outfile.write(sp.stdout.read().decode())
         logger.error(sp.stderr.read().decode())
         # Block if blocking is set by config module
         if config.is_blocking():
             sp.wait()
 
-    iterator = _sched_data_gen(_filename)
+    iterator = _sched_data_gen(filename)
 
     return iterator
 
