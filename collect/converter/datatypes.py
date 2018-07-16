@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# data_types.py - intermediate form of data to be converted
+# datatypes.py - intermediate form of data to be converted
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 
@@ -20,4 +20,4 @@ class SchedEvent(NamedTuple):
 class StackEvent(NamedTuple):
     """Represents a single call stack"""
     # Could have more attributes if needed
-    stack: list
+    stack: tuple

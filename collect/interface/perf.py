@@ -21,7 +21,7 @@ from common import (
     config,
     file
 )
-from ..converter.data_types import SchedEvent
+from ..converter.datatypes import SchedEvent
 
 # Constants for perf to stacks conversion
 INCLUDE_TID = False
