@@ -12,7 +12,7 @@ class SchedEvent(NamedTuple):
     """Represents a single scheduler event."""
     name: str
     pid: int
-    cpu: str
+    cpu: int
     time: str
     type: str
 

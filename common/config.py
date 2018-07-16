@@ -14,7 +14,7 @@ used mainly in data collection
 __all__ = ["is_blocking", "get_default_time", "get_default_frequency"]
 
 # Constants (temporary: will be in a file later)
-_BLOCKING = True
+_BLOCKING = False
 
 _TIME = 10
 

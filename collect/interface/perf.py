@@ -114,61 +114,46 @@ def _sched_data_gen(filename):
     Generator of SchedEvent objects from file
 
     Reads in the provided file, parses it and converts it into SchedEvent
-    objects.
+        objects.
 
     :param filename:
-        The name of the temporary file that stores the data
-        before further processing.
+        The name of the temporary file that contains structured perf sched
+        output data generated in get_sched_data.
 
     :return
-        SchedEvent object Iterator
+        an iterable of :class:`converter.data_types.SchedEvent` objects
+            giving information about the process name, id, cpu core, time and
+            the event type.
+
     """
-    # lazily return lines from the file as iterator
+    # Lazily return lines from the file as iterator
     with open(filename, "r") as infile:
-        while True:
-            event_data = infile.readline()
-            if not event_data:
-                break
+        for event_data in infile:
+            # e.g.   perf a  6997 [003] 363654.881950:       sched:sched_wakeup:
+            match = re.match("\s*"
+                             "(?P<name>\S+(\s+\S+)*)\s+"
+                             "(?P<pid>\d+)\s+"
+                             "\[(?P<cpu>\d+)\]\s+"
+                             "(?P<time>\d+.\d+):\s+"
+                             "(?P<event>\S+)", event_data)
 
-            if len(event_data.split()) == 5:
-                # TODO: Use regex
-                (name, pid, cpu, time, event) = event_data.split()
-                event = SchedEvent(name=name, pid=int(pid),
-                                   cpu=_cpu_to_int(cpu),
-                                   time=time, type=event)
-                yield event
-            else:
-                logger.debug("Error while splitting event_data: wrong number "
-                             "of arguments: {} expected 5: "
-                             "(name, pid, cpu, time, event)".format(event_data))
+            # If it did not match, log it but continue
+            if match is None:
+                logger.debug("Failed to parse event data: {} Expected "
+                             "format: name pid cpu time event".format(
+                              event_data))
+                continue
 
+            event = SchedEvent(name=match.group("name"),
+                               pid=int(match.group("pid")),
+                               cpu=int(match.group("cpu")),
+                               time=match.group("time"),
+                               type=match.group("event"))
+
+            yield event
+
+    # Delete file after we finished using it.
     os.remove(filename)
-
-
-def _cpu_to_int(cpu):
-    """Format the cpu attribute to int.
-    :param cpu:
-        The cpu value in string format.
-    :return:
-        The cpu value in int format.
-
-    """
-    # strip off brackets (for perf output)
-    if re.search("\[\d+\]", cpu) is not None:
-        cpu = re.sub("\[(\d+)\]", r"\1", cpu)
-
-    # convert to int
-    try:
-        cpu = int(cpu)
-    except ValueError:
-        output.error_("Unexpected formatting error. "
-                      "Please refer to log for details.",
-                      "Wrong format detected, cpu in sched event: {} "
-                      "is not a number, i.e. cannot be converted to int"
-                      .format(str(cpu)))
-        raise Exception("Stopped execution due to formatting error in perf.py "
-                        "function _cpu_to_int that converts cpu string to "
-                        "integer")
 
 
 def _stack_collapse(filename):
