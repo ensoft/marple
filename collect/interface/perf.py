@@ -189,24 +189,27 @@ class StackParser:
     # --------------------------------------------------------
 
     # The cached stack data
-    stack = []
-    # The process name
-    pname = None
-    # Variables to handle filtering for only one event
-    event_filter = ""
-    event_defaulted = False
-    event_warning = False
+    _stack = []
+    # The current process name
+    _pname = None
+    # event_defaulted: A Boolean flag to show the event_filter defaulted.
+    _event_defaulted = False
+    # event_warning: A Boolean flag that stores whether we already warned once.
+    _event_warning = False
 
-    def __init__(self, filename):
+    def __init__(self, filename, event_filter=""):
         """ Initialises the Parser.
 
         :param filename:
-            A text file or similar input containing lines of stack data
-            output from perf.
+            The name of a text file or similar input containing formatted
+            lines of stack data output from the perf profiling tool.
+        :param event_filter:
+            An optional string argument for an event type to be filtered for.
+            Empty defaults to the first event type that is encountered.
 
         """
-
         self.filename = filename
+        self.event_filter = event_filter
 
     def _line_is_empty(self, line):
         """Checks whether line is an empty line."""
@@ -227,98 +230,97 @@ class StackParser:
         """Creates a stack tuple from cached data and yields it."""
 
         # if there is no pname, we have not processed one yet, which means
-        #   that past ones have been filtered
-        if self.pname is None:
+        #   that past ones have been filtered (_pname used as flag)
+        if self._pname is None:
             return
 
         # Finish making the stack and yield it
-        self.stack.insert(0, self.pname)
+        self._stack.insert(0, self._pname)
 
-        stack_folded = tuple(self.stack)
+        stack_folded = tuple(self._stack)
 
         # Reset the cache
-        self.stack = []
-        self.pname = None
+        self._stack = []
+        self._pname = None
 
         return stack_folded
 
     def _parse_baseline(self, line):
         """Matches a stack baseline and extracts its info."""
 
-        m = re.match(self._baseline, line)
+        match = re.match(self._baseline, line)
         # eg. "java 25607 4794564.109216: cycles:"
 
-        (comm, pid) = m.group("comm"), m.group("pid")
+        (comm, pid) = match.group("comm"), match.group("pid")
 
         try:
-            tid = m.group("tid")
+            tid = match.group("tid")
 
         except IndexError:
-            # No tid found (only third group is optional)
+            # No tid found
             tid = pid
             pid = "?"
 
         if re.search(self._eventtype, line):
-            # Matches the event type of the stack, found at the
-            #   end of the baseline
+            # Matches the event type of the stack, found at the end of the
+            #   baseline.
             # e.g. cycles:ppp:
 
-            m = re.search(self._eventtype, line)
-            # By default only show events of the first encountered
-            #   event type. Merging together different types,
-            #   such as instructions and cycles, produces
-            #   misleading results.
-            event = m.group(1)
+            match = re.search(self._eventtype, line)
+            # By default only show events of the first encountered event
+            #   type. Merging together different types, such as instructions
+            #   and cycles, produces misleading results.
+            event = match.group(1)
 
+            # If the event_filter was not specified by the caller, default.
             if self.event_filter == "":
-                self.event_defaulted = True
+                self.event_filter = event
+                self._event_defaulted = True
 
             elif event != self.event_filter:
-                if self.event_defaulted and not self.event_warning:
-                    # only print this warning if necessary:
-                    # when we defaulted and there were
-                    # multiple event types.
+                if self._event_defaulted and not self._event_warning:
+                    # only print this warning if necessary: when we defaulted
+                    #  and there were multiple event types.
                     logger.error("Filtering for events of type {}"
                                  .format(self.event_filter))
-                    self.event_warning = True
+                    self._event_warning = True
                 return
 
         if INCLUDE_TID:
-            self.pname = "{}-{}/{}".format(comm, pid, tid)
+            self._pname = "{}-{}/{}".format(comm, pid, tid)
         elif INCLUDE_PID:
-            self.pname = "{}-{}".format(comm, pid)
+            self._pname = "{}-{}".format(comm, pid)
         else:
-            self.pname = comm
-        # replace space with underscore
-        self.pname = re.sub("\s", "_", self.pname)
+            self._pname = comm
+        # replace space with underscore in pname
+        self._pname = re.sub("\s", "_", self._pname)
 
     def _parse_stackline(self, line):
         """Matches a stack line that is not a baseline and extracts its info."""
 
-        m = re.match(self._stackline, line)
+        match = re.match(self._stackline, line)
         # e.g ffffffffabe0c31d intel_pmu_enable_ ([kernel.kallsyms])
 
-        # Ignore filtered samples
-        if self.pname is None:
+        # Ignore filtered samples, _pname used as flag
+        if self._pname is None:
             return
 
-        pc, rawfunc, mod = m.group("pc"), m.group("rawfunc").rstrip(), \
-            m.group("mod")
+        pc, rawfunc, mod = match.group("pc"), match.group("rawfunc").rstrip(), \
+            match.group("mod")
 
         # Linux 4.8 includes symbol offsets in perf script output,
-        # eg 7fffb84c9afc cpu_startup_entry+0x800047c022ec
-        #   ([kernel.kallsyms])
+        # eg 7fffb84c9afc cpu_startup_entry+0x800047c022ec([kernel.kallsyms])
 
         # strip these off:
         rawfunc = re.sub(self._symbol_offset, "", rawfunc)
 
-        # Original perl script adds inline here if required by user
+        # Can add inline here if selected
 
         # Skip process names
         if re.match("\(", rawfunc):
             return
 
-        # Not sure what inlining is for...
+        # Not sure what inline stands for...
         inline = ""
         for func in re.split("->", rawfunc):
             if func == "[unknown]":
@@ -333,7 +335,7 @@ class StackParser:
 
             inline += func
 
-        self.stack.insert(0, inline)
+        self._stack.insert(0, inline)
 
     def stack_collapse(self):
         """
