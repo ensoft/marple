@@ -19,8 +19,7 @@ import subprocess
 
 from common import (
     config,
-    file,
-    output
+    file
 )
 from ..converter.data_types import SchedEvent
 
@@ -142,7 +141,7 @@ def _sched_data_gen(filename):
             if match is None:
                 logger.debug("Failed to parse event data: {} Expected "
                              "format: name pid cpu time event".format(
-                    event_data))
+                              event_data))
                 continue
 
             event = SchedEvent(name=match.group("name"),
@@ -167,23 +166,23 @@ class StackParser:
     # ---------------------------------------------------------
     # Regular expressions to match lines of the perf output:
 
-    _emptyline = r"$^"
+    _emptyline = "$^"
     # Matches an empty line
 
-    _baseline = r"(?P<comm>\S.+?)\s+(?P<pid>\d+)/*(?P<tid>\d+)*\s+"
+    _baseline = "(?P<comm>\S.+?)\s+(?P<pid>\d+)/*(?P<tid>\d+)*\s+"
     # Matches "perf script" output, first line of a stack (baseline)
     # eg. "java 25607 4794564.109216: cycles:"
     # or  "V8 WorkerThread 24636/25607 [002] 6544038.708352: cpu-clock:"
 
-    _eventtype = r"(?P<event>\S+):\s*$"
+    _eventtype = "(?P<event>\S+):\s*$"
     # Matches the event type of the stack, found at the end of the baseline
     #   e.g. cycles:ppp:
 
-    _stackline = r"\s*(?P<pc>\w+)\s*(?P<rawfunc>.+)\((?P<mod>\S*)\)"
+    _stackline = "\s*(?P<pc>\w+)\s*(?P<rawfunc>.+)\((?P<mod>\S*)\)"
     # Matches the other lines of a stack, i.e. the ones above the base.
     # e.g ffffffffabe0c31d intel_pmu_enable_ ([kernel.kallsyms])
 
-    _symbol_offset = r"\+0x[\da-f]+$"
+    _symbol_offset = "\+0x[\da-f]+$"
     # Matches symbol offset
     # eg in: 7fffb84c9afc cpu_startup_entry+0x800047c022ec ([kernel.kallsyms])
 
@@ -234,11 +233,14 @@ class StackParser:
 
         # Finish making the stack and yield it
         self.stack.insert(0, self.pname)
-        yield tuple(self.stack)
+
+        stack_folded = tuple(self.stack)
 
         # Reset the cache
         self.stack = []
         self.pname = None
+
+        return stack_folded
 
     def _parse_baseline(self, line):
         """Matches a stack baseline and extracts its info."""
@@ -301,7 +303,7 @@ class StackParser:
             return
 
         pc, rawfunc, mod = m.group("pc"), m.group("rawfunc").rstrip(), \
-                           m.group("mod")
+            m.group("mod")
 
         # Linux 4.8 includes symbol offsets in perf script output,
         # eg 7fffb84c9afc cpu_startup_entry+0x800047c022ec
@@ -324,8 +326,6 @@ class StackParser:
                 if mod != "[unknown]":
                     func = mod
                     func = re.sub(".*/", "", func)
-
-            # TODO: Tidy generic stuff
 
             if len(inline) > 0:
                 # Mark as inlined
@@ -355,7 +355,9 @@ class StackParser:
                 # If end of stack, save cached data.
                 if self._line_is_empty(line):
                     # Matches empty line
-                    self._make_stack()
+                    x = self._make_stack()
+                    if x:
+                        yield x
 
                 # event record start
                 elif self._line_is_baseline(line):
