@@ -1,9 +1,7 @@
 import os
-import shutil
-import unittest
 
 import collect.interface.perf as perf
-import collect.converter.sched_event as sched_event
+import collect.converter.datatypes as datatypes
 import collect.test.util as util
 
 
@@ -31,7 +29,7 @@ class _BaseTest(util.BaseTest):
 #
 
 class DataGenTest(_BaseTest):
-    """Test class for the _data_gen() generator."""
+    """Test class for the _sched_data_get() generator."""
 
     def setUp(self):
         """Per-test set-up"""
@@ -43,17 +41,16 @@ class DataGenTest(_BaseTest):
 
     def test_basic(self):
         """
-        Basic test for _data_gen().
+        Basic test for _sched_data_get().
         
-        Write some formatted data to a temporary file, and check that _data_gen
-        correctly converts it.
+        Write some formatted data to a temporary file, and check that
+        _sched_data_get correctly converts it.
         
         """
         # Expected event data
-        expected = [sched_event.SchedEvent("name1", "12345", "[001]", "1232454",
-                                           "event1"),
-                    sched_event.SchedEvent("name2", "67890", "[003]", "67899",
-                                           "event2")]
+        expected = [datatypes.SchedEvent("name1", 12345, 1, "1232454",
+                                         "event1"),
+                    datatypes.SchedEvent("name2", 67890, 3, "67899", "event2")]
 
         filename = self._TEST_DIR + "data_gen_test"
 
@@ -62,33 +59,52 @@ class DataGenTest(_BaseTest):
             for entry in expected:
                 file_.write(" ".join(entry) + "\n")
 
-        # Run _data_gen() to get a generator of items.
-        actual = list(perf._data_gen(filename))
+        # Run _sched_data_get() to get a generator of items.
+        actual = list(perf._sched_data_gen(filename))
 
         self.assertEqual(expected, actual)
 
     def test_sched_data_neg(self):
         """Test when data_gen is passed an invalid file."""
         with self.assertRaises(FileNotFoundError):
-            list(perf._data_gen(self._TEST_DIR + "this/file/definitely/doesnt/"
-                                                 "exist"))
+            list(perf._sched_data_gen(self._TEST_DIR +
+                                      "this/file/definitely/doesnt/exist"))
 
 
 class StackParserTest(_BaseTest):
     """Test class for the StackParser class."""
 
-    def test_stack_data(self):
+    def setUp(self):
+        """Per-test set-up"""
+        super().setUp()
+
+    def tearDown(self):
+        """Per-test tear-down"""
+        super().tearDown()
+
+    def test_is_empty(self):
         pass
 
-    def test_stack_data_neg(self):
+    def test_is_baseline(self):
+        pass
+        # Variations
+
+    def test_is_stackline(self):
         pass
 
-    def test_StackParser_basic(self):
+    def test_stack_collapse_basic(self):
+        pass
+        # Check it calls the appropriate parses (can stub out _is_... as
+        #    tested above)
+
+    def test_parse_baseline(self):
         pass
 
-    def test_StackParser_fn1(self):
+    def test_parse_stackline(self):
         pass
 
-    def test_stack_collapse(self):
+    def test_make_stack(self):
         pass
 
+    def test_StackParser_complete(self):
+        pass
