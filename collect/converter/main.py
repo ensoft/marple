@@ -24,7 +24,7 @@ def create_stack_data(stack_events, filename):
     Count, sort and saves the stack data from the generator into a file.
 
     :param stack_events:
-        An iterable of :class:`StackEvent` objects
+        An iterable of :class:`StackEvent` objects.
     :param filename:
         The name of the file into which to store the output.
 
@@ -43,23 +43,23 @@ def create_stack_data(stack_events, filename):
     # Write data to file
     # Format: eg. perf;[unknown];_perf_event_enable;event_function_call 24
     with open(filename, "w") as out:
-        for key, val in cnt.items():
-            out.write(";".join(key) + " {}\n".format(val))
+        for stack_event, count in cnt.items():
+            out.write(";".join(stack_event.stack) + " {}\n".format(count))
 
     logger.info("Done.")
 
 
-def create_cpu_event_data(generator, filename):
+def create_cpu_event_data(sched_events, filename):
     """
     Saves the event data from the generator into a file.
 
-    :param generator:
-        The generator of SchedEvent objects
+    :param sched_events:
+        An iterator of :class:`SchedEvent` objects.
     :param filename:
         The name of the file into which to store the output.
 
     """
     # @Write to file
     with open(filename, "w") as out:
-        for event in generator:
+        for event in sched_events:
             out.write(str(event) + "\n")

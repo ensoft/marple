@@ -21,7 +21,10 @@ from common import (
     config,
     file
 )
-from ..converter.datatypes import SchedEvent
+from ..converter.datatypes import (
+    SchedEvent,
+    StackEvent
+)
 
 # Constants for perf to stacks conversion
 INCLUDE_TID = False
@@ -357,9 +360,9 @@ class StackParser:
                 # If end of stack, save cached data.
                 if self._line_is_empty(line):
                     # Matches empty line
-                    x = self._make_stack()
-                    if x:
-                        yield x
+                    stack_folded = self._make_stack()
+                    if stack_folded:
+                        yield StackEvent(stack=stack_folded)
 
                 # event record start
                 elif self._line_is_baseline(line):
