@@ -73,3 +73,22 @@ class DataGenTest(_BaseTest):
             list(perf._data_gen(self._TEST_DIR + "this/file/definitely/doesnt/"
                                                  "exist"))
 
+
+class StackParserTest(_BaseTest):
+    """Test class for the StackParser class."""
+
+    def test_stack_data(self):
+        pass
+
+    def test_stack_data_neg(self):
+        pass
+
+    def test_StackParser_basic(self):
+        pass
+
+    def test_StackParser_fn1(self):
+        pass
+
+    def test_stack_collapse(self):
+        pass
+
