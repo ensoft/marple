@@ -24,6 +24,11 @@ class _BaseTest(util.BaseTest):
     pass
 
 
+class _StackParserTest(_BaseTest):
+    """Base test class for testing the stack parser class"""
+    stack_parser = perf.StackParser("")
+
+
 # -----------------------------------------------------------------------------
 # Tests
 #
@@ -47,17 +52,24 @@ class DataGenTest(_BaseTest):
         _sched_data_get correctly converts it.
         
         """
+        def event_to_str(sched_event):
+            return "{} {} [00{}] {}: {}".format(*sched_event)
+
         # Expected event data
-        expected = [datatypes.SchedEvent("name1", 12345, 1, "1232454",
+        # e.g. perf   961 [000] 707827.248468:       sched:sched_wakeup:
+        expected = [datatypes.SchedEvent("name1", 12345, 1, "1232.454",
                                          "event1"),
-                    datatypes.SchedEvent("name2", 67890, 3, "67899", "event2")]
+                    datatypes.SchedEvent("name2", 67890, 3, "678.99",
+                                         "event2")]
 
         filename = self._TEST_DIR + "data_gen_test"
 
         # Create a file with formatted data
         with open(filename, "w") as file_:
+            # file_.writelines(event_to_str(entry) for entry in expected)
             for entry in expected:
-                file_.write(" ".join(entry) + "\n")
+                file_.write(event_to_str(entry)+"\n")
+                print(event_to_str(entry)+"\n")
 
         # Run _sched_data_get() to get a generator of items.
         actual = list(perf._sched_data_gen(filename))
@@ -71,7 +83,7 @@ class DataGenTest(_BaseTest):
                                       "this/file/definitely/doesnt/exist"))
 
 
-class StackParserTest(_BaseTest):
+class StackParserTest(_StackParserTest):
     """Test class for the StackParser class."""
 
     def setUp(self):
@@ -83,19 +95,27 @@ class StackParserTest(_BaseTest):
         super().tearDown()
 
     def test_is_empty(self):
-        pass
+        """Tests the function recognising an empty line."""
+        self.assertTrue(self.stack_parser._line_is_empty(""))
 
     def test_is_baseline(self):
-        pass
-        # Variations
+        """Tests the function recognising a baseline"""
+        # Variations of baselines
+        baselines = [""]
+        for line in baselines:
+            self.assertTrue(self.stack_parser._line_is_baseline(line))
 
     def test_is_stackline(self):
-        pass
+        """Tests the function recognising a stackline"""
+        # Variations of stacklines
+        stacklines = [""]
+        for line in stacklines:
+            self.assertTrue(self.stack_parser._line_is_stackline(line))
 
     def test_stack_collapse_basic(self):
+        """Check the stack_collapse function calls the appropriate parsers"""
+        # can stub out the is_... functions as they are tested separately
         pass
-        # Check it calls the appropriate parses (can stub out _is_... as
-        #    tested above)
 
     def test_parse_baseline(self):
         pass

@@ -133,6 +133,9 @@ def _sched_data_gen(filename):
     with open(filename, "r") as infile:
         for event_data in infile:
             # e.g.   perf a  6997 [003] 363654.881950:       sched:sched_wakeup:
+
+            event_data = event_data.strip()
+
             match = re.match("\s*"
                              "(?P<name>\S+(\s+\S+)*)\s+"
                              "(?P<pid>\d+)\s+"
