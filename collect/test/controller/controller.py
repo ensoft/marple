@@ -12,6 +12,7 @@ import collect.controller.main as collect_parser
 # Helpers
 #
 
+
 class _BaseTest(util.BaseTest):
     """Base test class for controller testing."""
 
