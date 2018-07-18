@@ -194,9 +194,9 @@ class StackParser:
 
     # --------------------------------------------------------
 
-    # The cached stack data
+    # _stack: A list containing the cached stack data
     _stack = []
-    # The current process name
+    # _pname: A string, the extracted current process name
     _pname = None
     # event_defaulted: A Boolean flag to show the event_filter defaulted.
     _event_defaulted = False
