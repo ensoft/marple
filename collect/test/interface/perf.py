@@ -4,7 +4,6 @@ import collect.interface.perf as perf
 import collect.converter.datatypes as datatypes
 import collect.test.util as util
 
-
 # -----------------------------------------------------------------------------
 # Globals
 #
@@ -52,6 +51,7 @@ class DataGenTest(_BaseTest):
         _sched_data_get correctly converts it.
         
         """
+
         def event_to_str(sched_event):
             return "{} {} [00{}] {}: {}".format(*sched_event)
 
@@ -68,8 +68,7 @@ class DataGenTest(_BaseTest):
         with open(filename, "w") as file_:
             # file_.writelines(event_to_str(entry) for entry in expected)
             for entry in expected:
-                file_.write(event_to_str(entry)+"\n")
-                print(event_to_str(entry)+"\n")
+                file_.write(event_to_str(entry) + "\n")
 
         # Run _sched_data_get() to get a generator of items.
         actual = list(perf._sched_data_gen(filename))
@@ -98,17 +97,32 @@ class StackParserTest(_StackParserTest):
         """Tests the function recognising an empty line."""
         self.assertTrue(self.stack_parser._line_is_empty(""))
 
+    def test_is_empty_neg(self):
+        """Tests that the line_is_empty function recognises non empty lines."""
+        self.assertFalse(self.stack_parser._line_is_empty(" Not empty "))
+
     def test_is_baseline(self):
         """Tests the function recognising a baseline"""
         # Variations of baselines
-        baselines = [""]
+        baselines = ["java 25607 4794564.109216: cycles:",
+                     "java 12688 [002] 6544038.708352: cpu-clock:",
+                     "V8 WorkerThread 25607 4794564.109216: cycles:",
+                     "java 24636/25607 [000] 4794564.109216: cycles:",
+                     "java 12688/12764 6544038.708352: cpu-clock:",
+                     "V8 WorkerThread 24636/25607 [000] 94564.109216: cycles:"]
         for line in baselines:
             self.assertTrue(self.stack_parser._line_is_baseline(line))
 
     def test_is_stackline(self):
         """Tests the function recognising a stackline"""
         # Variations of stacklines
-        stacklines = [""]
+        stacklines = \
+            ["	ffffffffa01bbd11 __perf_event_enable ([kernel.kallsyms])",
+             "  ffffffffa01b45bb event_function ([kernel.kallsyms])     ",
+             "  142cb9 [unknown] (/usr/lib/linux-tools-4.15.0-24/perf)"
+             "  21b97 __libc_start_main (/lib/x86_64-linux-gnu/libc-2.27.so)"
+             "2e46258d4c544155 [unknown] ([unknown])"]
+
         for line in stacklines:
             self.assertTrue(self.stack_parser._line_is_stackline(line))
 
