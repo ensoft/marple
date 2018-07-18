@@ -6,14 +6,14 @@
 """
 Analyses memory allocation and deallocation
 
-Handles interaction of the controller with the interface modules and writes 
+Handles interaction of the controller with the interface modules and writes
     the converted data to file.
 
 """
 __all__ = ["collect_and_store"]
 
-import logging 
-    
+import logging
+
 logger = logging.getLogger("collect.controller.mem")
 logger.setLevel(logging.DEBUG)
 

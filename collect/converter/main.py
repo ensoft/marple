@@ -37,7 +37,6 @@ def create_stack_data(stack_events, filename):
 
     logger.info("Sort stacks")
     # @Sort by keys (recursively by ascending index)
-    pass
 
     logger.info("Writing folded stacks to file")
     # Write data to file

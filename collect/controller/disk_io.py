@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# diskIO.py - analyses disk I/O efficiency
+# disk_io.py - analyses disk I/O efficiency
 # June-July 2018 - Franz Nowak
 # -------------------------------------------------------------
 

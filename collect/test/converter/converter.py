@@ -38,4 +38,4 @@ class EventTest(_BaseTest):
 
     def test_create(self):
         """Check that the output format is correct"""
-        pass
+        # Example

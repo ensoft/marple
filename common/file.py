@@ -86,18 +86,16 @@ def create_unique_temp_filename():
 
 def export_out_filename(filename):
     """Saves the output filename in a file on disk"""
-    
     with open(paths.VAR_DIR + "filename", "w") as fn:
         fn.write(filename)
 
 
 def import_out_filename():
     """Gets the output filename from disk"""
-
     try:
-        with open(paths.VAR_DIR + "filename", "r") as fn:
-            return fn.readline()
-    except FileNotFoundError as fnfe:
+        with open(paths.VAR_DIR + "filename", "r") as saved_filename:
+            return saved_filename.readline()
+    except FileNotFoundError:
         logger.debug("Unable to find filename helper file in {}"
                      .format(paths.VAR_DIR))
         raise

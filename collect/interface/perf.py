@@ -136,12 +136,12 @@ def _sched_data_gen(filename):
 
             event_data = event_data.strip()
 
-            match = re.match("\s*"
-                             "(?P<name>\S+(\s+\S+)*)\s+"
-                             "(?P<pid>\d+)\s+"
-                             "\[(?P<cpu>\d+)\]\s+"
-                             "(?P<time>\d+.\d+):\s+"
-                             "(?P<event>\S+)", event_data)
+            match = re.match(r"\s*"
+                             r"(?P<name>\S+(\s+\S+)*)\s+"
+                             r"(?P<pid>\d+)\s+"
+                             r"\[(?P<cpu>\d+)\]\s+"
+                             r"(?P<time>\d+.\d+):\s+"
+                             r"(?P<event>\S+)", event_data)
 
             # If it did not match, log it but continue
             if match is None:
@@ -172,23 +172,23 @@ class StackParser:
     # ---------------------------------------------------------
     # Regular expressions to match lines of the perf output:
 
-    _emptyline = "$^"
+    _emptyline = r"$^"
     # Matches an empty line
 
-    _baseline = "(?P<comm>\S.+?)\s+(?P<pid>\d+)/*(?P<tid>\d+)*\s+"
+    _baseline = r"(?P<comm>\S.+?)\s+(?P<pid>\d+)/*(?P<tid>\d+)*\s+"
     # Matches "perf script" output, first line of a stack (baseline)
     # eg. "java 25607 4794564.109216: cycles:"
     # or  "V8 WorkerThread 24636/25607 [002] 6544038.708352: cpu-clock:"
 
-    _eventtype = "(?P<event>\S+):\s*$"
+    _eventtype = r"(?P<event>\S+):\s*$"
     # Matches the event type of the stack, found at the end of the baseline
     #   e.g. cycles:ppp:
 
-    _stackline = "\s*(?P<pc>\w+)\s*(?P<rawfunc>.+)\((?P<mod>\S*)\)"
+    _stackline = r"\s*(?P<pc>\w+)\s*(?P<rawfunc>.+)\((?P<mod>\S*)\)"
     # Matches the other lines of a stack, i.e. the ones above the base.
     # e.g ffffffffabe0c31d intel_pmu_enable_ ([kernel.kallsyms])
 
-    _symbol_offset = "\+0x[\da-f]+$"
+    _symbol_offset = r"\+0x[\da-f]+$"
     # Matches symbol offset
     # eg in: 7fffb84c9afc cpu_startup_entry+0x800047c022ec ([kernel.kallsyms])
 

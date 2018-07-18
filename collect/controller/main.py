@@ -23,7 +23,7 @@ from common import (
 )
 from . import (
     cpu,
-    diskIO,
+    disk_io,
     ipc,
     libs,
     mem,
@@ -55,7 +55,7 @@ def _collect_and_store(args):
     if args.outfile is not None:
         if os.path.isfile(args.outfile):
             print("A file named {} already exists! Overwrite? ".format(
-                args.outfile), end='')
+                args.outfile), end="")
             answer = input()
             if answer != "y" and answer != "yes":
                 raise exceptions.AbortedException
@@ -74,7 +74,7 @@ def _collect_and_store(args):
     if args.cpu:
         cpu.sched_collect_and_store(time, filename)
     elif args.disk:
-        diskIO.collect_and_store(time, filename)
+        disk_io.collect_and_store(time, filename)
     elif args.ipc:
         ipc.collect_and_store(time, filename)
     elif args.lib:
