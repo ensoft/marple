@@ -163,6 +163,7 @@ class StackParserTest(_StackParserTest):
         self.assertTrue(self.stack_parser._pname == "java-27/1")
 
     def test_parse_stackline(self):
+        """Tests the insertion of stacklines in the stack array"""
         self.stack_parser._pname = "some_process"
         self.stack_parser._parse_stackline(line="ffffffffabe0c31d "
                                                 "intel_pmu_enable_ (["
@@ -219,7 +220,4 @@ class StackParserTest(_StackParserTest):
 
         # Run the whole stack_collapse function
         events = self.stack_parser.stack_collapse()
-
-        import pdb;pdb.set_trace()
-
         self.assertTrue(list(events) == expected)

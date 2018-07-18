@@ -194,15 +194,6 @@ class StackParser:
 
     # --------------------------------------------------------
 
-    # _stack: A list containing the cached stack data
-    _stack = []
-    # _pname: A string, the extracted current process name
-    _pname = None
-    # event_defaulted: A Boolean flag to show the event_filter defaulted.
-    _event_defaulted = False
-    # event_warning: A Boolean flag that stores whether we already warned once.
-    _event_warning = False
-
     def __init__(self, filename, event_filter=""):
         """ Initialises the Parser.
 
@@ -216,6 +207,15 @@ class StackParser:
         """
         self.filename = filename
         self.event_filter = event_filter
+
+        # _stack: A list containing the cached stack data
+        self._stack = []
+        # _pname: A string, the extracted current process name
+        self._pname = None
+        # event_defaulted: A Boolean flag to show the event_filter defaulted.
+        self._event_defaulted = False
+        # event_warning: A Boolean flag that stores whether we've warned before.
+        self._event_warning = False
 
     def _line_is_empty(self, line):
         """Checks whether line is an empty line."""
