@@ -48,7 +48,7 @@ class SchedTest(_ParseTest):
         """Check that asking for sched calls the right function"""
         self.check_calls(["--sched", "-t", "13"], sched, "collect", 13)
 
-    @patch.object(sched, 'collect')
+    @patch.object(sched, "collect")
     def test_sched_collect_config_time(self, collect_sched):
         """Check that config default time is used if set in config"""
         with patch.object(config, "get_default_time", return_value=7) \
@@ -57,7 +57,7 @@ class SchedTest(_ParseTest):
             get_time_mock.assert_called_once()
             collect_sched.assert_called_once_with(7)
 
-    @patch.object(sched, 'collect')
+    @patch.object(sched, "collect")
     def test_sched_collect_default_time(self, collect_sched):
         """Check that module default time is used if not set in config"""
         with patch.object(config, "get_default_time", return_value=None) \
@@ -66,7 +66,7 @@ class SchedTest(_ParseTest):
             get_time_mock.assert_called_once()
             collect_sched.assert_called_once_with(10)
 
-    @patch.object(sched, 'collect')
+    @patch.object(sched, "collect")
     def test_sched_collect_create_filename(self, collect_sched):
         """Check that file default function is called to create filename"""
         with patch.object(file, "create_unique_temp_name") \
@@ -75,7 +75,7 @@ class SchedTest(_ParseTest):
             get_filename_mock.assert_called_once()
             self.assertTrue(collect_sched.called)
 
-    @patch.object(sched, 'collect')
+    @patch.object(sched, "collect")
     def test_sched_collect_auto_filename_exists(self, collect_sched):
         """Check that it retries 5 times if auto create filename fails"""
         with patch.object(file, "create_unique_temp_name") \
@@ -90,10 +90,12 @@ class SchedTest(_ParseTest):
             self.assertTrue(get_filename_mock.call_count == 6)
             self.assertFalse(collect_sched.called)
 
-    @patch.object(sched, 'collect')
+    @patch.object(sched, "collect")
     def test_sched_collect_user_filename_exists(self, collect_sched):
         """Check that the program exits if user puts existing filename"""
         with patch.object(path, "isfile", return_value=True):
             with self.assertRaises(SystemExit):
                 collect_parser.main(["--sched", "-f", "test_name"])
             self.assertFalse(collect_sched.called)
+
+
