@@ -10,7 +10,7 @@ Gets the data that was collected by an interface module and converted into
 formatted objects and writes them into a file that was provided by the user.
 
 """
-__all__ = ["create_stack_data", "create_cpu_event_data"]
+__all__ = ["create_stack_data_unsorted", "create_cpu_event_data"]
 
 import logging
 import collections
@@ -19,7 +19,7 @@ logger = logging.getLogger("converter.main")
 logger.setLevel(logging.DEBUG)
 
 
-def create_stack_data(stack_events, filename):
+def create_stack_data_unsorted(stack_events, filename):
     """
     Count, sort and saves the stack data from the generator into a file.
 
@@ -29,7 +29,7 @@ def create_stack_data(stack_events, filename):
         The name of the file into which to store the output.
 
     """
-    logger.info("Enter create_stack_data")
+    logger.info("Enter create_stack_data_unsorted")
 
     logger.info("Counting number of stack occurrences")
     # Count stack occurrences

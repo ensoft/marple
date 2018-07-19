@@ -47,5 +47,5 @@ def collect_and_store(time, filename):
     stack_data_formatted = perf.get_stack_data()
 
     # Create file from the folded stack objects
-    converter.create_stack_data(stack_events=stack_data_formatted,
-                                filename=filename)
+    converter.create_stack_data_unsorted(stack_events=stack_data_formatted,
+                                         filename=filename)
