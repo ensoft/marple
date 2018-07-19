@@ -19,8 +19,8 @@ import subprocess
 
 from common import (
     config,
-    file
-)
+    file,
+    output)
 from ..converter.datatypes import (
     SchedEvent,
     StackEvent
@@ -47,8 +47,11 @@ def collect(time, frequency, cpufilter="-a"):
 
     """
 
-    subprocess.call(["perf", "record", "-F", str(frequency), cpufilter, "-g",
-                     "--", "sleep", str(time)])
+    sub_process = subprocess.Popen(["perf", "record", "-F", str(frequency),
+                                   cpufilter, "-g", "--", "sleep", str(time)],
+                                   stderr=subprocess.PIPE)
+    logger.error(sub_process.stderr.read().decode())
+    output.print_("Done.")
 
 
 def collect_sched(time):
@@ -60,7 +63,10 @@ def collect_sched(time):
         The time in seconds for which to collect the data.
 
     """
-    subprocess.call(["perf", "sched", "record", "sleep", str(time)])
+    sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
+                                   str(time)], stderr=subprocess.PIPE)
+    logger.error(sub_process.stderr.read().decode())
+    output.print_("Done.")
 
 
 def get_stack_data():
@@ -74,14 +80,14 @@ def get_stack_data():
     # Create temporary file for storing output
     filename = file.create_unique_temp_filename()
 
-    sp = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE)
+    sub_process = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
     with open(filename, "w") as outfile:
-        outfile.write(sp.stdout.read().decode())
-        logger.error(sp.stderr.read().decode())
+        outfile.write(sub_process.stdout.read().decode())
+        logger.error(sub_process.stderr.read().decode())
 
-    sp = StackParser(filename)
-    return sp.stack_collapse()
+    stack_parser = StackParser(filename)
+    return stack_parser.stack_collapse()
 
 
 def get_sched_data():
@@ -97,17 +103,17 @@ def get_sched_data():
     # Create temporary file for recording output
     filename = file.create_unique_temp_filename()
 
-    sp = subprocess.Popen(["perf", "sched", "script", "-F",
+    sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
                            "comm,pid,cpu,time,event"],
                           stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
 
     with open(filename, "w") as outfile:
-        outfile.write(sp.stdout.read().decode())
-        logger.error(sp.stderr.read().decode())
+        outfile.write(sub_process.stdout.read().decode())
+        logger.error(sub_process.stderr.read().decode())
         # Block if blocking is set by config module
         if config.is_blocking():
-            sp.wait()
+            sub_process.wait()
 
     return _sched_data_gen(filename)
 

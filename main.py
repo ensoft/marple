@@ -110,7 +110,7 @@ def main():
                       "Exited with an IsADirectoryError.")
     except Exception as ex:
         # If anything else goes wrong, handle it here
-        output.error_("An unexpected error occurred. Check log for details",
+        output.error_("An unexpected error occurred. Check log for details.",
                       str(ex))
         exit(1)
 
