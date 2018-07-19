@@ -104,9 +104,9 @@ def get_sched_data():
     filename = file.create_unique_temp_filename()
 
     sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
-                           "comm,pid,cpu,time,event"],
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE)
+                                    "comm,pid,cpu,time,event"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
     with open(filename, "w") as outfile:
         outfile.write(sub_process.stdout.read().decode())
@@ -293,8 +293,8 @@ class StackParser:
                 if self._event_defaulted and not self._event_warning:
                     # only print this warning if necessary: when we defaulted
                     #  and there were multiple event types.
-                    logger.error("Filtering for events of type %s"
-                                 , self.event_filter)
+                    logger.error("Filtering for events of type %s",
+                                 self.event_filter)
                     self._event_warning = True
                 return
 
