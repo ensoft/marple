@@ -50,7 +50,7 @@ def collect(time, frequency, cpufilter="-a"):
     sub_process = subprocess.Popen(["perf", "record", "-F", str(frequency),
                                    cpufilter, "-g", "--", "sleep", str(time)],
                                    stderr=subprocess.PIPE)
-    logger.error(sub_process.stderr.read().decode())
+    logger.debug(sub_process.stderr.read().decode())
     output.print_("Done.")
 
 
@@ -65,7 +65,7 @@ def collect_sched(time):
     """
     sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
                                    str(time)], stderr=subprocess.PIPE)
-    logger.error(sub_process.stderr.read().decode())
+    logger.debug(sub_process.stderr.read().decode())
     output.print_("Done.")
 
 
