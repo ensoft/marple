@@ -26,6 +26,10 @@ from common import (
 )
 from display import controller as display_controller
 
+# use marple log across the whole module
+logger = logging.getLogger('main')
+logger.setLevel(logging.DEBUG)
+
 
 def main():
 
@@ -46,10 +50,6 @@ def main():
                             filename=paths.LOG_DIR + "marple" + str(os.getpid())
                                     + ".log",
                             filemode="w")
-
-        # use marple log across the whole module
-        logger = logging.getLogger('main')
-        logger.setLevel(logging.DEBUG)
 
     except PermissionError:
         # if setting up the logging fails there is something wrong with the

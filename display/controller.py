@@ -150,7 +150,7 @@ def main(argv):
         command line arguments from call in main
 
     """
-    logger.info("Enter controller main function with arguments {}".format(argv))
+    logger.info("Enter controller main function with arguments %s", str(argv))
 
     # Parse arguments
     args = _args_parse(argv)

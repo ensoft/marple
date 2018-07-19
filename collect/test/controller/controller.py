@@ -1,9 +1,9 @@
 from unittest.mock import patch
 
-import collect.controller.cpu as cpu
-import collect.controller.main as collect_parser
-import collect.test.util as util
-import common.config as config
+from collect.controller import cpu
+from collect.controller import main as collect_parser
+from collect.test import util
+from common import config
 
 
 # -----------------------------------------------------------------------------
@@ -22,7 +22,7 @@ class _BaseTest(util.BaseTest):
 class _ParseTest(_BaseTest):
     """Class for testing that parsing works correctly"""
     @staticmethod
-    def check_calls(argv, cls, fn, args, kwargs={}):
+    def check_calls(argv, cls, fn, args, **kwargs):
         """
         Stubs out a given function and checks that it gets called
         after correctly passing the input.

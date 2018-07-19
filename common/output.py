@@ -25,7 +25,7 @@ def print_(text):
 
     """
     print("{}".format(text))
-    logger.debug("Output to user: {}".format(text))
+    logger.debug("Output to user: %s", text)
 
 
 def error_(text, description):
@@ -39,5 +39,5 @@ def error_(text, description):
         The error description for logging.
 
     """
-    logger.error("Error: {}".format(description))
+    logger.error("Error: %s", description)
     print_(text)

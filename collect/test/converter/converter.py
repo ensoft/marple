@@ -1,7 +1,7 @@
 import unittest
 
 import collect.converter.main as converter
-import collect.test.util as util
+from collect.test import util
 from collect.converter.datatypes import StackEvent
 
 
@@ -15,13 +15,6 @@ class _BaseTest(util.BaseTest):
 
 class StackTest(_BaseTest):
     """Class for testing data conversion of stack data"""
-    def setUp(self):
-        """Per-test set-up"""
-        super().setUp()
-
-    def tearDown(self):
-        """Per-test tear-down"""
-        super().tearDown()
 
     def check_create_stack_data(self, example, expected):
         filename = self._TEST_DIR + "create_stackdata_test"
@@ -69,14 +62,3 @@ class StackTest(_BaseTest):
                    "pname;call3;call4 1\n"
 
         self.check_create_stack_data(example, expected)
-
-
-class EventTest(_BaseTest):
-    """Class for testing data conversion of event data"""
-    def setUp(self):
-        """Per-test set-up"""
-        super().setUp()
-
-    def tearDown(self):
-        """Per-test tear-down"""
-        super().tearDown()

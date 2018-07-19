@@ -33,7 +33,7 @@ def sched_collect_and_store(time, filename):
     """
 
     logger.info("Enter sched_collect_and_record. Recording cpu scheduling data "
-                "for {} seconds. Output filename: {}".format(time, filename))
+                "for %s seconds. Output filename: %s", time, filename)
 
     # Collect relevant data using perf
     perf.collect_sched(time)

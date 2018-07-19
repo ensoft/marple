@@ -2,9 +2,9 @@ import os
 
 from unittest.mock import patch
 
-import collect.interface.perf as perf
-import collect.converter.datatypes as datatypes
-import collect.test.util as util
+from collect.interface import perf
+from collect.converter import datatypes
+from collect.test import util
 
 # -----------------------------------------------------------------------------
 # Globals
@@ -44,14 +44,6 @@ class _StackParserTest(_BaseTest):
 
 class DataGenTest(_BaseTest):
     """Test class for the _sched_data_get() generator."""
-
-    def setUp(self):
-        """Per-test set-up."""
-        super().setUp()
-
-    def tearDown(self):
-        """Per-test tear-down."""
-        super().tearDown()
 
     def test_basic(self):
         """
@@ -94,14 +86,6 @@ class DataGenTest(_BaseTest):
 
 class StackParserTest(_StackParserTest):
     """Test class for the StackParser class."""
-
-    def setUp(self):
-        """Per-test set-up."""
-        super().setUp()
-
-    def tearDown(self):
-        """Per-test tear-down."""
-        super().tearDown()
 
     def test_is_empty(self):
         """Tests the function recognising an empty line."""

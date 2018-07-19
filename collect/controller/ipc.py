@@ -29,5 +29,5 @@ def collect_and_store(time, filename):
     """
     # @Choose interface and implement
     logger.info("Enter ipc collect_and_store function. Recording ipc data for "
-                "{} seconds. Output filename: {}".format(time, filename))
+                "%s seconds. Output filename: %s", time, filename)
     raise NotImplementedError("ipc")

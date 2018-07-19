@@ -145,9 +145,9 @@ def _sched_data_gen(filename):
 
             # If it did not match, log it but continue
             if match is None:
-                logger.debug("Failed to parse event data: {} Expected "
-                             "format: name pid cpu time event".format(
-                              event_data))
+                logger.debug("Failed to parse event data: %s Expected "
+                             "format: name pid cpu time event",
+                             event_data)
                 continue
 
             event = SchedEvent(name=match.group("name"),
@@ -184,7 +184,7 @@ class StackParser:
     # Matches the event type of the stack, found at the end of the baseline
     #   e.g. cycles:ppp:
 
-    _stackline = r"\s*(?P<pc>\w+)\s*(?P<rawfunc>.+)\((?P<mod>\S*)\)"
+    _stackline = r"\s*\w+\s*(?P<rawfunc>.+)\((?P<mod>\S*)\)"
     # Matches the other lines of a stack, i.e. the ones above the base.
     # e.g ffffffffabe0c31d intel_pmu_enable_ ([kernel.kallsyms])
 
@@ -238,7 +238,7 @@ class StackParser:
         # if there is no pname, we have not processed one yet, which means
         #   that past ones have been filtered (_pname used as flag)
         if self._pname is None:
-            return
+            return None
 
         # Finish making the stack and yield it
         self._stack.insert(0, self._pname)
@@ -287,8 +287,8 @@ class StackParser:
                 if self._event_defaulted and not self._event_warning:
                     # only print this warning if necessary: when we defaulted
                     #  and there were multiple event types.
-                    logger.error("Filtering for events of type {}"
-                                 .format(self.event_filter))
+                    logger.error("Filtering for events of type %s"
+                                 , self.event_filter)
                     self._event_warning = True
                 return
 
@@ -299,7 +299,7 @@ class StackParser:
         else:
             self._pname = comm
         # replace space with underscore in pname
-        self._pname = re.sub("\s", "_", self._pname)
+        self._pname = re.sub(r"\s", "_", self._pname)
 
     def _parse_stackline(self, line):
         """Matches a stack line that is not a baseline and extracts its info."""
@@ -311,8 +311,7 @@ class StackParser:
         if self._pname is None:
             return
 
-        pc, rawfunc, mod = match.group("pc"), match.group("rawfunc").rstrip(), \
-            match.group("mod")
+        rawfunc, mod = match.group("rawfunc").rstrip(), match.group("mod")
 
         # Linux 4.8 includes symbol offsets in perf script output,
         # eg 7fffb84c9afc cpu_startup_entry+0x800047c022ec([kernel.kallsyms])
@@ -323,7 +322,7 @@ class StackParser:
         # Can add inline here if selected
 
         # Skip process names
-        if re.match("\(", rawfunc):
+        if re.match(r"\(", rawfunc):
             return
 
         # Not sure what inline stands for...
@@ -335,7 +334,7 @@ class StackParser:
                     func = mod
                     func = re.sub(".*/", "", func)
 
-            if len(inline) > 0:
+            if inline != "":
                 # Mark as inlined
                 func += "_[i]"
 
@@ -379,6 +378,6 @@ class StackParser:
 
                 # if nothing matches, log an error
                 else:
-                    logger.error("Unrecognized line: {}".format(line))
+                    logger.error("Unrecognized line: %s", line)
 
         logger.info("Conversion to stacks successful")

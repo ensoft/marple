@@ -48,8 +48,8 @@ def _collect_and_store(args):
 
     """
     logger.info("Enter collect and store function. Applying logic evaluating "
-                "and applying input parameters: {}"
-                .format(args))
+                "and applying input parameters: %s"
+                , args)
 
     # Use user output filename specified, otherwise create a unique one
     if args.outfile is not None:
@@ -57,7 +57,7 @@ def _collect_and_store(args):
             print("A file named {} already exists! Overwrite? ".format(
                 args.outfile), end="")
             answer = input()
-            if answer != "y" and answer != "yes":
+            if answer not in ("y", "yes"):
                 raise exceptions.AbortedException
         filename = args.outfile
     else:
@@ -157,7 +157,7 @@ def main(argv):
         a list of command line arguments from call in main module
 
     """
-    logger.info("Enter controller main function with arguments {}".format(argv))
+    logger.info("Enter controller main function with arguments %s", str(argv))
 
     # Parse arguments
     args = _args_parse(argv)

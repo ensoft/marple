@@ -29,6 +29,5 @@ def collect_and_store(time, filename):
     """
     # @Choose interface and implement
     logger.info("Enter diskIO collect_and_store function. Recording disk I/O "
-                "data for {} seconds. Output filename: {}".format(time,
-                                                                  filename))
+                "data for %s seconds. Output filename: %s", time, filename)
     raise NotImplementedError("diskIO")

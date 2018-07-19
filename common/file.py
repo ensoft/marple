@@ -96,6 +96,6 @@ def import_out_filename():
         with open(paths.VAR_DIR + "filename", "r") as saved_filename:
             return saved_filename.readline()
     except FileNotFoundError:
-        logger.debug("Unable to find filename helper file in {}"
-                     .format(paths.VAR_DIR))
+        logger.debug("Unable to find filename helper file in %s"
+                     , str(paths.VAR_DIR))
         raise

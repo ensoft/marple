@@ -29,5 +29,5 @@ def collect_and_store(time, filename):
     """
     # @Choose interface and implement
     logger.info("Enter libs collect_and_store function. Recording library data "
-                "for {} seconds. Output filename: {}".format(time, filename))
+                "for %s seconds. Output filename: %s", time, filename)
     raise NotImplementedError("libs")

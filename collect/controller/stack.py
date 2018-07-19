@@ -36,6 +36,9 @@ def collect_and_store(time, filename):
 
     """
 
+    logger.info("Enter stack collect_and_store function. Recording stack data "
+                "for %s seconds. Output filename: %s", time, filename)
+
     # Use default frequency for data collection
     frequency = config.get_default_frequency() if \
         config.get_default_frequency() is not None else _COLLECTION_FREQUENCY
