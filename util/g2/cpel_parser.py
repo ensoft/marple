@@ -36,17 +36,41 @@ class CPELParser:
                      "Event Section"]
 
     def __init__(self, filename: str):
-        """"""
+        """
+        Initialises the parser.
+
+        :param filename:
+            The name of the file containing binary data in CPEL format.
+
+        """
         self.filename = filename
         self.string_tables = dict()
 
     def _get_string(self, string_table, offset):
-        """"""
+        """
+        Fetches a string from the string resource table.
+
+        :param string_table:
+            The table name of the string resource table.
+        :param offset:
+            The offset in bytes of the start of the string in the string table.
+
+        :return:
+            The string resource from the string table.
+
+        """
         rest = str(self.string_tables[string_table])[offset:]
         return rest.split("\x00", 1)[0]
 
-    def _parse_file_header(self, binary_content: bytes):
-        """"""
+    @staticmethod
+    def _parse_file_header(file_descriptor):
+        """
+        Parses and prints the file header.
+
+        :param file_descriptor:
+            The file descriptor of the file containing the data.
+
+        """
         # Octet_offset, 	Data
         # 0x0 	    Endian bit (0x80), File Version, 7 bits (0x1...0x7F)
         # 0x1 	    Unused, 8 bits
@@ -54,13 +78,23 @@ class CPELParser:
         # 0x4 	    File date (32-bits) (POSIX "epoch" format)
 
         (_, number_of_sections, file_date) = struct.unpack(">cxhi",
-                                                           binary_content)
+                                                           file_descriptor.read(
+                                                               8))
 
         print("Number of sections: {}".format(number_of_sections))
         print("File date: {}".format(datetime.fromtimestamp(file_date)))
 
     def _parse_tld(self, file_descriptor):
-        """"""
+        """
+
+        :param file_descriptor:
+            The file descriptor of the file containing the data.
+
+        :return:
+            A tuple of the section type number and the section length,
+                or None, None if the end of file was reached.
+
+        """
         # Get type and length info
         tld = file_descriptor.read(8)
 
@@ -79,12 +113,25 @@ class CPELParser:
 
         return section_type_nr, section_length
 
-    def _parse_section_header(self, file_descriptor, section_type_nr: int,
+    @staticmethod
+    def _parse_section_header(file_descriptor, section_type_nr: int,
                               section_length: int):
-        """"""
+        """
+        Parses the header of a given section.
+
+        :param file_descriptor:
+            The file descriptor of the file containing the data.
+        :param section_type_nr:
+            The index of the section type in the SECTION_TYPES list.
+        :param section_length:
+            The length in bytes of the section.
+
+        :return:
+            A tuple of the section length and the table name.
+
+        """
         new_section_length = section_length
         table_name = None
-        ticks_per_us = None
 
         # Section type 1 does not need any more info
         if section_type_nr == 1:
@@ -117,8 +164,7 @@ class CPELParser:
                 # };
 
                 # Get number of ticks per microsecond
-                ticks = file_descriptor.read(4)
-                (ticks_per_us,) = struct.unpack(">L", ticks)
+                (ticks_per_us,) = struct.unpack(">L", file_descriptor.read(4))
                 # included in section length, so subtract
                 section_length -= 4
                 print("Ticks per microsecond: {}".format(ticks_per_us))
@@ -127,12 +173,20 @@ class CPELParser:
         else:
             new_section_length = 0
 
-        return new_section_length, table_name, ticks_per_us
+        return new_section_length, table_name
 
     def _parse_string_table(self, binary_content: bytes, section_length: int):
+        """
+        Parses a string table section of the file.
+
+        :param binary_content:
+            The data of the section in binary format.
+        :param section_length:
+            The length in bytes of the section.
+
+        """
         (char_content,) = struct.unpack(">{}s".format(section_length),
                                         binary_content)
-        """"""
 
         # Convert binary strings to utf8 (could break for non-characters)
         string_resources = str(char_content.decode())
@@ -150,7 +204,17 @@ class CPELParser:
 
     def _parse_symbol_table(self, binary_content: bytes, section_length: int,
                             table_name: str):
-        """"""
+        """
+        Parses a symbol table section.
+
+        :param binary_content:
+            The data of the section in binary format.
+        :param section_length:
+            The length in bytes of the section.
+        :param table_name:
+            The name of the string table associated with this section.
+
+        """
         # struct symbol_section_entry {
         #     unsigned long value;
         #     unsigned long name_offset_in_string_table;
@@ -165,7 +229,17 @@ class CPELParser:
     def _parse_event_definition_section(self, binary_content: bytes,
                                         section_length: int,
                                         table_name: str):
-        """"""
+        """
+        Parses an event definition section.
+
+        :param binary_content:
+            The data of the section in binary format.
+        :param section_length:
+            The length in bytes of the section.
+        :param table_name:
+            The name of the string table associated with this section.
+
+        """
 
         # struct event_definition_entry {
         #     unsigned long event_code;
@@ -186,7 +260,17 @@ class CPELParser:
     def _parse_track_definition_section(self, binary_content: bytes,
                                         section_length: int,
                                         table_name: str):
-        """"""
+        """
+        Parses a track definition section.
+
+        :param binary_content:
+            The data of the section in binary format.
+        :param section_length:
+            The length in bytes of the section.
+        :param table_name:
+            The name of the string table associated with this section.
+
+        """
         # struct track_definition {
         #     unsigned long track_id;
         #     unsigned long track_format_offset_in_string_table;
@@ -198,9 +282,17 @@ class CPELParser:
             print("{}\t{}".format(track_id, self._get_string(table_name,
                                                              track_offset)))
 
-    def _parse_event_section(self, binary_content: bytes, section_length: int,
-                             table_name: str, frequency: int):
-        """"""
+    @staticmethod
+    def _parse_event_section(binary_content: bytes, section_length: int):
+        """
+        Parses an event section.
+
+        :param binary_content:
+            The data of the section in binary format.
+        :param section_length:
+            The length in bytes of the section.
+
+        """
         # struct event_entry {
         # 	unsigned long time[2];
         # 	unsigned long track;
@@ -208,21 +300,18 @@ class CPELParser:
         # 	unsigned long event_datum;
         # };
         print("time track event_code, event_datum:")
-        start = 0
         for index in range(0, int(section_length - 20), 20):
             (time1, time2, track, event_code, event_datum) = struct.unpack(
                 ">LLLLL", binary_content[index:index + 20])
             print("{:01d} {}\t{}\t{}\t{}".format(time1, time2, track,
-                                                 event_code,
-                                               event_datum))
+                                                 event_code, event_datum))
 
     def parse_file(self):
-        """"""
+        """ The main function of the parser, parses the CPEL file. """
         with open(sys.argv[1], "rb") as file_:
 
             # Parse the file header
-            binary_content = file_.read(8)
-            self._parse_file_header(binary_content)
+            self._parse_file_header(file_)
 
             # Parse the sections
             while True:
@@ -234,7 +323,7 @@ class CPELParser:
                     break
 
                 # Get table name and ticks per microsecond
-                section_length, table_name, ticks = \
+                section_length, table_name = \
                     self._parse_section_header(file_,
                                                section_type_nr, section_length)
 
@@ -262,8 +351,7 @@ class CPELParser:
                 # Event Section
                 elif section_type_nr == 5:
                     self._parse_event_section(binary_content,
-                                              section_length,
-                                              table_name, ticks)
+                                              section_length)
                 # If the given number is not in the range 1-5
                 else:
                     print("Invalid Section number {}".format(
