@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export PYTHONPATH=.
+sudo python3 main.py "$@"
+

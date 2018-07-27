@@ -1,0 +1,10 @@
+#!/bin/bash
+
+printf "Installing linux-tools... "
+sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r`
+printf "Done.\n"
+
+printf "Changing sudoers file... "
+echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo
+printf "Done.\n"
+
