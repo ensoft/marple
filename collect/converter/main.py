@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # converter/main.py - Saves data objects into a file.
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
@@ -10,7 +10,7 @@ Gets the data that was collected by an interface module and converted into
 formatted objects and writes them into a file that was provided by the user.
 
 """
-__all__ = ["create_stack_data_unsorted", "create_cpu_event_data"]
+__all__ = ["create_stack_data_unsorted", "create_cpu_event_data", "create_mem_event_data"]
 
 import collections
 import logging
@@ -123,6 +123,37 @@ def create_cpu_event_data_cpel(sched_events, filename):
     type = 5
     length = 0  # Only know this after parsing all the strings
     info = struct.pack(">ii")
+
+
+def create_mem_event_data(mem_events, filename):
+    """
+    Save memory event data from generator to output file.
+
+    :param mem_events:
+        An iterator over :class:`StackEvent` objects.
+    :param filename:
+        The output file.
+
+    """
+
+    logger.info("Enter create_mem_event_data")
+
+    logger.info("Counting number of mem stack occurrences")
+
+    # Count stack occurrences
+    cnt = collections.Counter(mem_events)
+
+    logger.info("Sort mem")
+    # @Sort by keys (recursively by ascending index)
+
+    logger.info("Writing folded mem stacks to file")
+    # Write data to file
+    # Format: eg. perf;[unknown];_perf_event_enable;event_function_call 24
+    with open(filename, "w") as out:
+        for mem_event, count in cnt.items():
+            out.write(";".join(mem_event.stack) + " {}\n".format(count))
+
+    logger.info("Done.")
 
 
 if __name__=="__main__":

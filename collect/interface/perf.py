@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # perf.py - interacts with the perf tracing tool
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
@@ -10,7 +10,8 @@ Calls perf to collect data, format it, and has functions that create data
     object generators.
 
 """
-__all__ = ["collect", "collect_sched", "get_stack_data", "get_sched_data"]
+__all__ = ["collect", "collect_sched", "collect_mem", "get_stack_data", "get_sched_data", "get_stack_data",
+           "get_mem_data"]
 
 import logging
 import os
@@ -69,6 +70,21 @@ def collect_sched(time):
     output.print_("Done.")
 
 
+def collect_mem(time):
+    """
+    Collect all memory data using perf.
+
+    :param time:
+        The time for which data should be collected.
+
+    """
+
+    sub_process = subprocess.Popen(["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
+                                    "sleep", str(time)], stderr=subprocess.PIPE) #@@@
+    logger.debug(sub_process.stderr.read().decode())
+    output.print_("Done.")
+
+
 def get_stack_data():
     """
     Convert collected perf data to formatted stack data.
@@ -86,6 +102,28 @@ def get_stack_data():
         outfile.write(sub_process.stdout.read().decode())
         logger.error(sub_process.stderr.read().decode())
 
+    stack_parser = StackParser(filename)
+    return stack_parser.stack_collapse()
+
+
+def get_mem_data():
+    """
+    Get memory data. Creates and returns an iterator over memory event objects.
+
+    :return:
+        an iterator over :class:`StackEvent` objects.
+
+    """
+    filename = file.create_unique_temp_filename()
+
+    sub_process = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+
+    with open(filename, "w") as outfile:
+        outfile.write(sub_process.stdout.read().decode())
+        logger.error(sub_process.stderr.read().decode())
+
+    # return _mem_data_gen(filename)
     stack_parser = StackParser(filename)
     return stack_parser.stack_collapse()
 
@@ -116,6 +154,51 @@ def get_sched_data():
             sub_process.wait()
 
     return _sched_data_gen(filename)
+
+
+# def _mem_data_gen(filename):
+#     """
+#     Generates :class:`MemEvent` objects from an input file.
+#
+#     :param filename:
+#         The file containing perf mem output data, gathered in :func:`get_mem_data`.
+#
+#     """
+#     with open(filename, "r") as infile:
+#         for mem_data in infile:
+#             mem_data = mem_data.strip()
+#
+#             match = re.match(r"\s*"
+#                              r"(?P<name>\S+(\s+\S+)*)\s+"
+#                              r"(?P<pid>\d+)\s+"
+#                              r"\[(?P<cpu>\d+)\]\s+"
+#                              r"(?P<time>\d+.\d+):\s+"
+#                              r"(?P<duration>\d+)\s+"
+#                              r"(?P<type>\S+(\s+\S+)*):\s+"
+#                              r"(?P<addr>\S+)\s+"
+#                              r"(?P<func>\S+)\s+"
+#                              r"\((?P<lib>\S+)\)", mem_data)
+#
+#             # If it did not match, log it but continue
+#             if match is None:
+#                 logger.debug("Failed to parse event data: %s Expected "
+#                              "format: name pid cpu time event",
+#                              mem_data)
+#                 continue
+#
+#             event = MemEvent(name=match.group("name"),
+#                              pid=int(match.group("pid")),
+#                              cpu=int(match.group("cpu")),
+#                              time=match.group("time"),
+#                              duration=int(match.group("duration")),
+#                              type=match.group("type"),
+#                              addr=match.group("addr"),
+#                              func=match.group("func"),
+#                              lib=match.group("lib"))
+#             yield event
+#
+#     # Cleanup
+#     os.remove(filename)
 
 
 def _sched_data_gen(filename):

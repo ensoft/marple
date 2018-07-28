@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # controller.py - user interface, parses and applies display commands
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
@@ -54,8 +54,11 @@ def _display(args):
         # Stub
         raise NotImplementedError("display library data")
     elif args.mem:
-        # Stub
-        raise NotImplementedError("display memory data")
+        if args.n:
+            raise NotImplementedError("display-numeric stack data")
+        else:
+            flamegraph.make(input_filename, output_filename, colouring="mem")
+            flamegraph.show(output_filename)
     elif args.stack:
         if args.n:
             raise NotImplementedError("display-numeric stack data")

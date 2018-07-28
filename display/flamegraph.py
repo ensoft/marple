@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # flamegraph.py - interacts with the flame graph tool
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 """
 Interacts with the flamegraph tool.
@@ -18,7 +18,7 @@ DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
 FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
 
 
-def make(in_filename, out_filename):
+def make(in_filename, out_filename, colouring=None):
     """
     Uses Brendan Gregg's flamegraph tool to convert data to flamegraph.
 
@@ -29,8 +29,10 @@ def make(in_filename, out_filename):
 
     """
     with open(out_filename, "w") as out:
-        subprocess.Popen([FLAMEGRAPH_DIR, in_filename], stdout=out)
-
+        if colouring:
+            subprocess.Popen([FLAMEGRAPH_DIR, "--color=" + colouring,in_filename], stdout=out)
+        else:
+            subprocess.Popen([FLAMEGRAPH_DIR, in_filename], stdout=out)
 
 def show(image):
     """
@@ -41,5 +43,5 @@ def show(image):
 
     """
     subprocess.call(["su", "-", "-c",  "firefox " + DISPLAY_DIR + image,
-                     "franzn"])
+                     "hrutvikk"])
 
