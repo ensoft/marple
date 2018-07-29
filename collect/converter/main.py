@@ -77,52 +77,8 @@ def create_cpu_event_data_cpel(sched_events, filename):
 
 
     """
-    # unwrap the generator (if it is one)
-    events = list(sched_events)
-
-    # Header ----------------------------------------------------------
-
-    # Format:
-    # 0x0 	    Endian bit (0x80), File Version, 7 bits (0x1...0x7F)
-    # 0x1 	    Unused, 8 bits
-    # 0x2-0x3 	Number of sections (16 bits) (NSECTIONS)
-    # 0x4 	    File date (32-bits) (POSIX "epoch" format)
-
-    # Use big endian as per specification
-    endian_bit = 1
-    file_version = 255
-    first_byte = endian_bit << 7 | file_version
-    # Calculate number of sections afterwards
-    number_of_sections = 511
-    # Use POSIX "epoch" format for date
-    file_date = int(datetime.now().timestamp())
-    # Just date: file_date = int(datetime.combine(date.today(),
-    # time(0)).timestamp())
-
-    header = struct.pack(">cxhi", bytes([first_byte]), number_of_sections,
-                     file_date)
-    print(header)
-
-    # String tables -----------------------------------------------------
-    type = 1
-    length = 0 # Only know this after parsing all the strings
-    info = struct.pack(">ii")
-    # Symbol table ---------------------------------------------------------
-    type = 2
-    length = 0  # Only know this after parsing all the strings
-    info = struct.pack(">ii")
-    # Event definitions ----------------------------------------------------
-    type = 3
-    length = 0  # Only know this after parsing all the strings
-    info = struct.pack(">ii")
-    # Track definitions ----------------------------------------------------
-    type = 4
-    length = 0  # Only know this after parsing all the strings
-    info = struct.pack(">ii")
-    # Event sections -------------------------------------------------------
-    type = 5
-    length = 0  # Only know this after parsing all the strings
-    info = struct.pack(">ii")
+    cpel_writer = CpelWriter(sched_events)
+    cpel_writer.write(filename)
 
 
 def create_mem_event_data(mem_events, filename):
@@ -135,7 +91,6 @@ def create_mem_event_data(mem_events, filename):
         The output file.
 
     """
-
     logger.info("Enter create_mem_event_data")
 
     logger.info("Counting number of mem stack occurrences")
@@ -156,5 +111,145 @@ def create_mem_event_data(mem_events, filename):
     logger.info("Done.")
 
 
-if __name__=="__main__":
+class CpelWriter:
+    """A class that takes event data and converts it to a CPEL file."""
+
+    # ENDIAN_BIT: int value for endianness of the file (0 for big, 1 for little)
+    ENDIAN_BIT = 0
+    # FILE_VERSION: int value of 1 for showing this is a CPEL file
+    FILE_VERSION = 1
+
+    def __init__(self, event_objects):
+        """
+        Initialise the input data and read in the data
+
+        :param event_objects:
+            An iterator of event objects to be processed.
+        """
+        self.event_objects = event_objects
+
+        # Information for writing the file header (no of sections etc.)
+        self.info = dict()
+
+        # Create attributes for section data
+        self.string_table = dict()
+        self.symbol_table = dict()
+        self.event_definitions = dict()
+        self.track_definitions = dict()
+        self.event_data = dict()
+
+        # Create list attribute for section lengths
+        self.section_length = []
+
+        # Int counting the number of sections in the file
+        self.no_of_sections = 0
+
+        # fill the above data structures with data from event input.
+        self._collect()
+
+    def _insert_strings(self, event_object):
+        """
+        Puts the string resources of the event object into the string table.
+
+        :param event_object:
+            A reference to the currently processed event object.
+
+        """
+        pass
+
+    def _insert_symbols(self, event_object):
+        """
+        Unused for now.
+        :param event_object:
+             A reference to the currently processed event object.
+
+        """
+        pass
+
+    def _insert_event_def(self, event_object):
+        """
+        Puts the event into the event definition attribute.
+
+        :param event_object:
+            A reference to the currently processed event object.
+
+        """
+        pass
+
+    def _insert_track_def(self, event_object):
+        """
+        Puts the track into the track definition attribute.
+
+        :param event_object:
+            A reference to the currently processed event object.
+
+        """
+        pass
+
+    def _insert_event(self, event_object):
+        """
+        Puts event data into the event attribute.
+
+        :param event_object:
+            A reference to the currently processed event object.
+
+        """
+        pass
+
+    def _collect(self):
+        """
+        Processes the data and puts it into data structures.
+
+        """
+        for event_object in self.event_data:
+            self._insert_strings(event_object)
+            # self._insert_symbols(event_object)
+            self._insert_event_def(event_object)
+            self._insert_track_def(event_object)
+            self._insert_event(event_object)
+        self.no_of_sections += 4
+
+    def _write_header(self, file_descriptor):
+        """
+        Writes the file header into the Cpel file.
+
+        :param file_descriptor:
+            The file descriptor of the Cpel file.
+
+        """
+        # Format:
+        # 0x0 	    Endian bit (0x80), File Version, 7 bits (0x1...0x7F)
+        # 0x1 	    Unused, 8 bits
+        # 0x2-0x3 	Number of sections (16 bits) (NSECTIONS)
+        # 0x4 	    File date (32-bits) (POSIX "epoch" format)
+
+        # Calculate the file info byte
+        first_byte = self.ENDIAN_BIT << 7 | self.FILE_VERSION
+        # Insert number of sections
+        number_of_sections = self.no_of_sections
+        # Use POSIX "epoch" format for date
+        file_date = int(datetime.now().timestamp())
+        # Just date: file_date = int(datetime.combine(date.today(),
+        #   time(0)).timestamp())
+
+        header = struct.pack(">cxhi", bytes([first_byte]), number_of_sections,
+                             file_date)
+
+        file_descriptor.write(header)
+
+    def write(self, filename):
+        """
+        Writes the data to disk in a CPEL file.
+
+        :param filename:
+            The name of the output file to which to write the data.
+
+        """
+        # Write linearly from data structures
+        with open(filename, "w") as file_:
+            self._write_header(file_)
+
+
+if __name__ == "__main__":
     create_cpu_event_data_cpel(None, None)
+
