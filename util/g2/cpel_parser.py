@@ -77,10 +77,13 @@ class CPELParser:
         # 0x2-0x3 	Number of sections (16 bits) (NSECTIONS)
         # 0x4 	    File date (32-bits) (POSIX "epoch" format)
 
-        (_, number_of_sections, file_date) = struct.unpack(">cxhi",
-                                                           file_descriptor.read(
-                                                               8))
+        (file_info, number_of_sections, file_date) = \
+            struct.unpack(">cxhi", file_descriptor.read(8))
 
+        print("Endian-bit: {} ({}-endian)".format(file_info[0] >> 7, "little"
+                                                  if (file_info[0] >> 7) == 1
+                                                  else "big"))
+        print("File version: {}".format(file_info[0] & 127))
         print("Number of sections: {}".format(number_of_sections))
         print("File date: {}".format(datetime.fromtimestamp(file_date)))
 
@@ -246,16 +249,18 @@ class CPELParser:
         #     unsigned long event_format_offset_in_string_table;
         #     unsigned long datum_format_offset_in_string_table;
         # };
-        print("event_code event datum:")
+        print("event_code [event_offset] [datum_offset]:")
 
         for index in range(0, int(section_length - 12), 12):
             (event_code, event_offset, datum_offset) = struct.unpack(
                 ">LLL", binary_content[index:index + 12])
-            print("{}\t{}\t{}".format(event_code,
-                                      self._get_string(table_name,
-                                                       event_offset),
-                                      self._get_string(table_name,
-                                                       datum_offset)))
+            print("{}\t{}[{}] (\"{}\")\t{}[{}] (\"{}\")".format(event_code,
+                                                                table_name,
+                                                                event_offset,
+                  self._get_string(table_name, event_offset),
+                                                                table_name,
+                                                                datum_offset,
+                  self._get_string(table_name, datum_offset)))
 
     def _parse_track_definition_section(self, binary_content: bytes,
                                         section_length: int,
@@ -275,12 +280,15 @@ class CPELParser:
         #     unsigned long track_id;
         #     unsigned long track_format_offset_in_string_table;
         # };
-        print("track_id track_name:")
+        print("track_id [track_offset]:")
         for index in range(0, int(section_length - 8), 8):
             (track_id, track_offset) = struct.unpack(">LL", binary_content[
                                                             index:index + 8])
-            print("{}\t{}".format(track_id, self._get_string(table_name,
-                                                             track_offset)))
+            print("{}\t{}[{}] (\"{}\")".format(track_id, table_name,
+                                               track_offset, self._get_string(
+                                                table_name, track_offset)))
+
+        exit()
 
     @staticmethod
     def _parse_event_section(binary_content: bytes, section_length: int):
