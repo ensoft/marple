@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # perf.py - interacts with the perf tracing tool
-# June-July 2018 - Franz Nowak, Hrutvik Kanabar
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
 """
@@ -17,6 +17,7 @@ import logging
 import os
 import re
 import subprocess
+import common.util as util
 
 from common import (
     config,
@@ -35,6 +36,7 @@ logger = logging.getLogger("collect.interface.perf")
 logger.setLevel(logging.DEBUG)
 
 
+@util.check_kernel_version("2.6")
 def collect(time, frequency, cpufilter="-a"):
     """
     Collect system data using perf
@@ -55,6 +57,7 @@ def collect(time, frequency, cpufilter="-a"):
     output.print_("Done.")
 
 
+@util.check_kernel_version("2.6")
 def collect_sched(time):
     """
     Collect all CPU scheduling data using perf sched.
@@ -70,6 +73,7 @@ def collect_sched(time):
     output.print_("Done.")
 
 
+@util.check_kernel_version("2.6")
 def collect_mem(time):
     """
     Collect all memory data using perf.
@@ -85,6 +89,7 @@ def collect_mem(time):
     output.print_("Done.")
 
 
+@util.check_kernel_version("2.6")
 def get_stack_data():
     """
     Convert collected perf data to formatted stack data.
@@ -106,6 +111,7 @@ def get_stack_data():
     return stack_parser.stack_collapse()
 
 
+@util.check_kernel_version("2.6")
 def get_mem_data():
     """
     Get memory data. Creates and returns an iterator over memory event objects.
@@ -128,6 +134,7 @@ def get_mem_data():
     return stack_parser.stack_collapse()
 
 
+@util.check_kernel_version("2.6")
 def get_sched_data():
     """
     Get the relevant scheduling data.
