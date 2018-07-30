@@ -288,8 +288,6 @@ class CPELParser:
                                                track_offset, self._get_string(
                                                 table_name, track_offset)))
 
-        exit()
-
     @staticmethod
     def _parse_event_section(binary_content: bytes, section_length: int):
         """
