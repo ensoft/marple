@@ -102,6 +102,13 @@ def main():
                       "Exited with a FileNotFoundError. Filename: {}".format(
                           fnfe.filename))
         exit(1)
+    except exceptions.NotSupportedException as nse:
+        # If the target kernel does not meet the requirements
+        output.error_("You need to have kernel {} or above for this "
+                      "functionality".format(nse.required_kernel),
+                      "Exited with NotSupportedError. Required Kernel: "
+                      "{}".format(nse.required_kernel))
+        exit(1)
     except IsADirectoryError as iade:
         # If user tried to save output under a name that is a directory name
         output.error_("Cannot use filename {}, because there is a directory "
