@@ -17,6 +17,7 @@ import logging
 
 from common import file
 from . import flamegraph
+from . import trace2heatmap
 
 logger = logging.getLogger('display.controller')
 logger.setLevel(logging.DEBUG)
@@ -47,6 +48,13 @@ def _display(args):
     if args.cpu:
         # Stub
         raise NotImplementedError("display cpu data")
+    elif args.disk:
+        if args.n:
+            trace2heatmap.make(input_filename, output_filename)
+            trace2heatmap.show(output_filename)
+        else:
+            flamegraph.make(input_filename, output_filename, colouring="io")
+            flamegraph.show(output_filename)
     elif args.ipc:
         # Stub
         raise NotImplementedError("display ipc data")
@@ -55,7 +63,7 @@ def _display(args):
         raise NotImplementedError("display library data")
     elif args.mem:
         if args.n:
-            raise NotImplementedError("display-numeric stack data")
+            raise NotImplementedError("display-numeric memory data")
         else:
             flamegraph.make(input_filename, output_filename, colouring="mem")
             flamegraph.show(output_filename)
@@ -65,6 +73,7 @@ def _display(args):
         else:
             flamegraph.make(input_filename, output_filename)
             flamegraph.show(output_filename)
+
 
 
 def _args_parse(argv):

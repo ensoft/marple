@@ -42,6 +42,7 @@ def show(image):
         The image file containing the flamegraph.
 
     """
+    username = os.environ['HOME'][6:]  # @@@ TODO find a better way of doing this
     subprocess.call(["su", "-", "-c",  "firefox " + DISPLAY_DIR + image,
-                     "hrutvikk"])
+                     username])
 

@@ -70,17 +70,47 @@ def collect_sched(time):
     output.print_("Done.")
 
 
-def collect_mem(time):
+def collect_mem(time, malloc=False):
     """
     Collect all memory data using perf.
 
     :param time:
         The time for which data should be collected.
+    :param malloc:
+        True if a probe should be used to trace malloc calls.
 
     """
+    if malloc:
+        logger.info("Creating probe on malloc...")
 
-    sub_process = subprocess.Popen(["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
-                                    "sleep", str(time)], stderr=subprocess.PIPE) #@@@
+        # Delete old probes and create a new one tracking allocation size @@@ THIS IS ARCHITECTURE SPECIFIC CURRENTLY
+        sub_process = subprocess.Popen(["perf", "probe", "-q", "--del", "*malloc*"], stderr=subprocess.PIPE)
+        logger.debug(sub_process.stderr.read().decode())
+        sub_process = subprocess.Popen(["perf", "probe", "-qx", "/lib/x86_64-linux-gnu/libc.so.6", "malloc:1 size=%di"],
+                                       stderr=subprocess.PIPE)
+        logger.debug(sub_process.stderr.read().decode())
+        logger.info("Done.")
+
+        # Record perf data
+        sub_process = subprocess.Popen(["perf", "record", "-ag", "-e", "probe_libc:malloc:",
+                                        "sleep", str(time)], stderr=subprocess.PIPE)
+    else:
+        sub_process = subprocess.Popen(["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
+                                        "sleep", str(time)], stderr=subprocess.PIPE)
+    logger.debug(sub_process.stderr.read().decode())
+    output.print_("Done.")
+
+
+def collect_disk(time):
+    """
+    Collect disk I/O data using perf.
+
+    :param time:
+        The time for which data should be collected.
+
+    """
+    sub_process = subprocess.Popen(["perf", "record", "-ag", "-e", "block:block_rq_insert",
+                                    "sleep", str(time)], stderr=subprocess.PIPE)
     logger.debug(sub_process.stderr.read().decode())
     output.print_("Done.")
 
@@ -154,6 +184,27 @@ def get_sched_data():
             sub_process.wait()
 
     return _sched_data_gen(filename)
+
+
+def get_disk_data():
+    """
+    Get disk data. Creates and returns an iterator over memory event objects.
+
+    :return:
+        an iterator over :class:`StackEvent` objects.
+
+    """
+    filename = file.create_unique_temp_filename()
+
+    sub_process = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+
+    with open(filename, "w") as outfile:
+        outfile.write(sub_process.stdout.read().decode())
+        logger.error(sub_process.stderr.read().decode())
+
+    stack_parser = StackParser(filename)
+    return stack_parser.stack_collapse()
 
 
 # def _mem_data_gen(filename):
