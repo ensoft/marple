@@ -223,7 +223,7 @@ class CPELParser:
         #     unsigned long name_offset_in_string_table;
         # };
         print("value name:")
-        for index in range(0, int(section_length - 8), 8):
+        for index in range(0, int(section_length), 8):
             (value, name_offset) = struct.unpack(
                 ">LL", binary_content[index:index + 8])
             print("{}\t{}".format(value,
@@ -251,7 +251,7 @@ class CPELParser:
         # };
         print("event_code [event_offset] [datum_offset]:")
 
-        for index in range(0, int(section_length - 12), 12):
+        for index in range(0, int(section_length), 12):
             (event_code, event_offset, datum_offset) = struct.unpack(
                 ">LLL", binary_content[index:index + 12])
             print("{}\t{}[{}] (\"{}\")\t{}[{}] (\"{}\")".format(event_code,
@@ -281,7 +281,7 @@ class CPELParser:
         #     unsigned long track_format_offset_in_string_table;
         # };
         print("track_id [track_offset]:")
-        for index in range(0, int(section_length - 8), 8):
+        for index in range(0, int(section_length), 8):
             (track_id, track_offset) = struct.unpack(">LL", binary_content[
                                                             index:index + 8])
             print("{}\t{}[{}] (\"{}\")".format(track_id, table_name,
@@ -306,7 +306,7 @@ class CPELParser:
         # 	unsigned long event_datum;
         # };
         print("time track event_code, event_datum:")
-        for index in range(0, int(section_length - 20), 20):
+        for index in range(0, int(section_length)-20, 20):
             (time1, time2, track, event_code, event_datum) = struct.unpack(
                 ">LLLLL", binary_content[index:index + 20])
             print("{:01d} {}\t{}\t{}\t{}".format(time1, time2, track,
