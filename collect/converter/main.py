@@ -62,10 +62,20 @@ def create_cpu_event_data(sched_events, filename):
         The name of the file into which to store the output.
 
     """
+    logger.info("Enter create_cpu_data.")
+
+    no_data_flag = True
+
+    logger.info("Writing cpu events to file.")
     # @Write to file
     with open(filename, "w") as out:
         for event in sched_events:
+            no_data_flag = False
             out.write(str(event) + "\n")
+        if no_data_flag:
+            raise ValueError(
+                "No stack data objects found in the iterable to be "
+                "converted.")
 
 
 def create_cpu_event_data_cpel(sched_events, filename):
@@ -79,6 +89,8 @@ def create_cpu_event_data_cpel(sched_events, filename):
 
 
     """
+    logger.info("Enter create_cpu_event_data_cpel.")
+
     cpel_writer = CpelWriter(sched_events)
     cpel_writer.write(filename)
 
