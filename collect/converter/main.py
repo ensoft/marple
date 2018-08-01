@@ -230,19 +230,6 @@ class CpelWriter:
         self._insert_string("cpu " + str(event_object.cpu))
         self._insert_string(event_object.type)
 
-    @staticmethod
-    def _get_datum(event_object):
-        """
-        Takes data and returns single string datum of pid and name.
-
-        :param event_object:
-            The object whose data to return.
-        :return:
-            A string concatenating pid and name.
-
-        """
-        return str(event_object.name) + " pid: " + str(event_object.pid)
-
     def _insert_object_symbols(self, event_object):
         """
         Unused for now.
@@ -261,11 +248,12 @@ class CpelWriter:
 
         """
         # event_code event_offset datum_offset
+        if event_object.type not in self.event_definitions_dict:
+            self.event_definitions_dict[event_object.type] = \
+                self.event_def_index
+            self.event_def_index += 1
 
-        self.event_definitions_dict[event_object.type] = self.event_def_index
-        self.event_def_index += 1
-
-        self.section_length[3] += 12
+            self.section_length[3] += 12
 
     def _insert_object_track_def(self, event_object):
         """
@@ -278,10 +266,12 @@ class CpelWriter:
         # track_id track_format_offset
         # tdd[track]=
 
-        self.track_definitions_dict["cpu " + str(event_object.cpu)] = \
-            self.track_def_index
-        self.track_def_index += 1
-        self.section_length[4] += 8
+        event_name = self._get_track_name(event_object)
+
+        if event_name not in self.track_definitions_dict:
+            self.track_definitions_dict[event_name] = self.track_def_index
+            self.track_def_index += 1
+            self.section_length[4] += 8
 
     def _insert_object_event_data(self, event_object):
         """
@@ -298,7 +288,7 @@ class CpelWriter:
         time = event_object.time.split(".", 1)
         self.event_data.append((int(time[0]), int(time[1]),
                                 self.track_definitions_dict[
-                                    "cpu " + str(event_object.cpu)],
+                                    self._get_track_name(event_object)],
                                 self.event_definitions_dict[event_object.type],
                                 self.string_table[
                                     self._get_datum(event_object)]))
@@ -443,6 +433,25 @@ class CpelWriter:
             # Write a number for ticks per microsecond:
             self.file_descriptor.write(struct.pack(">L", 1000000))
 
+    @staticmethod
+    def _get_datum(event_object):
+        """
+        Helper function that creates single string datum of pid and name.
+
+        :param event_object:
+            The object whose data to return.
+        :return:
+            A string concatenating pid and name.
+
+        """
+        return "{} (pid: {})".format(str(event_object.name), str(
+            event_object.pid))
+
+    @staticmethod
+    def _get_track_name(event_object):
+        """Helper function for standard track name format."""
+        return "cpu " + str(event_object.cpu)
+
     def _pad_strings(self):
         """Makes sure the string section is padded to the nearest four bytes"""
         padnum = 4 - (len(self._string_resource) % 4)
@@ -495,9 +504,9 @@ if __name__ == "__main__":
                                                      time="1111.2222",
                                                      type="event_type"
                                                      ),
-                                datatypes.SchedEvent(name="test_2",
-                                                     pid=1212,
+                                datatypes.SchedEvent(name="test_name2",
+                                                     pid=1234,
                                                      cpu=2,
-                                                     time="1232.0000",
-                                                     type="other_type")],
+                                                     time="1111.2222",
+                                                     type="event_type")],
                                "MUT.cpel")
