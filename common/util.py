@@ -27,7 +27,7 @@ def check_kernel_version(required_kernel):
             if delimited_tk[0:3] < delimited_rk[0:3]:
                 raise exceptions.NotSupportedException("Kernel not supported",
                                                        required_kernel)
-            f(*args)
+            return f(*args)
         return wrapped_check
     return wrap
 
