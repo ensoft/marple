@@ -42,5 +42,5 @@ def sched_collect_and_store(time, filename):
     sched_data_formatted = perf.get_sched_data()
 
     # Create file from the SchedEvent objects
-    converter.create_cpu_event_data(sched_events=sched_data_formatted,
-                                    filename=filename)
+    converter.create_cpu_event_data_cpel(sched_events=sched_data_formatted,
+                                         filename=filename)

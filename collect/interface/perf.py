@@ -297,10 +297,14 @@ def _sched_data_gen(filename):
                              event_data)
                 continue
 
+            # Convert time format to us. Perf output: [seconds].[us]
+            time_str = match.group("time").split(".")
+            time_int = int(time_str[0]) * 1000000 + int(time_str[1])
+
             event = SchedEvent(name=match.group("name"),
                                pid=int(match.group("pid")),
                                cpu=int(match.group("cpu")),
-                               time=match.group("time"),
+                               time=time_int,
                                type=match.group("event"))
 
             yield event

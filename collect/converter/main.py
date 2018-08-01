@@ -297,8 +297,7 @@ class CpelWriter:
         # time,time (from object) track_id (from track_def_dict) event_code (
         #   from event_def_dict) event_datum (from string table)
 
-        time = event_object.time.split(".", 1)
-        self.event_data.append((int(time[0]), int(time[1]),
+        self.event_data.append((event_object.time,
                                 self.track_definitions_dict[
                                     self._get_track_name(event_object)],
                                 self.event_definitions_dict[event_object.type],
@@ -421,9 +420,10 @@ class CpelWriter:
 
         # Just write
         for event in self.event_data:
-            (time1, time2, track_id, event_code, event_datum) = event
+            (time, track_id, event_code, event_datum) = event
             # import pdb; pdb.set_trace()
-            data = struct.pack(">LLLLL", time1, time2, track_id, event_code,
+            time0, time1 = self._convert_time(time)
+            data = struct.pack(">LLLLL", time0, time1, track_id, event_code,
                                event_datum)
             self.file_descriptor.write(data)
 
@@ -444,6 +444,12 @@ class CpelWriter:
         if event_section:
             # Write a number for ticks per microsecond:
             self.file_descriptor.write(struct.pack(">L", 1000000))
+
+    @staticmethod
+    def _convert_time(time):
+        time0 = time >> 32
+        time1 = time & 2 ** 32 - 1
+        return time0, time1
 
     @staticmethod
     def _get_datum(event_object):
@@ -513,12 +519,12 @@ if __name__ == "__main__":
     create_cpu_event_data_cpel([datatypes.SchedEvent(name="test_name",
                                                      pid=1234,
                                                      cpu=1,
-                                                     time="1111.2222",
+                                                     time=11112222,
                                                      type="event_type"
                                                      ),
                                 datatypes.SchedEvent(name="test_name2",
                                                      pid=1234,
                                                      cpu=2,
-                                                     time="1111.2222",
+                                                     time=11112222,
                                                      type="event_type")],
                                "MUT.cpel")

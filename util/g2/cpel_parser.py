@@ -307,12 +307,13 @@ class CPELParser:
         # };
         print("time \t\t\t\t\t track \t event_code \t event_datum:")
         for index in range(0, int(section_length)-20, 20):
-            (time1, time2, track, event_code, event_datum) = struct.unpack(
+            (time0, time1, track, event_code, event_datum) = struct.unpack(
                 ">LLLLL", binary_content[index:index + 20])
-            print("time:{:01d}:{:07d} {:10d} {:10d} \t{}".format(time1,
-                                                                    time2,
-                                                             track,
-                                                 event_code,
+
+            time = (time0 << 32) | time1
+            print("time:\t{} \t track:{:5d} \t event:{:5d} \t\t{}".format(time,
+                                                                    track,
+                                                         event_code,
                                                  self._get_string(
                                                      table_name, event_datum)))
 

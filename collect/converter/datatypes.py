@@ -13,7 +13,7 @@ class SchedEvent(NamedTuple):
     name: str
     pid: int
     cpu: int
-    time: str
+    time: int
     type: str
 
 
