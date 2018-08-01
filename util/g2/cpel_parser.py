@@ -288,8 +288,8 @@ class CPELParser:
                                                track_offset, self._get_string(
                                                 table_name, track_offset)))
 
-    @staticmethod
-    def _parse_event_section(binary_content: bytes, section_length: int):
+    def _parse_event_section(self, binary_content: bytes, section_length: int,
+                             table_name: str):
         """
         Parses an event section.
 
@@ -305,12 +305,16 @@ class CPELParser:
         # 	unsigned long event_code;
         # 	unsigned long event_datum;
         # };
-        print("time track event_code, event_datum:")
+        print("time \t\t\t\t\t track \t event_code \t event_datum:")
         for index in range(0, int(section_length)-20, 20):
             (time1, time2, track, event_code, event_datum) = struct.unpack(
                 ">LLLLL", binary_content[index:index + 20])
-            print("{:01d} {}\t{}\t{}\t{}".format(time1, time2, track,
-                                                 event_code, event_datum))
+            print("time:{:01d}:{:07d} {:10d} {:10d} \t{}".format(time1,
+                                                                    time2,
+                                                             track,
+                                                 event_code,
+                                                 self._get_string(
+                                                     table_name, event_datum)))
 
     def parse_file(self):
         """ The main function of the parser, parses the CPEL file. """
@@ -357,7 +361,8 @@ class CPELParser:
                 # Event Section
                 elif section_type_nr == 5:
                     self._parse_event_section(binary_content,
-                                              section_length)
+                                              section_length,
+                                              table_name)
                 # If the given number is not in the range 1-5
                 else:
                     print("Invalid Section number {}".format(
