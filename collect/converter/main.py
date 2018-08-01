@@ -10,8 +10,8 @@ Gets the data that was collected by an interface module and converted into
 formatted objects and writes them into a file that was provided by the user.
 
 """
-__all__ = ["create_stack_data_unsorted", "create_cpu_event_data", "create_mem_event_data",
-           "create_disk_event_data"]
+__all__ = ["create_stack_data_unsorted", "create_cpu_event_data",
+           "create_mem_event_data", "create_disk_event_data"]
 
 import collections
 import logging
@@ -159,6 +159,7 @@ class CpelWriter:
 
         :param event_objects:
             An iterator of event objects to be processed.
+
         """
         self.event_objects = event_objects
 
@@ -175,9 +176,9 @@ class CpelWriter:
         self.string_table[short_table_name] = 0
         self._string_resource += short_table_name
         self.section_length[1] = len(short_table_name)
-        self.string_table["%s"] = 1
-        self.section_length[1] += (len("%s") + 1)
+        self.string_table["%s"] = self.section_length[1] + 1
         self._string_resource += ("\x00" + "%s")
+        self.section_length[1] += (len("%s") + 1)
 
         # Dict for symbol table section
         self.symbol_table = dict()
@@ -212,7 +213,7 @@ class CpelWriter:
 
         """
         if string_key not in self.string_table:
-            self.string_table[string_key] = self.section_length[1]
+            self.string_table[string_key] = self.section_length[1] + 1
             self.section_length[1] += (len(string_key) + 1)
             self._string_resource += ("\x00" + string_key)
 
@@ -229,7 +230,8 @@ class CpelWriter:
         self._insert_string("cpu " + str(event_object.cpu))
         self._insert_string(event_object.type)
 
-    def _get_datum(self, event_object):
+    @staticmethod
+    def _get_datum(event_object):
         """
         Takes data and returns single string datum of pid and name.
 
@@ -287,13 +289,14 @@ class CpelWriter:
 
         :param event_object:
             A reference to the currently processed event object.
+                time: string("d+.d+")
 
         """
         # time,time (from object) track_id (from track_def_dict) event_code (
         #   from event_def_dict) event_datum (from string table)
 
         time = event_object.time.split(".", 1)
-        self.event_data.append((time[0], time[1],
+        self.event_data.append((int(time[0]), int(time[1]),
                                 self.track_definitions_dict[
                                     "cpu " + str(event_object.cpu)],
                                 self.event_definitions_dict[event_object.type],
@@ -376,11 +379,16 @@ class CpelWriter:
         # };
 
         # sort by index and write into file
-        for event_def in [x[0] for x in sorted(
+        for event_def in sorted(
                 self.event_definitions_dict.items(),
-                key=(lambda x: x[1]))]:
-            def_bytearray = bytearray(event_def, "ascii")
-            self.file_descriptor.write(def_bytearray)
+                key=(lambda x: x[1])):
+
+            event_code = event_def[1]
+            event_format = self.string_table[event_def[0]]
+            event_data_format = self.string_table["%s"]
+            self.file_descriptor.write(struct.pack(">LLL", event_code,
+                                                   event_format,
+                                                   event_data_format))
 
     def _write_track_def(self):
         """Writes the track definition section into the file"""
@@ -390,7 +398,15 @@ class CpelWriter:
         # };
 
         # Sort by id and write
-        pass
+        for track_def in sorted(
+                self.track_definitions_dict.items(),
+                key=(lambda x: x[1])):
+            # import pdb; pdb.set_trace()
+
+            track_id = track_def[1]
+            track_format = self.string_table[track_def[0]]
+            self.file_descriptor.write(struct.pack(">LL", track_id,
+                                                   track_format))
 
     def _write_events(self):
         """Writes the event data to disk"""
@@ -402,23 +418,34 @@ class CpelWriter:
         # };
 
         # Just write
-        pass
+        for event in self.event_data:
+            (time1, time2, track_id, event_code, event_datum) = event
+            # import pdb; pdb.set_trace()
+            data = struct.pack(">LLLLL", time1, time2, track_id, event_code,
+                               event_datum)
+            self.file_descriptor.write(data)
 
-    def _write_section_header(self, no_of_entries):
+    def _write_section_header(self, no_of_entries, event_section=False):
         """
         Writes the table name before the start of a section
 
         :param no_of_entries:
             The number of entries the section has.
+        :param event_section:
+            Optional flag to indicate that the sectionn is an event section.
 
         """
         self.file_descriptor.write(bytearray(self.FILE_STRING_TABLE_NAME,
                                              "ascii"))
         self.file_descriptor.write(struct.pack(">L", no_of_entries))
 
+        if event_section:
+            # Write a number for ticks per microsecond:
+            self.file_descriptor.write(struct.pack(">L", 1000000))
+
     def _pad_strings(self):
         """Makes sure the string section is padded to the nearest four bytes"""
-        padnum = 4-(len(self._string_resource) % 4)
+        padnum = 4 - (len(self._string_resource) % 4)
         for index in range(padnum):
             self._string_resource += "\x00"
             self.section_length[1] += 1
@@ -434,31 +461,43 @@ class CpelWriter:
         # Write linearly from data structures
         with open(filename, "wb") as file_:
             self.file_descriptor = file_
+
+            # Header
             self._write_file_header()
+
+            # String Table
             self._pad_strings()
             self._write_tld(1, self.section_length[1])
             self._write_strings()
-            # self._write_tld(2, self.section_length[2])
-            # self._write_section_header()
-            # self._write_symbols()
 
+            # Event Definition Section
             # Add 68 for the section header (table name and length)
             self._write_tld(3, self.section_length[3] + 68)
             self._write_section_header(len(self.event_definitions_dict))
             self._write_event_def()
+
+            # Track Definition Section
             self._write_tld(4, self.section_length[4] + 68)
             self._write_section_header(len(self.track_definitions_dict))
-            self._write_event_def()
-            self._write_tld(5, self.section_length[5] + 68)
-            self._write_section_header(len(self.event_data))
+            self._write_track_def()
+
+            # Event Section
+            # Add 72 for section header (table name, length and ticks per us)
+            self._write_tld(5, self.section_length[5] + 72)
+            self._write_section_header(len(self.event_data), event_section=True)
             self._write_events()
 
 
 if __name__ == "__main__":
-    create_cpu_event_data_cpel([datatypes.SchedEvent(name="test",
-                                                     pid=1,
+    create_cpu_event_data_cpel([datatypes.SchedEvent(name="test_name",
+                                                     pid=1234,
                                                      cpu=1,
                                                      time="1111.2222",
-                                                     type="nooooo"
-                                                     )], "MUT.cpel")
-
+                                                     type="event_type"
+                                                     ),
+                                datatypes.SchedEvent(name="test_2",
+                                                     pid=1212,
+                                                     cpu=2,
+                                                     time="1232.0000",
+                                                     type="other_type")],
+                               "MUT.cpel")
