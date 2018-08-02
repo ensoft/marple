@@ -17,7 +17,7 @@ import logging
 
 from common import file
 from . import flamegraph
-from . import trace2heatmap
+from . import heatmap
 
 logger = logging.getLogger('display.controller')
 logger.setLevel(logging.DEBUG)
@@ -50,8 +50,11 @@ def _display(args):
         raise NotImplementedError("display cpu data")
     elif args.disk:
         if args.n:
-            trace2heatmap.make(input_filename, output_filename)
-            trace2heatmap.show(output_filename)
+            labels = dict(X_LAB='Time', X_UNITS='seconds', Y_LAB='Latency',
+                          Y_UNITS='ms', COLORBAR='No. accesses')
+            hmap = heatmap.HeatMap(input_filename, output_filename, labels)
+            hmap.save()
+            hmap.show()
         else:
             flamegraph.make(input_filename, output_filename, colouring="io")
             flamegraph.show(output_filename)

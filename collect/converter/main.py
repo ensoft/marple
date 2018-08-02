@@ -11,11 +11,12 @@ formatted objects and writes them into a file that was provided by the user.
 
 """
 __all__ = ["create_stack_data_unsorted", "create_cpu_event_data",
-           "create_mem_event_data", "create_disk_event_data"]
+           "create_mem_flamegraph_data", "create_disk_flamegraph_data"]
 
 import collections
 import logging
 import struct
+import subprocess
 from datetime import datetime
 from collect.converter import datatypes
 
@@ -95,7 +96,7 @@ def create_cpu_event_data_cpel(sched_events, filename):
     cpel_writer.write(filename)
 
 
-def create_mem_event_data(mem_events, filename):
+def create_mem_flamegraph_data(mem_events, filename):
     """
     Save memory event data from generator to output file.
 
@@ -125,7 +126,7 @@ def create_mem_event_data(mem_events, filename):
     logger.info("Done.")
 
 
-def create_disk_event_data(disk_events, filename):
+def create_disk_flamegraph_data(disk_events, filename):
     """
     Save disk event data from generator to output file.
 
@@ -153,6 +154,23 @@ def create_disk_event_data(disk_events, filename):
             out.write(";".join(disk_event.stack) + " {}\n".format(count))
 
     logger.info("Done.")
+
+
+def create_disk_heatmap_data(input_file, output_file):
+    """
+    Save disk event data from iosnoop to a format for display as a heatmap.
+
+    :param input_file:
+        The output file from iosnoop, containing disk data
+    :param output_file:
+        The file to save to disk.
+
+    """
+    logger.info("Enter create_disk_heatmap_data")
+
+    with open(output_file, "w") as out:
+        subprocess.Popen(["awk", "$1 ~ /^[0-9]/ { print $2, $9 }", input_file],
+                         stdout=out)
 
 
 class CpelWriter:

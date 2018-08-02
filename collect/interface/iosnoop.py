@@ -39,8 +39,9 @@ def collect_disk(time, filename):
     logger.debug("Enter collect_disk - begin iosnoop tracing.")
 
     with open(filename, "w") as out:
-        sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(time)], stdout=out,
-                                       stderr=subprocess.PIPE)
+        sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(time)],
+                                       stdout=out, stderr=subprocess.PIPE)
+
     logger.debug("Done.")
     logger.debug(sub_process.stderr.read().decode())
     output.print_("Done.")

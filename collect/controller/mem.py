@@ -43,4 +43,4 @@ def collect_and_store(time, filename):
     mem_data_formatted = perf.get_mem_data()
 
     # Create file
-    converter.create_mem_event_data(mem_data_formatted, filename)
+    converter.create_mem_flamegraph_data(mem_data_formatted, filename)
