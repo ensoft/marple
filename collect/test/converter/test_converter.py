@@ -8,10 +8,10 @@ from collect.converter.datatypes import StackEvent
 class _BaseTest(util.BaseTest):
     """Base test class"""
 
-
 # -----------------------------------------------------------------------------
 # Tests
 #
+
 
 class StackTest(_BaseTest):
     """Class for testing data conversion of stack data"""
@@ -41,7 +41,7 @@ class StackTest(_BaseTest):
             "pname", "call1", "call2")), StackEvent(("pname", "call3",
                                                      "call4")))
 
-        # Expected ouput:
+        # Expected output:
         expected = "pname;call1;call2 2\n" \
             "pname;call3;call4 1\n"
 
@@ -62,3 +62,23 @@ class StackTest(_BaseTest):
                    "pname;call3;call4 1\n"
 
         self.check_create_stack_data(example, expected)
+
+
+class EventTest(_BaseTest):
+    """Class for testing creation and conversion of event object data"""
+    def setUp(self):
+        super.setUp()
+        # Create Event iterators for testing
+
+
+class CPELTest(EventTest):
+    """Class for testing conversion from event objects to CPEL"""
+
+    # - Create well known output file (here or in util)
+    #
+    # - Variations of data, same or different datum fields, same or different
+    # tracks, swapping track and data around, etc.
+    #
+    # - Have completely duplicate events, see if it breaks things
+    #
+    # - Test the time scales, different values for ticks per us (?)
