@@ -17,7 +17,6 @@ import logging
 from ..converter import main as converter
 from ..interface import perf
 from ..interface import iosnoop
-from common import file
 
 logger = logging.getLogger("collect.controller.diskIO")
 logger.setLevel(logging.DEBUG)
@@ -38,14 +37,11 @@ def collect_and_store(time, filename, latency=True):
                 "data for %s seconds. Output filename: %s", time, filename)
 
     if latency:
-        # Temp file for data collection
-        temp_file = file.create_unique_temp_filename()
-
         # Collect data using iosnoop
-        iosnoop.collect_disk(time, temp_file)
+        latency_datapoints = iosnoop.collect_disk(time)
 
         # Format data for heatmap and save to disk
-        converter.create_disk_heatmap_data(temp_file, filename)
+        converter.create_datapoint_file(latency_datapoints, filename)
     else:
         # Collect and format disk data using perf
         perf.collect_disk(time)

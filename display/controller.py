@@ -50,11 +50,16 @@ def _display(args):
         raise NotImplementedError("display cpu data")
     elif args.disk:
         if args.n:
-            labels = dict(X_LAB='Time', X_UNITS='seconds', Y_LAB='Latency',
-                          Y_UNITS='ms', COLORBAR='No. accesses')
-            hmap = heatmap.HeatMap(input_filename, output_filename, labels)
-            hmap.save()
+            labels = heatmap.AxesLabels(x='Time', x_units='seconds',
+                                        y='Latency', y_units='ms',
+                                        colorbar='No. accesses')
+            logger.info("Creating heatmap.")
+            hmap = heatmap.HeatMap(input_filename, labels,
+                                   heatmap.DEFAULT_PARAMETERS)
+            logger.info("Saving and displaying heatmap.")
             hmap.show()
+            hmap.save(output_filename)
+            logger.info("Exit heatmap methods.")
         else:
             flamegraph.make(input_filename, output_filename, colouring="io")
             flamegraph.show(output_filename)

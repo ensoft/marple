@@ -15,6 +15,13 @@ class SchedEvent(NamedTuple):
     track: str
     datum: str
 
+
+class Datapoint(NamedTuple):
+    """Represents a single 2D datapoint, potentially with added info."""
+    x: float
+    y: float
+    info: str
+
 # class MemEvent(NamedTuple):
 #     """Represents a single memory event."""
 #     name: str

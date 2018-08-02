@@ -16,6 +16,7 @@ import os
 import subprocess
 
 from common import output
+from ..converter.datatypes import Datapoint
 
 logger = logging.getLogger("collect.interface.iosnoop")
 logger.setLevel(logging.DEBUG)
@@ -26,7 +27,7 @@ ROOT_DIR = str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(
 IOSNOOP_SCRIPT = ROOT_DIR + "util/perf-tools/iosnoop"
 
 
-def collect_disk(time, filename):
+def collect_disk(time):
     """
     Collect disk latency data using iosnoop.
 
@@ -38,9 +39,15 @@ def collect_disk(time, filename):
     """
     logger.debug("Enter collect_disk - begin iosnoop tracing.")
 
-    with open(filename, "w") as out:
-        sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(time)],
-                                       stdout=out, stderr=subprocess.PIPE)
+    sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(time)],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+
+    for line in sub_process.stdout.readlines()[2:]:  # skip two lines of header
+        values = line.decode().split()
+        if len(values) < 9:
+            continue # skip footer lines
+        yield Datapoint(x=float(values[1]), y=float(values[8]), info=values[3])
 
     logger.debug("Done.")
     logger.debug(sub_process.stderr.read().decode())

@@ -1,7 +1,38 @@
+# -------------------------------------------------------------
+# heatmap.py - creates a heat map from a data file.
+# August 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
+"""
+    Heat map functionality from a data file.
+
+    The data file should be comma-separated 2D datapoints with accompanying
+    information or annotation: <x>,<y>,<info>.
+
+    Two classes are provided for modifying the graph:
+        :class:`AxesLabels` allows labelling of axes.
+        :class:`GraphParameters` allows scaling.
+
+    The class :class:`HeatMap` encapsulates the heat map itself,
+    and allows construction, display, and saving of the figure.
+
+"""
+
+__all__ = (
+    'AxesLabels',
+    'GraphParameters',
+    'DEFAULT_PARAMETERS',
+    'HeatMap',
+    'HeatMap.show',
+    'HeatMap.save'
+)
+
+import math
+from typing import NamedTuple
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
-import math
 
 # @@@ TODO save interactive files (see pickle package)
 # @@@ TODO scroll to zoom
@@ -9,102 +40,156 @@ import math
 #     (e.g. PID of processes in current bin)
 
 
-class HeatMap:
-    HEADER_SIZE = 8
+class AxesLabels(NamedTuple):
+    """
+    Class for storing labellings for heat map axes.
 
-    def __init__(self, datafile, outputfile, labels,
-                 figure_size=10, scale=5, y_res=10):
+    x:
+        Label for x-axis.
+    y:
+        Label for y-axis.
+    x_units:
+        Units for the x-axis.
+    y_units:
+        Units for the y-axis.
+    colorbar:
+        Label for the colourbar.
+
+    """
+    x: str
+    y: str
+    x_units: str
+    y_units: str
+    colorbar: str
+
+
+class GraphParameters(NamedTuple):
+    """
+    Class for storing heatmap graph display parameters.
+
+    figure_size:
+        The size of the square figure on-screen, in inches.
+    scale:
+        The scale of the graph - larger means more histogram bins
+        (i.e. more zoomed in)
+    y_res:
+        The resolution on the y-axis - larger means greater resolution.
+
+    """
+    figure_size: float
+    scale: float
+    y_res: float
+
+
+DEFAULT_PARAMETERS = GraphParameters(figure_size=10.0, scale=5.0, y_res=10.0)
+
+
+class HeatMap:
+    """
+    The :class:`HeatMap` constructor takes in the input data file,
+    a :class:`AxesLabels` object, and a :class:`GraphParameters` object.
+    It creates the heat map with a colourbar, scrollable axes, and annotations
+    on hover.
+
+    To show the heat map, use :func:`HeatMap.show`.
+    To save, use :func:`HeatMap.save`.
+
+    """
+    def __init__(self, datafile, labels,
+                 parameters=DEFAULT_PARAMETERS):
         # Create input/output filenames
         self.datafile = datafile
-        self.outputfile = outputfile
 
         # Set parameters
         self.labels = labels
-        self.figure_size = figure_size
-        self.scale = scale
-        self.y_res = y_res
-
-        """
-        The following variables are defined above:
-        labels:
-            Labels for the axes (with units), and label for the colorbar.
-            A dictionary with the following fields:
-                "X_LAB", "Y_LAB", "X_UNITS", "Y_UNITS", "COLORBAR"
-        figure_size:
-            The size of the graph in inches.
-        scale:
-            A scale factor for the graph: larger scale gives a more zoomed out
-            graph.
-        y_res:
-            The resolution of the y-axis: a larger value gives finer bins.
-
-        """
+        self.params = parameters
 
         # Get data
-        self.x_data, self.y_data = self.get_data()
-        self.bounds = self.data_bounds()
-        self.bins = self.data_bins()
-        self.delta = self.get_delta()
-        """
-        The following data attributes are defined above:
-            x_data, y_data:
-                The data itself.
-            bounds:
-                Maximum and minimum values, and median y value.
-            bins:
-                Number of histogram bins and their sizes.
-            delta:
-                Useful variables for resizing axes.
-                In general, the visible axes will span two deltas.
+        self.x_data, self.y_data = self._get_data()
 
-        """
+        # Get values calculated from data
+        self.comps = self._get_data_comps()
 
         # Plot
-        self.axes, self.figure = self.create_axes()
-        self.heatmap, self.image = self.plot_histogram()
+        self.axes, self.figure = self._create_axes()
+        self.heatmap, self.image = self._plot_histogram()
 
-        # Set initial axes
-        self.pos = dict(X=self.delta['X'], Y=self.delta['Y'])
-        # pos: position of current viewport
-        self.set_axes_limits()
+        # Set current viewport
+        self.pos = self._ViewportPosition(self.comps.x_delta,
+                                          self.comps.y_delta)
+
+        # Set current axes
+        self._set_axes_limits()
 
         # Add features - colorbar, sliders, annotations
-        self.add_colorbar()
-        self.create_sliders()
-        self.add_annotations()
+        self._add_colorbar()
 
-    # def parse_header(self):
-    #     """
-    #     Parse the header of the data file to set graph parameters.
-    #     The header should be as follows:
-    #         <figure size>
-    #         <figure scale>
-    #         <y-axis resolution>
-    #         <x-axis label>
-    #         <x-axis units>
-    #         <y-axis label>
-    #         <y-axis units>
-    #         <colourbar label>
-    #
-    #     :return:
-    #         A tuple consisting of figure size, graph scale, y-axis resolution,
-    #         and a dictionary of axis labels.
-    #
-    #     """
-    #     with open(self.datafile, "r") as file:
-    #         figure_size = int(file.readline())
-    #         scale = int(file.readline())
-    #         y_res = int(file.readline())
-    #         x_lab = file.readline().strip()
-    #         x_unit = file.readline().strip()
-    #         y_lab = file.readline().strip()
-    #         y_unit = file.readline().strip()
-    #         cbar_lab = file.readline().strip()
-    #         labels = dict(X_LAB=x_lab, X_UNITS=x_unit, Y_LAB=y_lab,
-    #                       Y_UNITS=y_unit, COLORBAR=cbar_lab)
-    #         return figure_size, scale, y_res, labels
+        self._create_sliders()
 
-    def get_data(self, time=True):
+        self._add_annotations()
+
+    # The two methods below are not static as we would like a HeatMap instance
+    # to be created before they are used.
+    def save(self, outputfile):
+        """
+        Save the heat map to disk.
+        This will fail if the file is not of the correct format.
+
+        :param outputfile:
+            The output file name.
+        """
+        plt.savefig(outputfile, bbox_inches="tight")
+
+    def show(self):
+        plt.show()
+
+    class _DataComps(NamedTuple):
+        """
+        Internal class for storing values computed from the data.
+
+        x_min, x_max:
+            Minimum and maximum x-axis datapoints.
+        y_min, y_max:
+            Minimum and maximum y-axis datapoints.
+        y_median:
+            Median y-axis datapoint, for calculating scaling of y-axis.
+        x_bins, x_bin_size:
+            The number of bins on the x-axis, and their size.
+        y_bins, y_bin_size:
+            The number of bins on the y-axis, and their size.
+        x_delta, y_delta:
+            Delta values for x-axis and y-axis respectively.
+            These are useful values for calculating
+            how much of the graph should be visible.
+            In general, 2 * delta will be visible on each axis.
+
+        """
+        x_min: float
+        y_min: float
+        x_max: float
+        y_max: float
+        y_median: float
+        x_bins: float
+        x_bin_size: float
+        y_bins: float
+        y_bin_size: float
+        x_delta: float
+        y_delta: float
+
+    class _ViewportPosition(NamedTuple):
+        """
+        Internal class for storing position of current viewport.
+
+        x:
+            Position in x-axis.
+        y:
+            Position in y-axis.
+
+        """
+        x: float
+        y: float
+
+    def _get_data(self, time=True):
         """
         Gets heatmap data from a data file.
 
@@ -119,17 +204,11 @@ class HeatMap:
 
         """
         with open(self.datafile, "r") as file:
-            # # Skip header
-            # for _ in range(HeatMap.HEADER_SIZE):
-            #     next(file)
-
             # Get data
-            xy_values = [(float(line.split()[0]),
-                         float(line.split()[1]))
-                         for line in file]
+            xyz_values = [line.split(",") for line in file]
 
-            x_values = [x for (x, _) in xy_values]
-            y_values = [y for (_, y) in xy_values]
+            x_values = [float(value[0]) for value in xyz_values]
+            y_values = [float(value[1]) for value in xyz_values]
 
             if time:
                 # Normalize x-axis values to start from zero
@@ -137,7 +216,7 @@ class HeatMap:
 
             return x_values, y_values
 
-    def create_axes(self):
+    def _create_axes(self):
         """
         Create axes and figure objects ready for use.
 
@@ -151,65 +230,46 @@ class HeatMap:
         fig.canvas.set_window_title('Heat map')
 
         # Set axis labels
-        plt.xlabel(self.labels['X_LAB']+' / '+self.labels['X_UNITS'], va="top")
-        plt.ylabel(self.labels['Y_LAB']+' / '+self.labels['Y_UNITS'],
+        plt.xlabel(self.labels.x+' / '+self.labels.x_units, va="top")
+        plt.ylabel(self.labels.y+' / '+self.labels.y_units,
                    rotation=90, va="bottom")
 
         # Set figure size
-        fig.set_size_inches(self.figure_size, self.figure_size, forward=True)
+        fig.set_size_inches(self.params.figure_size, self.params.figure_size,
+                            forward=True)
 
         return axes, fig
 
-    def data_bounds(self):
+    def _get_data_comps(self):
         """
-        Determine the upper/lower bounds of the data.
+        Determine values computed from the data.
 
         :return:
-            A dictionary containing the bounds, and the median y value.
+            An object of class :class:`_DataComps`
 
         """
-        return dict(X_MIN=min(self.x_data), X_MAX=max(self.x_data),
-                    Y_MIN=min(self.y_data), Y_MAX=max(self.y_data),
-                    Y_MEDIAN=np.median(self.y_data))
+        # Determine minimum, maximum, median
+        x_min, x_max = min(self.x_data), max(self.x_data)
+        y_min, y_max = min(self.y_data), max(self.y_data)
+        y_med = np.median(self.y_data).item()
 
-    def data_bins(self):
-        """
-        Determine the number of bins for the histogram.
+        # Determine no. bins and bin size
+        x_bins = max(self.params.scale * self.params.figure_size, x_max)
+        y_bins = y_max / (y_med / self.params.y_res)
+        x_bin_size = (x_max - x_min) / x_bins
+        y_bin_size = (y_max - y_min) / y_bins
 
-        :return:
-            A dictionary containing the number of bins and their size
-            for both sets of data.
+        # Get delta values
+        x_delta = self.params.scale * self.params.figure_size * x_bin_size
+        y_delta = self.params.scale * self.params.figure_size * y_bin_size
 
-        """
-        # Determine no. of bins
-        x_bins = max(self.scale * self.figure_size, self.bounds['X_MAX'])
-        # i.e. minimum of SCALE * FIGURE_SIZE bins, up to a bin for every second
-        y_bins = self.bounds['Y_MAX'] / (self.bounds['Y_MEDIAN'] / self.y_res)
-        # i.e. enough bins to alllow resolution of Y_RES bins below median
+        return self._DataComps(x_min=x_min, x_max=x_max, y_min=y_min,
+                               y_max=y_max, y_median=y_med, x_bins=x_bins,
+                               y_bins=y_bins, x_bin_size=x_bin_size,
+                               y_bin_size=y_bin_size, x_delta=x_delta,
+                               y_delta=y_delta)
 
-        # Determine bin sizes
-        x_bin_size = (self.bounds['X_MAX'] - self.bounds['X_MIN']) / x_bins
-        y_bin_size = (self.bounds['Y_MAX'] - self.bounds['Y_MIN']) / y_bins
-
-        return dict(X_BINS=x_bins, Y_BINS=y_bins,
-                    X_SIZE=x_bin_size, Y_SIZE=y_bin_size)
-
-    def get_delta(self):
-        """
-        Get the deltas - useful variables for adjusting axes.
-        The visible axes should in general span two deltas.
-
-        :return:
-            A dictionary containing the delta measures, useful for calculating
-            which parts of the axes should be visible
-
-        """
-        x_delta = self.scale * self.figure_size * self.bins['X_SIZE']
-        y_delta = self.scale * self.figure_size * self.bins['Y_SIZE']
-
-        return dict(X=x_delta, Y=y_delta)
-
-    def plot_histogram(self):
+    def _plot_histogram(self):
         """
         Plot the histogram.
 
@@ -219,8 +279,8 @@ class HeatMap:
         """
         # Get histogram
         heatmap, xedges, yedges = np.histogram2d(self.x_data, self.y_data,
-                                                 bins=(self.bins['X_BINS'],
-                                                       self.bins['Y_BINS']))
+                                                 bins=(self.comps.x_bins,
+                                                       self.comps.y_bins))
         extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
 
         # Plot data
@@ -229,56 +289,59 @@ class HeatMap:
 
         return heatmap, image
 
-    def set_axes_limits(self):
+    def _set_axes_limits(self):
         """
         Set the limits of the axes that should be visible.
 
         """
-        x_ax_min = max(self.bounds['X_MIN'], self.pos['X'] - self.delta['X'])
-        x_ax_max = min(self.bounds['X_MAX'], self.pos['X'] + self.delta['X'])
-        y_ax_min = max(self.bounds['Y_MIN'], self.pos['Y'] - self.delta['Y'])
-        y_ax_max = min(self.bounds['Y_MAX'], self.pos['Y'] + self.delta['Y'])
+        x_ax_min = max(self.comps.x_min, self.pos.x - self.comps.x_delta)
+        x_ax_max = min(self.comps.x_max, self.pos.x + self.comps.x_delta)
+        y_ax_min = max(self.comps.y_min, self.pos.y - self.comps.y_delta)
+        y_ax_max = min(self.comps.y_max, self.pos.y + self.comps.y_delta)
 
         self.axes.axis([x_ax_min, x_ax_max, y_ax_min, y_ax_max])
 
-    def redraw(self):
+    def _redraw(self):
         """ Redraw the graph """
         self.figure.canvas.draw_idle()
 
-    def create_sliders(self):
+    def _create_sliders(self):
         """ Create sliders that allow the user to scroll the axes. """
         # Create sliders for scrollable axes
         x_slider = plt.axes([0.2, 0.95, 0.6, 0.015])
         x_slider_pos = Slider(x_slider,
-                              'Position of x-axis\n/ '+self.labels['X_UNITS'],
-                              self.bounds['X_MIN'] + self.delta['X'],
-                              self.bounds['X_MAX'] - self.delta['X'])
+                              'Position of x-axis\n/ '+self.labels.x_units,
+                              self.comps.x_min + self.comps.x_delta,
+                              self.comps.x_max - self.comps.x_delta)
+        x_slider_pos.valtext.set_visible(False)
 
         y_slider = plt.axes([0.2, 0.9, 0.6, 0.015])
         y_slider_pos = Slider(y_slider,
-                              'Position of y-axis\n/ '+self.labels['Y_UNITS'],
-                              self.bounds['Y_MIN'] + self.delta['Y'],
-                              self.bounds['Y_MAX'] - self.delta['Y'])
+                              'Position of y-axis\n/ '+self.labels.y_units,
+                              self.comps.y_min + self.comps.y_delta,
+                              self.comps.y_max - self.comps.y_delta)
+        y_slider_pos.valtext.set_visible(False)
 
         def update(val):
             """ Update the axes on slider change """
             # Determine new positions
-            self.pos = dict(X=x_slider_pos.val, Y=y_slider_pos.val)
-            self.set_axes_limits()
+            self.pos = self._ViewportPosition(x=x_slider_pos.val,
+                                              y=y_slider_pos.val)
+            self._set_axes_limits()
 
             # Redraw
-            self.redraw()
+            self._redraw()
 
         # Listeners for slider changes
         x_slider_pos.on_changed(update)
         y_slider_pos.on_changed(update)
 
-    def add_colorbar(self):
+    def _add_colorbar(self):
         """ Add a colorbar scale to the graph. """
         colorbar = self.axes.figure.colorbar(self.image, ax=self.axes)
-        colorbar.ax.set_ylabel(self.labels['COLORBAR'])
+        colorbar.ax.set_ylabel(self.labels.colorbar)
 
-    def add_annotations(self):
+    def _add_annotations(self):
         """ Add hovering annotations to the graph. """
         annot = self.axes.annotate("", xy=(0, 0), xytext=(5, 7),
                                    xycoords="data", textcoords="offset points",
@@ -289,28 +352,22 @@ class HeatMap:
         def hover(event):
             """ Update the figure on hover. """
             if event.inaxes == self.axes:
-                x_bin = int(math.floor(event.xdata / self.bins['X_SIZE']))
-                y_bin = int(math.floor(event.ydata / self.bins['Y_SIZE']))
+                x_bin = int(math.floor((event.xdata - self.comps.x_min) /
+                                       self.comps.x_bin_size))
+                y_bin = int(math.floor((event.ydata - self.comps.y_min) /
+                                       self.comps.y_bin_size))
                 text = "Bin (x-axis): {:.2g} - {:.2g} units\n" \
                        "Bin (y-axis): {:.4g} - {:.4g} units\n" \
-                       "Count: {}".format(x_bin, x_bin + self.bins['X_SIZE'],
-                                          y_bin, y_bin + self.bins['Y_SIZE'],
+                       "Count: {}".format(x_bin, x_bin + self.comps.x_bin_size,
+                                          y_bin, y_bin + self.comps.y_bin_size,
                                           self.heatmap[x_bin, y_bin])
                 annot.xy = (event.xdata, event.ydata)
                 annot.set_text(text)
                 annot.get_bbox_patch().set_alpha(0.4)
                 annot.set_visible(True)
-                self.redraw()
+                self._redraw()
             else:
                 annot.set_visible(False)
-                self.redraw()
+                self._redraw()
 
         self.figure.canvas.mpl_connect("motion_notify_event", hover)
-
-    def save(self):
-        """ Save the file to output. @@@ TODO save interactivity too """
-        plt.savefig(self.outputfile, bbox_inches="tight")
-
-    @classmethod
-    def show(cls):
-        plt.show()

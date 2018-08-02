@@ -11,7 +11,8 @@ formatted objects and writes them into a file that was provided by the user.
 
 """
 __all__ = ["create_stack_data_unsorted", "create_cpu_event_data",
-           "create_mem_flamegraph_data", "create_disk_flamegraph_data"]
+           "create_mem_flamegraph_data", "create_disk_flamegraph_data",
+           "create_datapoint_file"]
 
 import collections
 import logging
@@ -156,21 +157,24 @@ def create_disk_flamegraph_data(disk_events, filename):
     logger.info("Done.")
 
 
-def create_disk_heatmap_data(input_file, output_file):
+def create_datapoint_file(datapoints, output_file):
     """
-    Save disk event data from iosnoop to a format for display as a heatmap.
+    Save datapoint data as comma-separated values.
 
-    :param input_file:
-        The output file from iosnoop, containing disk data
+    :param datapoints:
+        The datapoints generator.
     :param output_file:
         The file to save to disk.
 
     """
-    logger.info("Enter create_disk_heatmap_data")
+    logger.info("Enter create_datapoint_file")
 
     with open(output_file, "w") as out:
-        subprocess.Popen(["awk", "$1 ~ /^[0-9]/ { print $2, $9 }", input_file],
-                         stdout=out)
+        for datapoint in datapoints:
+            # Write as comma-separated values
+            s = str(datapoint.x) + "," + str(datapoint.y) + "," + \
+                datapoint.info + "\n"
+            out.write(s)
 
 
 class CpelWriter:
