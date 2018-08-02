@@ -9,7 +9,18 @@ from typing import NamedTuple
 
 
 class SchedEvent(NamedTuple):
-    """Represents a single scheduler event."""
+    """
+    Represents a single scheduler event.
+    :key time:
+        The timesptamp of the event in Cpu ticks.
+    :key type:
+        The type of the event.
+    :key track:
+        The track that the event belongs to (e.g. cpu core, process, ...)
+    :key datum:
+        The data belonging to this event, (e.g. process id etc, cpu ... )
+
+    """
     time: int
     type: str
     track: str
