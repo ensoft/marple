@@ -301,9 +301,15 @@ def _sched_data_gen(filename):
             time_str = match.group("time").split(".")
             time_int = int(time_str[0]) * 1000000 + int(time_str[1])
 
-            event = SchedEvent(name=match.group("name"),
-                               pid=int(match.group("pid")),
-                               cpu=int(match.group("cpu")),
+            # Create datum from name and pid:
+            datum = "{} (pid: {})".format(match.group("name"),
+                                          match.group("pid"))
+
+            # Create track name from cpu:
+            track = "cpu " + str(int(match.group("cpu")))
+
+            event = SchedEvent(datum=datum,
+                               track=track,
                                time=time_int,
                                type=match.group("event"))
 

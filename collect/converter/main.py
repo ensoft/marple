@@ -237,9 +237,9 @@ class CpelWriter:
             A reference to the currently processed event object.
 
         """
-        # insert name, pid, cpu, type (not time)
-        self._insert_string(self._get_datum(event_object))
-        self._insert_string("cpu " + str(event_object.cpu))
+        # insert datum, track, event_type (not time)
+        self._insert_string(event_object.datum)
+        self._insert_string(event_object.track)
         self._insert_string(event_object.type)
 
     def _insert_object_symbols(self, event_object):
@@ -276,12 +276,10 @@ class CpelWriter:
 
         """
         # track_id track_format_offset
-        # tdd[track]=
 
-        event_name = self._get_track_name(event_object)
-
-        if event_name not in self.track_definitions_dict:
-            self.track_definitions_dict[event_name] = self.track_def_index
+        if event_object.track not in self.track_definitions_dict:
+            self.track_definitions_dict[event_object.track] = \
+                self.track_def_index
             self.track_def_index += 1
             self.section_length[4] += 8
 
@@ -299,10 +297,9 @@ class CpelWriter:
 
         self.event_data.append((event_object.time,
                                 self.track_definitions_dict[
-                                    self._get_track_name(event_object)],
+                                     event_object.track],
                                 self.event_definitions_dict[event_object.type],
-                                self.string_table[
-                                    self._get_datum(event_object)]))
+                                self.string_table[event_object.datum]))
 
         self.section_length[5] += 20
 
@@ -401,7 +398,7 @@ class CpelWriter:
         # Sort by id and write
         for track_def in sorted(
                 self.track_definitions_dict.items(),
-                key=(lambda x: x[1])):
+                key=(lambda x: x[0])):
             # import pdb; pdb.set_trace()
 
             track_id = track_def[1]
@@ -451,25 +448,6 @@ class CpelWriter:
         time1 = time & 2 ** 32 - 1
         return time0, time1
 
-    @staticmethod
-    def _get_datum(event_object):
-        """
-        Helper function that creates single string datum of pid and name.
-
-        :param event_object:
-            The object whose data to return.
-        :return:
-            A string concatenating pid and name.
-
-        """
-        return "{} (pid: {})".format(str(event_object.name), str(
-            event_object.pid))
-
-    @staticmethod
-    def _get_track_name(event_object):
-        """Helper function for standard track name format."""
-        return "cpu " + str(event_object.cpu)
-
     def _pad_strings(self):
         """Makes sure the string section is padded to the nearest four bytes"""
         padnum = 4 - (len(self._string_resource) % 4)
@@ -516,15 +494,15 @@ class CpelWriter:
 
 
 if __name__ == "__main__":
-    create_cpu_event_data_cpel([datatypes.SchedEvent(name="test_name",
-                                                     pid=1234,
-                                                     cpu=1,
-                                                     time=11112222,
+    create_cpu_event_data_cpel([datatypes.SchedEvent(datum="test_name (pid: "
+                                                           "1234)",
+                                                     track="cpu 2",
+                                                     time=11112221,
                                                      type="event_type"
                                                      ),
-                                datatypes.SchedEvent(name="test_name2",
-                                                     pid=1234,
-                                                     cpu=2,
+                                datatypes.SchedEvent(datum="test_name2 (pid: "
+                                                           "1234)",
+                                                     track="cpu 1",
                                                      time=11112222,
                                                      type="event_type")],
                                "MUT.cpel")

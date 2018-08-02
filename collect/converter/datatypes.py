@@ -10,12 +10,10 @@ from typing import NamedTuple
 
 class SchedEvent(NamedTuple):
     """Represents a single scheduler event."""
-    name: str
-    pid: int
-    cpu: int
     time: int
     type: str
-
+    track: str
+    datum: str
 
 # class MemEvent(NamedTuple):
 #     """Represents a single memory event."""
