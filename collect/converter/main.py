@@ -17,8 +17,8 @@ __all__ = ["create_stack_data_unsorted", "create_cpu_event_data",
 import collections
 import logging
 import struct
-import subprocess
 from datetime import datetime
+
 from collect.converter import datatypes
 
 logger = logging.getLogger("converter.main")
@@ -184,7 +184,7 @@ class CpelWriter:
     ENDIAN_BIT = 0
     # FILE_VERSION: int value of 1 for showing this is a CPEL file
     FILE_VERSION = 1
-    # FILE_STRING_TABLE_NAME: str, name of the (only) string table of the file.
+    # FILE_STRING_TABLE_NAME: str, name of the (only) file string table (64b).
     FILE_STRING_TABLE_NAME = "FileStrtab" + 54 * "\x00"
 
     def __init__(self, event_objects):
@@ -473,7 +473,7 @@ class CpelWriter:
     def _pad_strings(self):
         """Makes sure the string section is padded to the nearest four bytes"""
         padnum = 4 - (len(self._string_resource) % 4)
-        for index in range(padnum):
+        for _ in range(padnum):
             self._string_resource += "\x00"
             self.section_length[1] += 1
 
