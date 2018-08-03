@@ -105,5 +105,7 @@ def show(in_file, out_file):
                       legend=True, width=700)
     with open(DISPLAY_DIR + out_file, "w") as out:
         out.write(tmap.dump_html(data))
+
+    username = os.environ['SUDO_USER']  # @@@ TODO test this
     subprocess.call(["su", "-", "-c", "firefox " +
-                     DISPLAY_DIR + out_file, "andreid"])
+                     DISPLAY_DIR + out_file, username])
