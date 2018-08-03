@@ -10,8 +10,8 @@ Calls perf to collect data, format it, and has functions that create data
     object generators.
 
 """
-__all__ = ["collect", "collect_sched", "collect_mem", "get_stack_data", "get_sched_data", "get_stack_data",
-           "get_mem_data"]
+__all__ = ["collect", "collect_sched", "collect_mem", "get_stack_data",
+           "get_sched_data", "get_mem_data"]
 
 import logging
 import os
@@ -36,7 +36,7 @@ logger = logging.getLogger("collect.interface.perf")
 logger.setLevel(logging.DEBUG)
 
 
-@util.check_kernel_version("2.6")
+#@util.check_kernel_version("2.6")
 def collect(time, frequency, cpufilter="-a"):
     """
     Collect system data using perf
@@ -57,7 +57,7 @@ def collect(time, frequency, cpufilter="-a"):
     output.print_("Done.")
 
 
-@util.check_kernel_version("2.6")
+#@util.check_kernel_version("2.6")
 def collect_sched(time):
     """
     Collect all CPU scheduling data using perf sched.
@@ -538,3 +538,4 @@ class StackParser:
                     logger.error("Unrecognized line: %s", line)
 
         logger.info("Conversion to stacks successful")
+

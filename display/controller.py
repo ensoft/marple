@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # controller.py - user interface, parses and applies display commands
-# June-July 2018 - Franz Nowak, Hrutvik Kanabar
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
 """
@@ -18,6 +18,7 @@ import logging
 from common import file
 from . import flamegraph
 from . import heatmap
+from . import treemap
 
 logger = logging.getLogger('display.controller')
 logger.setLevel(logging.DEBUG)
@@ -78,6 +79,10 @@ def _display(args):
     elif args.stack:
         if args.n:
             raise NotImplementedError("display-numeric stack data")
+        elif args.t:
+            logger.info("Creating treemap.")
+            treemap.show(input_filename, output_filename + ".html")
+            logger.info("Displayed treemap.")
         else:
             flamegraph.make(input_filename, output_filename)
             flamegraph.show(output_filename)
@@ -144,6 +149,8 @@ def _args_parse(argv):
                                    "default)")
     type_display.add_argument("-n", action="store_true",
                               help="numerical representation as a table")
+    type_display.add_argument("-t", action="store_true",
+                              help="treemap representation as an html")
 
     # Add flag and parameter for input filename
     filename = parser.add_argument_group()

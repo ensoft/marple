@@ -17,3 +17,11 @@ sudo apt-get -qq install python3-tk
 python3 -mpip install -U numpy matplotlib
 printf "Done.\n"
 
+printf "Installing IPython... "
+pip install ipython
+printf "Done.\n"
+
+printf "Installing pandas... "
+pip install pandas
+printf "Done.\n"
+

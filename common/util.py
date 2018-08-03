@@ -13,10 +13,9 @@ import common.exceptions as exceptions
 def check_kernel_version(required_kernel):
     """
     Decorator function that checks if the target kernel supports the interface
-
+    Raises a NotSupportedException if the kernel is not supported
     :param: required_kernel:
         The required kernel for the interface
-    :return: returns True is the interface is supported, false otherwise
 
     """
     def wrap(f):
