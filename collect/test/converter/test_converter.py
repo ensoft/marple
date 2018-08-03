@@ -1,8 +1,10 @@
+import struct
 import unittest
 
 import collect.converter.main as converter
+from collect.converter import datatypes
 from collect.test import util
-from collect.converter.datatypes import StackEvent
+from collect.converter.datatypes import StackEvent, SchedEvent
 
 
 class _BaseTest(util.BaseTest):
@@ -57,28 +59,77 @@ class StackTest(_BaseTest):
             "pname", "call1", "call2")), StackEvent((
                 "pname", "call1", "call2")))
 
-        # Expected ouput:
+        # Expected output:
         expected = "pname;call1;call2 2\n" \
                    "pname;call3;call4 1\n"
 
         self.check_create_stack_data(example, expected)
 
 
-class EventTest(_BaseTest):
+class SchedTest(_BaseTest):
     """Class for testing creation and conversion of event object data"""
+
     def setUp(self):
-        super.setUp()
+        # Inherit temporary test directory.
+        super().setUp()
+
         # Create Event iterators for testing
+        self.testEvents = [datatypes.SchedEvent(datum="test_name (pid: "
+                                                      "1234)",
+                                                      track="cpu 2",
+                                                      time=11112221,
+                                                      type="event_type"
+                                                ),
+                           datatypes.SchedEvent(datum="test_name2 (pid: "
+                                                      "1234)",
+                                                      track="cpu 1",
+                                                      time=11112222,
+                                                      type="event_type")
+                           ]
 
 
-class CPELTest(EventTest):
+class CPELTest(SchedTest):
     """Class for testing conversion from event objects to CPEL"""
 
-    # - Create well known output file (here or in util)
-    #
-    # - Variations of data, same or different datum fields, same or different
-    # tracks, swapping track and data around, etc.
-    #
-    # - Have completely duplicate events, see if it breaks things
-    #
-    # - Test the time scales, different values for ticks per us (?)
+    # Well known output file
+    example_file = "example_scheddata.cpel"
+
+    def _compare_headers(self, file1, file2):
+        """Helper function to compare headers between two CPEL files."""
+        (first_byte1, nr_of_sections1, _) = struct.unpack(">cxhi",
+                                                          file1.read(8))
+        (first_byte2, nr_of_sections2, _) = struct.unpack(">cxhi",
+                                                          file2.read(8))
+        self.assertEqual(first_byte1, first_byte2)
+        self.assertEqual(nr_of_sections1, nr_of_sections2)
+
+    def _compare_files(self, file1, file2):
+        """Helper function to compare file content of two files."""
+        while True:
+            buffer1 = file1.read(1024)
+            buffer2 = file2.read(1024)
+            self.assertEqual(buffer1, buffer2)
+            if not buffer1 or not buffer2:
+                break
+
+    def test_basic_file(self):
+        """Creates a test file in test directory and compares it with example"""
+        filename = self._TEST_DIR + "create_scheddata_test.cpel"
+        converter.create_cpu_event_data_cpel(self.testEvents, filename)
+        with open(filename, "rb") as test_file, open(self.example_file,
+                                                     "rb") as correct_file:
+            self._compare_headers(test_file, correct_file)
+            self._compare_files(test_file, correct_file)
+
+    def test_variations(self):
+        """Variations of data, same or different datum fields, same or different
+        tracks, swapping track and data around, etc."""
+        pass
+
+    def test_duplicate_events(self):
+        """Have completely duplicate events, see if it breaks things"""
+        pass
+
+    def test_timescales(self):
+        """Test the time scales, different values for ticks per us (?)"""
+        pass
