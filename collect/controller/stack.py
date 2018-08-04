@@ -1,12 +1,12 @@
 # -------------------------------------------------------------
 # stack.py - does stack tracing
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
 Does stack tracing.
 
-Handles interaction of the controller with the interface modules and writes 
+Handles interaction of the controller with the interface modules and writes
     the converted data to file.
 
 """
@@ -15,8 +15,8 @@ __all__ = ["collect_and_store"]
 import logging
 
 from common import config
-from ..converter import main as converter
-from ..interface import perf
+from collect.writer import write
+from collect.interface import perf
 
 # COLLECTION_FREQUENCY - int constant specifying the default sample frequency
 _COLLECTION_FREQUENCY = 99
@@ -43,12 +43,13 @@ def collect_and_store(time, filename):
     frequency = config.get_default_frequency() if \
         config.get_default_frequency() is not None else _COLLECTION_FREQUENCY
 
-    # Collect raw data using perf
-    perf.collect(time, frequency)
+    options = perf.Stack.Options(frequency, "-a")
 
-    # Collapse the stack, create stack object generator
-    stack_data_formatted = perf.get_stack_data()
+    # Collect and write data using perf
+    collecter = perf.Stack(time, options)
+    collecter.collect()
+    data = collecter.get()
 
-    # Create file from the folded stack objects
-    converter.create_stack_data_unsorted(stack_events=stack_data_formatted,
-                                         filename=filename)
+    # Write data
+    writer = write.Writer(data, filename)
+    writer.write()

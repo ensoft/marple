@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # cpu.py - analyses scheduling performance
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
@@ -14,7 +14,7 @@ __all__ = ["sched_collect_and_store"]
 
 import logging
 
-from collect.converter import main as converter
+from collect.writer import write
 from collect.interface import perf
 
 logger = logging.getLogger("collect.controller.cpu")
@@ -36,11 +36,11 @@ def sched_collect_and_store(time, filename):
                 "for %s seconds. Output filename: %s", time, filename)
 
     # Collect relevant data using perf
-    perf.collect_sched(time)
+    collecter = perf.Scheduling(time)
+    collecter.collect()
 
     # Create SchedEvent object generator
-    sched_data_formatted = perf.get_sched_data()
+    sched_data = collecter.get()
 
     # Create file from the SchedEvent objects
-    converter.create_cpu_event_data_cpel(sched_events=sched_data_formatted,
-                                         filename=filename)
+    write.create_cpu_event_data_cpel(sched_data, filename)

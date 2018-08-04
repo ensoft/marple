@@ -3,7 +3,7 @@ import os
 from unittest.mock import patch
 
 from collect.interface import perf
-from collect.converter import datatypes
+from common import datatypes
 from collect.test import util
 
 # -----------------------------------------------------------------------------
@@ -48,10 +48,10 @@ class DataGenTest(_BaseTest):
     def test_basic(self):
         """
         Basic test for _sched_data_get().
-        
+
         Write some formatted data to a temporary file, and check that
         _sched_data_get correctly converts it.
-        
+
         """
 
         def event_to_str(sched_event):

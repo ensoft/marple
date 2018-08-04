@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # disk_io.py - analyses disk I/O efficiency
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
@@ -14,9 +14,11 @@ __all__ = ["collect_and_store"]
 
 import logging
 
-from ..converter import main as converter
-from ..interface import perf
-from ..interface import iosnoop
+from collect.writer import write
+from collect.interface import (
+    perf,
+    iosnoop
+)
 
 logger = logging.getLogger("collect.controller.diskIO")
 logger.setLevel(logging.DEBUG)
@@ -36,16 +38,19 @@ def collect_and_store(time, filename, latency=True):
     logger.info("Enter diskIO collect_and_store function. Recording disk I/O "
                 "data for %s seconds. Output filename: %s", time, filename)
 
+    # Select interface
     if latency:
-        # Collect data using iosnoop
-        latency_datapoints = iosnoop.collect_disk(time)
-
-        # Format data for heatmap and save to disk
-        converter.create_datapoint_file(latency_datapoints, filename)
+        interface = iosnoop
     else:
-        # Collect and format disk data using perf
-        perf.collect_disk(time)
-        disk_data_formatted = perf.get_disk_data()
+        interface = perf
 
-        # Create file
-        converter.create_disk_flamegraph_data(disk_data_formatted, filename)
+    # Create data collecter object
+    collecter = interface.Disk(time)
+
+    # Collect data
+    collecter.collect()
+    data = collecter.get()
+
+    # Write data
+    writer = write.Writer(data, filename)
+    writer.write()

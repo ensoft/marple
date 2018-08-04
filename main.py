@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------
 # main.py - Initiates the program
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """

@@ -61,7 +61,8 @@ def _display(args):
             hmap.save(output_filename)
             logger.info("Exit heatmap methods.")
         else:
-            flamegraph.make(input_filename, output_filename, colouring="io")
+            stacks = flamegraph.read(input_filename)
+            flamegraph.make(stacks, output_filename, colouring="io")
             flamegraph.show(output_filename)
     elif args.ipc:
         # Stub
@@ -73,13 +74,15 @@ def _display(args):
         if args.n:
             raise NotImplementedError("display-numeric memory data")
         else:
-            flamegraph.make(input_filename, output_filename, colouring="mem")
+            stacks = flamegraph.read(input_filename)
+            flamegraph.make(stacks, output_filename, colouring="mem")
             flamegraph.show(output_filename)
     elif args.stack:
         if args.n:
             raise NotImplementedError("display-numeric stack data")
         else:
-            flamegraph.make(input_filename, output_filename)
+            stacks = flamegraph.read(input_filename)
+            flamegraph.make(stacks, output_filename)
             flamegraph.show(output_filename)
 
 

@@ -9,14 +9,19 @@ Interacts with the iosnoop tracing tool.
 Calls iosnoop to collect data and format it.
 
 """
-__all__ = ["collect_disk"]
+__all__ = (
+    'Disk'
+)
 
 import logging
 import os
 import subprocess
+from typing import NamedTuple
 
-from common import output
-from ..converter.datatypes import Datapoint
+from common.datatypes import Datapoint
+from collect.interface.interface import Interface
+from common import util
+
 
 logger = logging.getLogger("collect.interface.iosnoop")
 logger.setLevel(logging.DEBUG)
@@ -27,28 +32,41 @@ ROOT_DIR = str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(
 IOSNOOP_SCRIPT = ROOT_DIR + "util/perf-tools/iosnoop"
 
 
-def collect_disk(time):
-    """
-    Collect disk latency data using iosnoop.
+class Disk(Interface):
+    class Options(NamedTuple):
+        pass
 
-    :param time:
-        The time for which data should be collected.
-    :param filename:
-        The output file to which the data will be written.
+    _DEFAULT_OPTIONS = None
 
-    """
-    logger.debug("Enter collect_disk - begin iosnoop tracing.")
+    @util.check_kernel_version("2.6")
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        super().__init__(time, options)
+        self.data_generator = None
 
-    sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(time)],
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+    @util.Override(Interface)
+    def collect(self):
+        logger.info("Enter Disk.collect")
 
-    for line in sub_process.stdout.readlines()[2:]:  # skip two lines of header
-        values = line.decode().split()
-        if len(values) < 9:
-            continue # skip footer lines
-        yield Datapoint(x=float(values[1]), y=float(values[8]), info=values[3])
+        sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(self.time)],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+        logger.debug(sub_process.stderr.read().decode())
 
-    logger.debug("Done.")
-    logger.debug(sub_process.stderr.read().decode())
-    output.print_("Done.")
+        self.data_generator = (line.decode()
+                               for line in sub_process.stdout.readlines())
+
+    @util.Override(Interface)
+    def get(self):
+        logger.info("Enter Disk.get")
+
+        # Skip over two lines of header
+        next(self.data_generator)
+        next(self.data_generator)
+
+        # Process rest of file
+        for line in self.data_generator:
+            values = line.split()
+            if len(values) < 9:
+                continue  # skip footer lines
+            yield Datapoint(x=float(values[1]), y=float(values[8]),
+                            info=values[3])

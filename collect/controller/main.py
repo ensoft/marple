@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
-# main.py - user interface, parses and applies collect commands
-# June-July 2018 - Franz Nowak
+# write.py - user interface, parses and applies collect commands
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
@@ -19,9 +19,10 @@ import os
 from common import (
     config,
     exceptions,
-    file
+    file,
+    output
 )
-from . import (
+from collect.controller import (
     cpu,
     disk_io,
     ipc,
@@ -83,6 +84,8 @@ def _collect_and_store(args):
         mem.collect_and_store(time, filename)
     elif args.stack:
         stack.collect_and_store(time, filename)
+
+    output.print_("Done.")
 
 
 def _args_parse(argv):

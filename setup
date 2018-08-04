@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# -------------------------------------------------------------
+# setup - Sets up marple
+# July-Aug 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
 printf "Installing linux-tools... "
 sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r`
 printf "Done.\n"

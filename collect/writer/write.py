@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# converter/main.py - Saves data objects into a file.
+# writer/write.py - Saves data objects into a file.
 # June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
@@ -10,74 +10,29 @@ Gets the data that was collected by an interface module and converted into
 formatted objects and writes them into a file that was provided by the user.
 
 """
-__all__ = ["create_stack_data_unsorted", "create_cpu_event_data",
-           "create_mem_flamegraph_data", "create_disk_flamegraph_data",
-           "create_datapoint_file"]
+__all__ = (
+    'Writer',
+    'create_cpu_event_data_cpel'
+)
 
-import collections
 import logging
 import struct
-import subprocess
 from datetime import datetime
-from collect.converter import datatypes
+from common import datatypes
 
-logger = logging.getLogger("converter.main")
+logger = logging.getLogger("writer.write")
 logger.setLevel(logging.DEBUG)
 
 
-def create_stack_data_unsorted(stack_events, filename):
-    """
-    Count, sort and saves the stack data from the generator into a file.
+class Writer:
+    def __init__(self, data, filename):
+        self.data = data
+        self.filename = filename
 
-    :param stack_events:
-        An iterable of :class:`StackEvent` objects.
-    :param filename:
-        The name of the file into which to store the output.
-
-    """
-    logger.info("Enter create_stack_data_unsorted")
-
-    logger.info("Counting number of stack occurrences")
-    # Count stack occurrences
-    cnt = collections.Counter(stack_events)
-
-    logger.info("Sort stacks")
-    # @Sort by keys (recursively by ascending index)
-
-    logger.info("Writing folded stacks to file")
-    # Write data to file
-    # Format: eg. perf;[unknown];_perf_event_enable;event_function_call 24
-    with open(filename, "w") as out:
-        for stack_event, count in cnt.items():
-            out.write(";".join(stack_event.stack) + " {}\n".format(count))
-
-    logger.info("Done.")
-
-
-def create_cpu_event_data(sched_events, filename):
-    """
-    Saves the event data from the generator into a file.
-
-    :param sched_events:
-        An iterator of :class:`SchedEvent` objects.
-    :param filename:
-        The name of the file into which to store the output.
-
-    """
-    logger.info("Enter create_cpu_data.")
-
-    no_data_flag = True
-
-    logger.info("Writing cpu events to file.")
-    # @Write to file
-    with open(filename, "w") as out:
-        for event in sched_events:
-            no_data_flag = False
-            out.write(str(event) + "\n")
-        if no_data_flag:
-            raise ValueError(
-                "No stack data objects found in the iterable to be "
-                "converted.")
+    def write(self):
+        with open(self.filename, "w") as out:
+            for datum in self.data:
+                out.write(str(datum) + "\n")
 
 
 def create_cpu_event_data_cpel(sched_events, filename):
@@ -95,86 +50,6 @@ def create_cpu_event_data_cpel(sched_events, filename):
 
     cpel_writer = CpelWriter(sched_events)
     cpel_writer.write(filename)
-
-
-def create_mem_flamegraph_data(mem_events, filename):
-    """
-    Save memory event data from generator to output file.
-
-    :param mem_events:
-        An iterator over :class:`StackEvent` objects.
-    :param filename:
-        The output file.
-
-    """
-    logger.info("Enter create_mem_event_data")
-
-    logger.info("Counting number of mem stack occurrences")
-
-    # Count stack occurrences
-    cnt = collections.Counter(mem_events)
-
-    logger.info("Sort mem")
-    # @Sort by keys (recursively by ascending index)
-
-    logger.info("Writing folded mem stacks to file")
-    # Write data to file
-    # Format: eg. perf;[unknown];_perf_event_enable;event_function_call 24
-    with open(filename, "w") as out:
-        for mem_event, count in cnt.items():
-            out.write(";".join(mem_event.stack) + " {}\n".format(count))
-
-    logger.info("Done.")
-
-
-def create_disk_flamegraph_data(disk_events, filename):
-    """
-    Save disk event data from generator to output file.
-
-    :param disk_events:
-        An iterator over :class:`StackEvent` objects.
-    :param filename:
-        The output file.
-
-    """
-    logger.info("Enter create_disk_event_data")
-
-    logger.info("Counting number of disk stack occurrences")
-
-    # Count stack occurrences
-    cnt = collections.Counter(disk_events)
-
-    logger.info("Sort disk")
-    # @Sort by keys (recursively by ascending index)
-
-    logger.info("Writing folded disk stacks to file")
-    # Write data to file
-    # Format: eg. perf;[unknown];_perf_event_enable;event_function_call 24
-    with open(filename, "w") as out:
-        for disk_event, count in cnt.items():
-            out.write(";".join(disk_event.stack) + " {}\n".format(count))
-
-    logger.info("Done.")
-
-
-def create_datapoint_file(datapoints, output_file):
-    """
-    Save datapoint data as comma-separated values.
-
-    :param datapoints:
-        The datapoints generator.
-    :param output_file:
-        The file to save to disk.
-
-    """
-    logger.info("Enter create_datapoint_file")
-
-    with open(output_file, "w") as out:
-        for datapoint in datapoints:
-            # Write as comma-separated values
-            s = str(datapoint.x) + "," + str(datapoint.y) + "," + \
-                datapoint.info + "\n"
-            out.write(s)
 
 
 class CpelWriter:

@@ -14,9 +14,8 @@ __all__ = ["collect_and_store"]
 
 import logging
 
-from common import config
-from ..converter import main as converter
-from ..interface import perf
+from collect.writer import write
+from collect.interface import perf
 
 logger = logging.getLogger("collect.controller.mem")
 logger.setLevel(logging.DEBUG)
@@ -36,11 +35,11 @@ def collect_and_store(time, filename):
     logger.info("Enter mem collect_and_store function. Recording memory data "
                 "for %s seconds. Output filename: %s", time, filename)
 
-    # Collect data using perf
-    perf.collect_mem(time)
+    # Collect and write data using perf
+    collecter = perf.Memory(time)
+    collecter.collect()
+    data = collecter.get()
 
-    # Format data
-    mem_data_formatted = perf.get_mem_data()
-
-    # Create file
-    converter.create_mem_flamegraph_data(mem_data_formatted, filename)
+    # Write data
+    writer = write.Writer(data, filename)
+    writer.write()

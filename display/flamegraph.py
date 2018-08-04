@@ -11,6 +11,10 @@ Flamegraph tool.
 """
 import os
 import subprocess
+import collections
+
+from common import file
+from common.datatypes import StackData
 
 DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
               __file__)))) + "/"
@@ -18,21 +22,44 @@ DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
 FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
 
 
-def make(in_filename, out_filename, colouring=None):
+def read(in_filename):
+    """Read stack events from a file in standard format."""
+    with open(in_filename, "r") as file:
+        for line in file.readlines():
+            yield StackData.from_string(line)
+
+
+def make(stack_data, out_filename, colouring=None):
     """
     Uses Brendan Gregg's flamegraph tool to convert data to flamegraph.
 
-    :param in_filename:
-        The name of the data file from which to create the image.
+    :param stack_data:
+        Generator for :class:`StackData` objects.
     :param out_filename:
         The name of the image file that will be created.
+    :param colouring:
+        The colouring for the flamegraph as an argument string.
+        As defined by Brendan Gregg's script, to go in the
+        "--color=" option.
 
     """
+    temp_file = file.create_unique_temp_filename()
+    counts = collections.Counter()
+    for stack in stack_data:
+        new_counts = collections.Counter({stack.stack: stack.weight})
+        counts += new_counts
+
+    with open(temp_file, "w") as out:
+        for stack, count in counts.items():
+            out.write(";".join(stack) + " {}\n".format(count))
+
     with open(out_filename, "w") as out:
         if colouring:
-            subprocess.Popen([FLAMEGRAPH_DIR, "--color=" + colouring,in_filename], stdout=out)
+            subprocess.Popen([FLAMEGRAPH_DIR, "--color=" + colouring,
+                              temp_file], stdout=out)
         else:
-            subprocess.Popen([FLAMEGRAPH_DIR, in_filename], stdout=out)
+            subprocess.Popen([FLAMEGRAPH_DIR, temp_file], stdout=out)
+
 
 def show(image):
     """

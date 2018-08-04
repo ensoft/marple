@@ -10,23 +10,25 @@ Calls perf to collect data, format it, and has functions that create data
     object generators.
 
 """
-__all__ = ["collect", "collect_sched", "collect_mem", "get_stack_data", "get_sched_data", "get_stack_data",
-           "get_mem_data"]
+
+__all__ = (
+    'Memory',
+    'Stack',
+    'Scheduling',
+    'Disk'
+)
 
 import logging
-import os
 import re
 import subprocess
-import common.util as util
+from io import StringIO
+from common import util
+from typing import NamedTuple
 
 from common import (
-    config,
-    file,
-    output)
-from ..converter.datatypes import (
-    SchedEvent,
-    StackEvent
+    datatypes
 )
+from collect.interface.interface import Interface
 
 # Constants for perf to stacks conversion
 INCLUDE_TID = False
@@ -35,250 +37,148 @@ INCLUDE_PID = False
 logger = logging.getLogger("collect.interface.perf")
 logger.setLevel(logging.DEBUG)
 
-
-@util.check_kernel_version("2.6")
-def collect(time, frequency, cpufilter="-a"):
-    """
-    Collect system data using perf
-
-    :param time:
-        The time in seconds for which to collect the data.
-    :param frequency:
-        The frequency in Hz of taking samples.
-    :param cpufilter:
-        Optional parameter to filter for specific cpu core.
-
-    """
-
-    sub_process = subprocess.Popen(["perf", "record", "-F", str(frequency),
-                                   cpufilter, "-g", "--", "sleep", str(time)],
-                                   stderr=subprocess.PIPE)
-    logger.debug(sub_process.stderr.read().decode())
-    output.print_("Done.")
+# @@@ TODO add blocking based on config file
 
 
-@util.check_kernel_version("2.6")
-def collect_sched(time):
-    """
-    Collect all CPU scheduling data using perf sched.
+class Memory(Interface):
 
-    This will get all the events in the scheduler.
-    :param time:
-        The time in seconds for which to collect the data.
+    class Options(NamedTuple):
+        malloc_probe: bool
+        mem_events: bool
 
-    """
-    sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
-                                   str(time)], stderr=subprocess.PIPE)
-    logger.debug(sub_process.stderr.read().decode())
-    output.print_("Done.")
+    _DEFAULT_OPTIONS = Options(malloc_probe=True, mem_events=False)
 
+    @util.check_kernel_version("2.6")
+    @util.Override(Interface)
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        super().__init__(time, options)
 
-@util.check_kernel_version("2.6")
-def collect_mem(time, malloc=False):
-    """
-    Collect all memory data using perf.
+    @util.Override(Interface)
+    def collect(self):
+        logger.info("Enter Memory.collect")
 
-    :param time:
-        The time for which data should be collected.
-    :param malloc:
-        True if a probe should be used to trace malloc calls.
+        if self.options.malloc_probe:
+            logger.info("Creating probe on malloc...")
 
-    """
-    if malloc:
-        logger.info("Creating probe on malloc...")
+            # Delete old probes and create a new one tracking allocation size
+            # @@@ TODO THIS IS ARCHITECTURE SPECIFIC CURRENTLY
+            sub_process = subprocess.Popen(
+                ["perf", "probe", "-q", "--del", "*malloc*"],
+                stderr=subprocess.PIPE)
+            _, err = sub_process.communicate()
+            logger.debug(err.decode())
 
-        # Delete old probes and create a new one tracking allocation size @@@ THIS IS ARCHITECTURE SPECIFIC CURRENTLY
-        sub_process = subprocess.Popen(["perf", "probe", "-q", "--del", "*malloc*"], stderr=subprocess.PIPE)
-        logger.debug(sub_process.stderr.read().decode())
-        sub_process = subprocess.Popen(["perf", "probe", "-qx", "/lib/x86_64-linux-gnu/libc.so.6", "malloc:1 size=%di"],
+            sub_process = subprocess.Popen(
+                ["perf", "probe", "-qx", "/lib/x86_64-linux-gnu/libc.so.6",
+                 "malloc:1 size=%di"], stderr=subprocess.PIPE)
+            _, err = sub_process.communicate()
+            logger.debug(err.decode())
+
+            # Record perf data
+            logger.info("Tracing malloc calls...")
+            sub_process = subprocess.Popen(
+                ["perf", "record", "-ag", "-e", "probe_libc:malloc:",
+                 "sleep", str(self.time)], stderr=subprocess.PIPE)
+            _, err = sub_process.communicate()
+            logger.debug(err.decode())
+
+        elif self.options.mem_events:
+            logger.info("Tracing memory events...")
+
+            sub_process = subprocess.Popen(
+                ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
+                 "sleep", str(self.time)], stderr=subprocess.PIPE)
+            _, err = sub_process.communicate()
+            logger.debug(err.decode())
+
+    @util.Override(Interface)
+    def get(self):
+        logger.info("Enter Memory.get")
+
+        sub_process = subprocess.Popen(["perf", "script"],
+                                       stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
-        logger.debug(sub_process.stderr.read().decode())
-        logger.info("Done.")
+        out, err = sub_process.communicate()
 
-        # Record perf data
-        sub_process = subprocess.Popen(["perf", "record", "-ag", "-e", "probe_libc:malloc:",
-                                        "sleep", str(time)], stderr=subprocess.PIPE)
-    else:
-        sub_process = subprocess.Popen(["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
-                                        "sleep", str(time)], stderr=subprocess.PIPE)
-    logger.debug(sub_process.stderr.read().decode())
-    output.print_("Done.")
+        logger.error(err.decode())
+
+        stack_parser = StackParser(out.decode())
+        return stack_parser.stack_collapse()
 
 
-def collect_disk(time):
-    """
-    Collect disk I/O data using perf.
+class Stack(Interface):
 
-    :param time:
-        The time for which data should be collected.
+    class Options(NamedTuple):
+        frequency: int
+        cpufilter: str
 
-    """
-    sub_process = subprocess.Popen(["perf", "record", "-ag", "-e", "block:block_rq_insert",
-                                    "sleep", str(time)], stderr=subprocess.PIPE)
-    logger.debug(sub_process.stderr.read().decode())
-    output.print_("Done.")
+    _DEFAULT_OPTIONS = Options(frequency=99, cpufilter="-a")
 
+    @util.check_kernel_version("2.6")
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        super().__init__(time, options)
 
-@util.check_kernel_version("2.6")
-def get_stack_data():
-    """
-    Convert collected perf data to formatted stack data.
+    @util.Override(Interface)
+    def collect(self):
+        logger.info("Enter Stack.collect")
 
-    :return:
-        The temporary file that holds the output.
+        sub_process = subprocess.Popen(["perf", "record", "-F",
+                                        str(self.options.frequency),
+                                        self.options.cpufilter,
+                                        "-g", "--", "sleep",
+                                        str(self.time)],
+                                       stderr=subprocess.PIPE)
+        _, err = sub_process.communicate()
+        logger.debug(err.decode())
 
-    """
-    # Create temporary file for storing output
-    filename = file.create_unique_temp_filename()
+    @util.Override(Interface)
+    def get(self):
+        logger.info("Enter Stack.get")
 
-    sub_process = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-    with open(filename, "w") as outfile:
-        outfile.write(sub_process.stdout.read().decode())
-        logger.error(sub_process.stderr.read().decode())
+        sub_process = subprocess.Popen(["perf", "script"],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
 
-    stack_parser = StackParser(filename)
-    return stack_parser.stack_collapse()
+        out, err = sub_process.communicate()
 
+        logger.error(err.decode())
 
-@util.check_kernel_version("2.6")
-def get_mem_data():
-    """
-    Get memory data. Creates and returns an iterator over memory event objects.
-
-    :return:
-        an iterator over :class:`StackEvent` objects.
-
-    """
-    filename = file.create_unique_temp_filename()
-
-    sub_process = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-
-    with open(filename, "w") as outfile:
-        outfile.write(sub_process.stdout.read().decode())
-        logger.error(sub_process.stderr.read().decode())
-
-    # return _mem_data_gen(filename)
-    stack_parser = StackParser(filename)
-    return stack_parser.stack_collapse()
+        stack_parser = StackParser(out.decode())
+        return stack_parser.stack_collapse()
 
 
-@util.check_kernel_version("2.6")
-def get_sched_data():
-    """
-    Get the relevant scheduling data.
+class Scheduling(Interface):
 
-    Creates and returns an iterator of scheduling event objects.
+    class Options(NamedTuple):
+        pass
 
-    :return:
-        iterator of SchedEvent objects
+    _DEFAULT_OPTIONS = None
 
-    """
-    # Create temporary file for recording output
-    filename = file.create_unique_temp_filename()
+    @util.check_kernel_version("2.6")
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        super().__init__(time, options)
 
-    sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
-                                    "comm,pid,cpu,time,event"],
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+    @util.Override(Interface)
+    def collect(self):
+        logger.info("Enter Scheduling.collect")
 
-    with open(filename, "w") as outfile:
-        outfile.write(sub_process.stdout.read().decode())
-        logger.error(sub_process.stderr.read().decode())
-        # Block if blocking is set by config module
-        if config.is_blocking():
-            sub_process.wait()
+        sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
+                                        str(self.time)], stderr=subprocess.PIPE)
+        _, err = sub_process.communicate()
+        logger.debug(err.decode())
 
-    return _sched_data_gen(filename)
+    @util.Override(Interface)
+    def get(self):
+        logger.info("Enter Scheduling.get")
 
+        sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
+                                        "comm,pid,cpu,time,event"],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+        out, err = sub_process.communicate()
+        logger.error(err.decode())
 
-def get_disk_data():
-    """
-    Get disk data. Creates and returns an iterator over memory event objects.
-
-    :return:
-        an iterator over :class:`StackEvent` objects.
-
-    """
-    filename = file.create_unique_temp_filename()
-
-    sub_process = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-
-    with open(filename, "w") as outfile:
-        outfile.write(sub_process.stdout.read().decode())
-        logger.error(sub_process.stderr.read().decode())
-
-    stack_parser = StackParser(filename)
-    return stack_parser.stack_collapse()
-
-
-# def _mem_data_gen(filename):
-#     """
-#     Generates :class:`MemEvent` objects from an input file.
-#
-#     :param filename:
-#         The file containing perf mem output data, gathered in :func:`get_mem_data`.
-#
-#     """
-#     with open(filename, "r") as infile:
-#         for mem_data in infile:
-#             mem_data = mem_data.strip()
-#
-#             match = re.match(r"\s*"
-#                              r"(?P<name>\S+(\s+\S+)*)\s+"
-#                              r"(?P<pid>\d+)\s+"
-#                              r"\[(?P<cpu>\d+)\]\s+"
-#                              r"(?P<time>\d+.\d+):\s+"
-#                              r"(?P<duration>\d+)\s+"
-#                              r"(?P<type>\S+(\s+\S+)*):\s+"
-#                              r"(?P<addr>\S+)\s+"
-#                              r"(?P<func>\S+)\s+"
-#                              r"\((?P<lib>\S+)\)", mem_data)
-#
-#             # If it did not match, log it but continue
-#             if match is None:
-#                 logger.debug("Failed to parse event data: %s Expected "
-#                              "format: name pid cpu time event",
-#                              mem_data)
-#                 continue
-#
-#             event = MemEvent(name=match.group("name"),
-#                              pid=int(match.group("pid")),
-#                              cpu=int(match.group("cpu")),
-#                              time=match.group("time"),
-#                              duration=int(match.group("duration")),
-#                              type=match.group("type"),
-#                              addr=match.group("addr"),
-#                              func=match.group("func"),
-#                              lib=match.group("lib"))
-#             yield event
-#
-#     # Cleanup
-#     os.remove(filename)
-
-
-def _sched_data_gen(filename):
-    """
-    Generator of SchedEvent objects from file
-
-    Reads in the provided file, parses it and converts it into SchedEvent
-        objects.
-
-    :param filename:
-        The name of the temporary file that contains structured perf sched
-        output data generated in get_sched_data.
-
-    :return
-        an iterable of :class:`converter.data_types.SchedEvent` objects
-            giving information about the process name, id, cpu core, time and
-            the event type.
-
-    """
-    # Lazily return lines from the file as iterator
-    with open(filename, "r") as infile:
-        for event_data in infile:
+        for event_data in StringIO(out.decode()):
             # e.g.   perf a  6997 [003] 363654.881950:       sched:sched_wakeup:
 
             event_data = event_data.strip()
@@ -308,15 +208,47 @@ def _sched_data_gen(filename):
             # Create track name from cpu:
             track = "cpu " + str(int(match.group("cpu")))
 
-            event = SchedEvent(datum=datum,
-                               track=track,
-                               time=time_int,
-                               type=match.group("event"))
+            event = datatypes.SchedEvent(datum=datum,
+                                         track=track,
+                                         time=time_int,
+                                         type=match.group("event"))
 
             yield event
 
-    # Delete file after we finished using it.
-    os.remove(filename)
+
+class Disk(Interface):
+
+    class Options(NamedTuple):
+        pass
+
+    _DEFAULT_OPTIONS = None
+
+    @util.check_kernel_version("2.6")
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        super().__init__(time, options)
+
+    @util.Override(Interface)
+    def collect(self):
+        logger.info("Enter Disk.collect")
+
+        sub_process = subprocess.Popen(
+            ["perf", "record", "-ag", "-e", "block:block_rq_insert",
+             "sleep", str(self.time)], stderr=subprocess.PIPE)
+        _, err = sub_process.communicate()
+        logger.debug(err.decode())
+
+    @util.Override(Interface)
+    def get(self):
+        logger.info("Enter Disk.get")
+
+        sub_process = subprocess.Popen(["perf", "script"],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+        out, err = sub_process.communicate()
+        logger.error(err.decode())
+
+        stack_parser = StackParser(out.decode())
+        return stack_parser.stack_collapse()
 
 
 class StackParser:
@@ -351,18 +283,17 @@ class StackParser:
 
     # --------------------------------------------------------
 
-    def __init__(self, filename, event_filter=""):
+    def __init__(self, data_in, event_filter=""):
         """ Initialises the Parser.
 
-        :param filename:
-            The name of a text file or similar input containing formatted
-            lines of stack data output from the perf profiling tool.
+        :param data_in:
+            Input from perf.
         :param event_filter:
             An optional string argument for an event type to be filtered for.
             Empty defaults to the first event type that is encountered.
 
         """
-        self.filename = filename
+        self.data = data_in
         self.event_filter = event_filter
 
         # _stack: A list containing the cached stack data
@@ -510,31 +441,28 @@ class StackParser:
             An iterable of tuples that contain information about stacks.
 
         """
-
         logger.info("Starting to convert perf output to stacks")
-        with(open(self.filename, "r")) as input_:
 
-            for line in input_:
+        for line in StringIO(self.data):
+            # If end of stack, save cached data.
+            if self._line_is_empty(line):
+                # Matches empty line
+                stack_folded = self._make_stack()
+                if stack_folded:
+                    yield datatypes.StackData(weight=1.0, stack=stack_folded)
+                    # @@@ TODO: generalise to allow different weights
+            # event record start
+            elif self._line_is_baseline(line):
+                # Matches "perf script" output, first line of a stack
+                self._parse_baseline(line)
 
-                # If end of stack, save cached data.
-                if self._line_is_empty(line):
-                    # Matches empty line
-                    stack_folded = self._make_stack()
-                    if stack_folded:
-                        yield StackEvent(stack=stack_folded)
+            # stack line
+            elif self._line_is_stackline(line):
+                # Matches the other lines of a stack above the baseline
+                self._parse_stackline(line)
 
-                # event record start
-                elif self._line_is_baseline(line):
-                    # Matches "perf script" output, first line of a stack
-                    self._parse_baseline(line)
-
-                # stack line
-                elif self._line_is_stackline(line):
-                    # Matches the other lines of a stack above the baseline
-                    self._parse_stackline(line)
-
-                # if nothing matches, log an error
-                else:
-                    logger.error("Unrecognized line: %s", line)
+            # if nothing matches, log an error
+            else:
+                logger.error("Unrecognized line: %s", line)
 
         logger.info("Conversion to stacks successful")

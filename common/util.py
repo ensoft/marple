@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # util.py - various utilities
-# July 2018 - Andrei Diaconu
+# July 2018 - Andrei Diaconu, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """Various utilities"""
@@ -31,3 +31,9 @@ def check_kernel_version(required_kernel):
         return wrapped_check
     return wrap
 
+
+def Override(superclass):
+    def overrider(method):
+        assert(method.__name__ in dir(superclass))
+        return method
+    return overrider
