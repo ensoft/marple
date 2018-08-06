@@ -7,6 +7,7 @@
 
 import platform
 import re
+
 import common.exceptions as exceptions
 
 
@@ -36,3 +37,42 @@ def Override(superclass):
         assert(method.__name__ in dir(superclass))
         return method
     return overrider
+
+
+def log(logger):
+    """
+    A decorator wrapping a function for logging.
+
+    Logs function entry and exit at level DEBUG, any exceptions that occur
+    at level EXCEPTION, and arguments/optional arguments at level DEBUG.
+
+    :param logger:
+        The logging object to log to.
+
+    """
+    def decorator(fn):
+        from functools import wraps
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            logger.debug('Entering function: {}'.format(fn.__name__))
+            args_list = list(args)
+            logger.debug("Args: {:<90.90s}...".format(str(args_list)))
+            if kwargs != {}:
+                logger.debug("Kwargs: {:<90.90s}...".format(str(kwargs)))
+            try:
+                # Apply the function
+                out = fn(*args, **kwargs)
+            except Exception:
+                # Catch and log any exceptions
+                logger.exception("Exception in {}".format(fn.___name__))
+                # Re-raise the exception
+                raise
+
+            logger.debug("Leaving function: {}".format(fn.__name__))
+
+            # Return the return value
+            return out
+
+        return wrapper
+    return decorator

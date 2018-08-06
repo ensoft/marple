@@ -17,6 +17,7 @@ __all__ = ["main"]
 import sys
 import os
 import logging
+from datetime import datetime
 
 from collect.controller import main as collect_controller
 from common import (
@@ -28,7 +29,7 @@ from common import (
 from display import controller as display_controller
 
 # use marple log across the whole module
-logger = logging.getLogger('main')
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
@@ -46,13 +47,17 @@ def main():
 
 
     try:
-        # create a unique and descriptive logfile using timestamp and process id
-        # in the standard linux log file directory
-        logging.basicConfig(format="%(asctime)s %(name)-12s "
-                                   "%(levelname)-8s %(message)s",
-                            datefmt="%m-%d %H:%M",
-                            filename=paths.LOG_DIR + "marple" + str(os.getpid())
-                                    + ".log",
+        # create a unique and descriptive logfile in the standard linux
+        # log file directory
+        LOG_FORMAT = '%(asctime)s - %(name)-25.25s - %(levelname)-8.8s - ' \
+                     '%(message)-100.100s'
+        LOG_DATE_FORMAT = "%H:%M:%S"
+        now = datetime.now()
+        LOG_FILE = paths.LOG_DIR + now.strftime('%Y-%m-%d_%H:%M:%S') + ".log"
+        LEVEL = logging.DEBUG
+
+        logging.basicConfig(format=LOG_FORMAT, level=LEVEL,
+                            datefmt=LOG_DATE_FORMAT, filename=LOG_FILE,
                             filemode="w")
 
     except PermissionError:
@@ -67,7 +72,6 @@ def main():
         #   system
         exit("Fatal Error: Failed to set up logging! {}".format(str(ex)))
 
-    logger.info("Application started.")
     try:
         # Call main function with command line arguments excluding argv[0]
         # (program name: marple) and argv[1] (function name: {collect,display})

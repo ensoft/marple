@@ -35,8 +35,8 @@ from collect.interface.collecter import Collecter
 INCLUDE_TID = False
 INCLUDE_PID = False
 
-logger = logging.getLogger("collect.interface.perf")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 # @@@ TODO add blocking based on config file
 
@@ -53,12 +53,9 @@ class MemoryEvents(Collecter):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
+    @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        logger.info("Enter Memory.collect")
-
-        logger.info("Tracing memory events...")
-
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
@@ -88,12 +85,9 @@ class MemoryMalloc(Collecter):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
+    @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        logger.info("Enter Memory.collect")
-
-        logger.info("Creating probe on malloc...")
-
         # Delete old probes and create a new one tracking allocation size
         # @@@ TODO THIS IS ARCHITECTURE SPECIFIC CURRENTLY
         sub_process = subprocess.Popen(
@@ -109,7 +103,6 @@ class MemoryMalloc(Collecter):
         logger.debug(err.decode())
 
         # Record perf data
-        logger.info("Tracing malloc calls...")
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "probe_libc:malloc:",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
@@ -139,10 +132,9 @@ class StackTrace(Collecter):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
+    @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        logger.info("Enter Stack.collect")
-
         sub_process = subprocess.Popen(["perf", "record", "-F",
                                         str(self.options.frequency),
                                         self.options.cpufilter,
@@ -175,10 +167,9 @@ class SchedulingEvents(Collecter):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
+    @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        logger.info("Enter Scheduling.collect")
-
         sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
                                         str(self.time)], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
@@ -205,7 +196,7 @@ class SchedulingEvents(Collecter):
 
             # If it did not match, log it but continue
             if match is None:
-                logger.debug("Failed to parse event data: %s Expected "
+                logger.error("Failed to parse event data: %s Expected "
                              "format: name pid cpu time event",
                              event_data)
                 continue
@@ -240,10 +231,9 @@ class DiskBlockRequests(Collecter):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
+    @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        logger.info("Enter Disk.collect")
-
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "block:block_rq_insert",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
@@ -439,6 +429,7 @@ class StackParser:
 
         self._stack.insert(0, inline)
 
+    @util.log(logger)
     def stack_collapse(self):
         """
         Goes through input line by line to fold the stacks.
@@ -450,7 +441,6 @@ class StackParser:
             An iterable of tuples that contain information about stacks.
 
         """
-        logger.info("Starting to convert perf output to stacks")
 
         for line in StringIO(self.data):
             # If end of stack, save cached data.
@@ -473,5 +463,3 @@ class StackParser:
             # if nothing matches, log an error
             else:
                 logger.error("Unrecognized line: %s", line)
-
-        logger.info("Conversion to stacks successful")

@@ -18,8 +18,15 @@ __all__ = (
 
 
 from typing import NamedTuple
-from common import exceptions
+import logging
 
+from common import (
+    exceptions,
+    util
+)
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 class SchedEvent(NamedTuple):  # @@@ TODO make this more general
     """

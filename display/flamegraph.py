@@ -12,9 +12,16 @@ Flamegraph tool.
 import os
 import subprocess
 import collections
+import logging
 
-from common import file
+from common import (
+    file,
+    util
+)
 from common.datatypes import StackData
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
               __file__)))) + "/"
@@ -22,6 +29,7 @@ DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
 FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
 
 
+@util.log(logger)
 def read(in_filename):
     """Read stack events from a file in standard format."""
     with open(in_filename, "r") as file:
@@ -29,6 +37,7 @@ def read(in_filename):
             yield StackData.from_string(line)
 
 
+@util.log(logger)
 def make(stack_data, out_filename, colouring=None):
     """
     Uses Brendan Gregg's flamegraph tool to convert data to flamegraph.
@@ -61,6 +70,7 @@ def make(stack_data, out_filename, colouring=None):
             subprocess.Popen([FLAMEGRAPH_DIR, temp_file], stdout=out)
 
 
+@util.log(logger)
 def show(image):
     """
     Uses firefox to display the flamegraph.

@@ -15,15 +15,22 @@ __all__ = "main"
 import argparse
 import logging
 
-from common import file
-from . import flamegraph
-from . import heatmap
-from . import treemap
+from common import (
+    file,
+    util
+)
+from display import (
+    flamegraph,
+    heatmap,
+    treemap
+)
 
-logger = logging.getLogger('display.controller')
-logger.setLevel(logging.DEBUG)
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 
+@util.log(logger)
 def _display(args):
     """
     Displaying part of the controller module.
@@ -35,9 +42,6 @@ def _display(args):
         Passed by main function
 
     """
-    logger.info("Display function. "
-                "Applying logic evaluating and applying input parameters")
-
     # Try to use the specified input file, otherwise use last one created
     input_filename = args.infile if args.infile is not None else \
         file.import_out_filename()
@@ -54,13 +58,10 @@ def _display(args):
             labels = heatmap.AxesLabels(x='Time', x_units='seconds',
                                         y='Latency', y_units='ms',
                                         colorbar='No. accesses')
-            logger.info("Creating heatmap.")
             hmap = heatmap.HeatMap(input_filename, labels,
                                    heatmap.DEFAULT_PARAMETERS)
-            logger.info("Saving and displaying heatmap.")
             hmap.show()
             hmap.save(output_filename)
-            logger.info("Exit heatmap methods.")
         else:
             stacks = flamegraph.read(input_filename)
             flamegraph.make(stacks, output_filename, colouring="io")
@@ -82,16 +83,14 @@ def _display(args):
         if args.n:
             raise NotImplementedError("display-numeric stack data")
         elif args.t:
-            logger.info("Creating treemap.")
             treemap.show(input_filename, output_filename + ".html")
-            logger.info("Displayed treemap.")
         else:
             stacks = flamegraph.read(input_filename)
             flamegraph.make(stacks, output_filename)
             flamegraph.show(output_filename)
 
 
-
+@util.log(logger)
 def _args_parse(argv):
     """
     Create a parser that parses the display command.
@@ -121,8 +120,6 @@ def _args_parse(argv):
     Called by main when the program is started.
 
     """
-
-    logger.info("Enter _args_parse function. Creates parser.")
 
     # Create parser object
     parser = argparse.ArgumentParser(prog="marple display",
@@ -166,10 +163,10 @@ def _args_parse(argv):
     filename.add_argument("-o", "--outfile", type=str,
                           help="Output file where the graph is stored")
 
-    logger.info("Parsing input arguments")
     return parser.parse_args(argv)
 
 
+@util.log(logger)
 def main(argv):
     """
     The main function of the controller.
@@ -180,8 +177,6 @@ def main(argv):
         command line arguments from call in main
 
     """
-    logger.info("Enter controller main function with arguments %s", str(argv))
-
     # Parse arguments
     args = _args_parse(argv)
 

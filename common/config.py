@@ -13,6 +13,10 @@ __all__ = ["Parser"]
 
 import os
 import configparser
+import logging
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 
 class Parser:

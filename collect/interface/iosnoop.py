@@ -24,8 +24,8 @@ from collect.interface.collecter import Collecter
 from common import util
 
 
-logger = logging.getLogger("collect.interface.iosnoop")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 ROOT_DIR = str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(
               __file__))))) + "/"
@@ -43,10 +43,9 @@ class DiskLatency(Collecter):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
+    @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        logger.info("Enter " + __name__)
-
         sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(self.time)],
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)

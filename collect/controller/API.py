@@ -1,7 +1,13 @@
 # -------------------------------------------------------------
 # API.py - a unified interface for all the controllers
-# August 2018 - Andrei Diaconu
+# August 2018 - Andrei Diaconu, Hrutvik Kanabar
 # -------------------------------------------------------------
+
+import logging
+from common import util
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 
 class GenericController:
@@ -25,6 +31,7 @@ class GenericController:
         self.writer = writer
         self.filename = filename
 
+    @util.log(logger)
     def run(self):
         # We collect the data first
         data = self.collecter.collect()

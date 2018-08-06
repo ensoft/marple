@@ -29,12 +29,17 @@ __all__ = (
 
 import math
 from typing import NamedTuple
+import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
 from common.datatypes import Datapoint
+from common import util
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 # @@@ TODO save interactive files (see pickle package)
 # @@@ TODO scroll to zoom
@@ -129,6 +134,7 @@ class HeatMap:
 
     # The two methods below are not static as we would like a HeatMap instance
     # to be created before they are used.
+    @util.log(logger)
     def save(self, outputfile):
         """
         Save the heat map to disk.
@@ -139,6 +145,7 @@ class HeatMap:
         """
         plt.savefig(outputfile, bbox_inches="tight")
 
+    @util.log(logger)
     def show(self):
         plt.show()
 
@@ -188,6 +195,8 @@ class HeatMap:
         x: float
         y: float
 
+
+    @util.log(logger)
     def _get_data(self, datafile, time=True):
         """
         Gets heatmap data from a data file.

@@ -21,12 +21,12 @@ from datetime import datetime
 
 from common import datatypes, util
 
-logger = logging.getLogger("writer.write")
-logger.setLevel(logging.DEBUG)
-
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 class Writer:
     @staticmethod
+    @util.log(logger)
     def write(data, filename):
         with open(filename, "w") as out:
             for datum in data:
@@ -35,6 +35,7 @@ class Writer:
 
 class WriterCPEL(Writer):
     @staticmethod
+    @util.log(logger)
     @util.Override(Writer)
     def write(sched_events, filename):
         """
@@ -47,7 +48,6 @@ class WriterCPEL(Writer):
 
 
         """
-        logger.info("Enter create_cpu_event_data_cpel.")
 
         cpel_writer = CpelWriter(sched_events)
         cpel_writer.write(filename)
@@ -353,6 +353,7 @@ class CpelWriter:
             self._string_resource += "\x00"
             self.section_length[1] += 1
 
+    @util.log(logger)
     def write(self, filename):
         """
         Writes the data to disk in a CPEL file.

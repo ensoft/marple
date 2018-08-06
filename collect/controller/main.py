@@ -19,20 +19,21 @@ import os
 from common import (
     exceptions,
     file,
-    output
+    output,
+    util
 )
-
-import collect.interface.perf as perf
-import collect.interface.iosnoop as iosnoop
-
+from collect.interface import (
+    perf,
+    iosnoop
+)
 from collect.writer import write
-
 from collect.controller import API
 
-logger = logging.getLogger('collect.controller.main')
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 
+@util.log(logger)
 def _collect_and_store(args, parser):
     """
     Calls the relevant functions that user chose and stores output in file.
@@ -42,9 +43,6 @@ def _collect_and_store(args, parser):
         Passed by main function.
 
     """
-    logger.info("Enter collect and store function. Applying logic evaluating "
-                "and applying input parameters: %s",
-                args)
 
     # Use user output filename specified, otherwise create a unique one
     if args.outfile is not None:
@@ -95,6 +93,7 @@ def _collect_and_store(args, parser):
     output.print_("Done.")
 
 
+@util.log(logger)
 def _args_parse(argv):
     """
     Creates a parser that parses the collect command.
@@ -120,8 +119,6 @@ def _args_parse(argv):
     Called by main when the program is started.
 
     """
-
-    logger.info("Enter _args_parse function. Creates parser.")
 
     # Create parser object
     parser = argparse.ArgumentParser(prog="marple collect",
@@ -152,10 +149,10 @@ def _args_parse(argv):
     time.add_argument("-t", "--time", type=int,
                       help="time in seconds that data is collected")
 
-    logger.info("Parsing input arguments")
     return parser.parse_args(argv)
 
 
+@util.log(logger)
 def main(argv, parser):
     """
     The main function of the controller.
@@ -166,7 +163,6 @@ def main(argv, parser):
         a list of command line arguments from call in main module
 
     """
-    logger.info("Enter controller main function with arguments %s", str(argv))
 
     # Parse arguments
     args = _args_parse(argv)
