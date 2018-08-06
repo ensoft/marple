@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# datatypes.py - intermediate form of data to be converted
+# test_datatypes.py - intermediate form of data to be converted
 # June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
@@ -72,14 +72,14 @@ class SchedEvent(NamedTuple):  # @@@ TODO make this more general
             fields = string.strip().split(",")
             return SchedEvent(time=int(fields[0]), type=fields[1],
                               track=fields[2], datum=fields[3])
-        except IndexError:
+        except IndexError as ie:
             raise exceptions.DatatypeException(
                 "SchedEvent - not enough values in datatype string "
-                "('{}')".format(string)) from exceptions
-        except ValueError:
+                "('{}')".format(string)) from ie
+        except ValueError as ve:
             raise exceptions.DatatypeException(
                 "SchedEvent - could not convert datatype string "
-                "('{}')".format(string)) from exceptions
+                "('{}')".format(string)) from ve
 
 
 class Datapoint(NamedTuple):
@@ -131,14 +131,14 @@ class Datapoint(NamedTuple):
             fields = string.strip().split(",")
             return Datapoint(x=float(fields[0]), y=float(fields[1]),
                              info=fields[2])
-        except IndexError:
+        except IndexError as ie:
             raise exceptions.DatatypeException(
                 "Datapoint - not enough values in datatype string "
-                "('{}')".format(string)) from exceptions
-        except ValueError:
+                "('{}')".format(string)) from ie
+        except ValueError as ve:
             raise exceptions.DatatypeException(
                 "Datapoint - could not convert datatype string "
-                "('{}')".format(string)) from exceptions
+                "('{}')".format(string)) from ve
 
 
 class StackData(NamedTuple):
@@ -165,9 +165,11 @@ class StackData(NamedTuple):
 
         """
         result = str(self.weight) + ","
-        for stack_line in self.stack:
+        for stack_line in self.stack[:-1]:
             result += stack_line + ";"
+        result += self.stack[-1]
         return result
+
 
     def __repr__(self):
         return self.__str__()
@@ -188,15 +190,14 @@ class StackData(NamedTuple):
         """
         try:
             fields = string.strip().split(",")
+            if len(fields) != 2:
+                raise exceptions.DatatypeException(
+                    "StackData - incorrect no. of values in datatype string")
             weight = float(fields[0])
             stack_list = fields[1].split(";")
             stack = tuple(stack_list)
             return StackData(weight=weight, stack=stack)
-        except IndexError:
-            raise exceptions.DatatypeException(
-                "StackData - not enough values in datatype string "
-                "('{}')".format(string)) from exceptions
-        except ValueError:
+        except ValueError as ve:
             raise exceptions.DatatypeException(
                 "StackData - could not convert datatype string "
-                "('{}')".format(string)) from exceptions
+                "('{}')".format(string)) from ve
