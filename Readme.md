@@ -176,56 +176,58 @@ $ make g2-install
 
 ~~~~
 
-### How to use
+### How to run
 ~~~~
 
-# Run
+# Make sure you are in the build-root directory of vpp
 
-$ ./install-native/g2/bin/g2
-
-# usage:
-
-g2 [--pointdefs <filename>] [--event-log <filename>]
-
-   [--ticks-per-us <value>]
-
-   [--cpel-input <filename>] [--clib-input <filename]>
-
-G2 (x86_64 GNU/Linux) major version 3.0
-
-Changed Thu Dec 14 17:18:36 EST 2017
+$ ./install-native/g2/g2 [--ticks-per-us <value>] --cpel-input <filename>
 
 ~~~~
 
-### How to convert to cpel
-~~~~
+## How to use
+A new window will open looking something like the following:
 
-$ make perftool-install
+![g2](./res/g2.png)
 
-<snip>
+**Figure 3: An example of g2 program execution on an Ubuntu machine.**
 
-$ ls install-native/perftool/bin/
+ * At the bottom of the panel there is a time scale, ordering the *events* chronologically. 
 
-c2cpel      cpeldump   cpelstate  elog_merge
+ * On the right there are checkboxes to enable/disable visibility of certain *event types*. 
 
-cpelatency  cpelinreg  elftool   
+ * Finally, there are many controls to scroll, zoom, search for processes/events etc. in the form of buttons on the bottom and bottom right.
 
- 
+A more detailed documentation of g2 screen taxonomy etc can be found [here](https://wiki.fd.io/view/VPP/g2).
 
-~~~~
+Note that it stores the time of the event as two 32-bit unsigned long numbers, that, concatenated, give the number of CPU ticks.
+
+However, if we store that value as microseconds directly, we need to set the number of ticks per microsecond to 1,000,000 for the timescale to turn out right.
 
 ## Future tasks
- * g2 representation for scheduler, ipc?
+ * From meeting on Thu 2nd Aug:
 
- * flamegraph for memory
+   * Datatypes - generalise these to agnostic ones. So far: <x>,<y>,<info> CSV files for datapoints and <weight>,<baseline>,<stackline>,... CSV files for stacks/trees.
 
- * use configparser for configuration file
+   * Consider creating an interface to the interfaces - allow it to choose which to use based on passed arguments and config file.
 
- * make a function that defines default values: first user input, then default file, then local constants
+   * UI - add further args to allow for different types of data collection. Consider possibility of collecting multiple types at once (e.g. 'collect --disk --latency,block_requests' or similar)
 
- * pipe the errors of subprocess.Popen calls (asynchronously?) to the log
+   * Config file - todo
 
- * wait on subprocesses or not? Should be yes.
+   * 'converter' should become 'writer' - merge unnecessary functions so that they are agnostic to type of data input; move datatypes to common to be used on display side too; move data conversion to display.
+
+   * Add changes to XML module layout file.
+
+   * Redesign controller.py in display so that onne can specify the extension for the unique out filename, if that is used
+
+ * Backlog for the future:
+
+   * use configparser for configuration file
+
+   * pipe the errors of subprocess.Popen calls (asynchronously?) to the log
+
+   * wait on subprocesses or not? Should be yes.
 
 ## References
 The following is a list of resources for system profiling.
