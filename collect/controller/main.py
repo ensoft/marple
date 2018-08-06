@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # write.py - user interface, parses and applies collect commands
-# June-July 2018 - Franz Nowak, Hrutvik Kanabar
+# June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
 """
@@ -23,23 +23,20 @@ from common import (
     output
 )
 from collect.controller import (
-    cpu,
-    disk_io,
-    ipc,
-    libs,
-    mem,
-    stack
+    # cpu,
+    # disk_io,
+    # ipc,
+    # libs,
+    # mem,
+    # stack
+    API
 )
-
-
-# COLLECTION_TIME - int constant specifying the default data collection time
-_COLLECTION_TIME = 10
 
 logger = logging.getLogger('collect.controller.main')
 logger.setLevel(logging.DEBUG)
 
 
-def _collect_and_store(args):
+def _collect_and_store(args, parser):
     """
     Calls the relevant functions that user chose and stores output in file.
 
@@ -49,8 +46,8 @@ def _collect_and_store(args):
 
     """
     logger.info("Enter collect and store function. Applying logic evaluating "
-                "and applying input parameters: %s"
-                , args)
+                "and applying input parameters: %s",
+                args)
 
     # Use user output filename specified, otherwise create a unique one
     if args.outfile is not None:
@@ -68,22 +65,28 @@ def _collect_and_store(args):
     file.export_out_filename(filename)
 
     # Use user specified time for data collection, otherwise standard value
-    time = args.time if args.time is not None else config.get_default_time() \
-        if config.get_default_time() is not None else _COLLECTION_TIME
+    time = args.time if args.time is not None \
+                     else config.Parser.get_default_time()
 
     # Call appropriate function based on user input
     if args.cpu:
-        cpu.sched_collect_and_store(time, filename)
+        #cpu.sched_collect_and_store(time, filename)
+        pass
     elif args.disk:
-        disk_io.collect_and_store(time, filename)
+        pass
+        #disk_io.collect_and_store(time, filename)
     elif args.ipc:
-        ipc.collect_and_store(time, filename)
+        pass
+        #ipc.collect_and_store(time, filename)
     elif args.lib:
-        libs.collect_and_store(time, filename)
+        pass
+        #libs.collect_and_store(time, filename)
     elif args.mem:
-        mem.collect_and_store(time, filename)
+        pass
+        #mem.collect_and_store(time, filename)
     elif args.stack:
-        stack.collect_and_store(time, filename)
+        controller = API.GenericController(StackTrace, Writer)
+        #stack.collect_and_store(time, filename)
 
     output.print_("Done.")
 
@@ -122,7 +125,6 @@ def _args_parse(argv):
 
     # Add options for the modules
     module_collect = parser.add_mutually_exclusive_group(required=True)
-
     module_collect.add_argument("-c", "--cpu", action="store_true",
                                 help="gather cpu scheduling events")
     module_collect.add_argument("-d", "--disk", action="store_true",
@@ -150,7 +152,7 @@ def _args_parse(argv):
     return parser.parse_args(argv)
 
 
-def main(argv):
+def main(argv, parser):
     """
     The main function of the controller.
 
@@ -166,4 +168,4 @@ def main(argv):
     args = _args_parse(argv)
 
     # Call the appropriate functions to collect input
-    _collect_and_store(args)
+    _collect_and_store(args, parser)

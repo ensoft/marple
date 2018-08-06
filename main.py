@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------
 # main.py - Initiates the program
-# June-July 2018 - Franz Nowak, Hrutvik Kanabar
+# June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
 """
@@ -22,7 +22,8 @@ from collect.controller import main as collect_controller
 from common import (
     exceptions,
     output,
-    paths
+    paths,
+    config
 )
 from display import controller as display_controller
 
@@ -39,7 +40,10 @@ def main():
         exit("Error: You need to have root privileges to run marple.")
 
     # Make sure the directories marple accesses actually exist.
+    # TODO: create config directory?
     paths.create_directories()
+    parser = config.Parser()
+
 
     try:
         # create a unique and descriptive logfile using timestamp and process id
@@ -71,7 +75,7 @@ def main():
             output.print_("usage: marple COMMAND\n The COMMAND "
                           "can be either \"collect\" or \"display\"")
         elif sys.argv[1] == "collect":
-            collect_controller.main(sys.argv[2:])
+            collect_controller.main(sys.argv[2:], parser)
         elif sys.argv[1] == "display":
             display_controller.main(sys.argv[2:])
         else:
