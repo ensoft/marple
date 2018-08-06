@@ -8,6 +8,5 @@ out/
 *.cpel
 *.html
 *.csv
-*.txt
 *out*
 venv/
