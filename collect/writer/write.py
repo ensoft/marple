@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # writer/write.py - Saves data objects into a file.
-# June-July 2018 - Franz Nowak, Hrutvik Kanabar
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
 """
@@ -26,13 +26,9 @@ logger.setLevel(logging.DEBUG)
 
 
 class Writer:
-    def __init__(self, data, filename):
-        self.data = data
-        self.filename = filename
-
-    def write(self):
-        with open(self.filename, "w") as out:
-            for datum in self.data:
+    def write(self, data, filename):
+        with open(filename, "w") as out:
+            for datum in data:
                 out.write(str(datum) + "\n")
 
 

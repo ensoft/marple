@@ -10,3 +10,4 @@ out/
 *.csv
 *.txt
 *out*
+venv/

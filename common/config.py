@@ -19,15 +19,18 @@ class Parser:
     DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
                       __file__)))) + "/"
 
-    def __self__(self):
+    def __init__(self):
         self.config = configparser.ConfigParser()
         self.config.read(self.DISPLAY_DIR + "config.txt")
 
-    def get_option_from_section(self, sec, opt, typ = "string"):
+    def get_option_from_section(self, sec, opt, typ="string"):
         """
         Parses a section from the config file
 
-        :param section: the section we are reading from
+        :param sec: the section we are reading from
+        :param opt: the option we want to get
+        :param typ: the type of the output, so we can parse it to the
+                    appropriate type
         :return: a dictionary that has the as keys the fields of the provided
                  section
         """
@@ -37,13 +40,15 @@ class Parser:
                 value = self.config.get(sec, opt)
             elif typ == "int":
                 value = self.config.getint(sec, opt)
-            elif typ == "bool":
-                value = self.config.getbool(sec, opt)
+            else:
+                value = self.config.getboolean(sec, opt)
             return value
         except configparser.NoSectionError:
             print("Invalid section %s" % sec)
         except configparser.NoOptionError:
             print("Invalid option %s" % opt)
+        except ValueError as err:
+            print("Invalid type specified" + str(err))
 
     def get_default_blocking(self):
         """
@@ -57,7 +62,7 @@ class Parser:
         :return:
             A boolean value that specifies whether to block
         """
-        return self.get_option_from_section("General", "blocking", "bool")
+        return self.get_option_from_section("General", "blocking", "boolean")
 
     def get_default_time(self):
         """
@@ -79,7 +84,7 @@ class Parser:
         """
         return self.get_option_from_section("General", "frequency", "int")
 
-    def system_wide(self):
+    def get_system_wide(self):
         """
         Return the default coverage
 

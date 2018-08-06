@@ -17,20 +17,16 @@ import logging
 import os
 
 from common import (
-    config,
     exceptions,
     file,
     output
 )
-from collect.controller import (
-    # cpu,
-    # disk_io,
-    # ipc,
-    # libs,
-    # mem,
-    # stack
-    API
-)
+
+import collect.interface.perf as perf
+
+from collect.writer import write
+
+from collect.controller import API
 
 logger = logging.getLogger('collect.controller.main')
 logger.setLevel(logging.DEBUG)
@@ -64,9 +60,10 @@ def _collect_and_store(args, parser):
     # Save latest filename to temporary file for display module
     file.export_out_filename(filename)
 
+    #TODO: get all options from either args or config
     # Use user specified time for data collection, otherwise standard value
     time = args.time if args.time is not None \
-                     else config.Parser.get_default_time()
+                     else parser.get_default_time()
 
     # Call appropriate function based on user input
     if args.cpu:
@@ -85,8 +82,12 @@ def _collect_and_store(args, parser):
         pass
         #mem.collect_and_store(time, filename)
     elif args.stack:
-        controller = API.GenericController(StackTrace, Writer)
-        #stack.collect_and_store(time, filename)
+        options = perf.StackTrace.Options(parser.get_default_frequency(),
+                                          parser.get_system_wide())
+        print(options)
+        controller = API.GenericController(perf.StackTrace(time),
+                                           write.Writer(), options, filename)
+        controller.run()
 
     output.print_("Done.")
 
