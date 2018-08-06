@@ -6,5 +6,7 @@ out/
 *.data*
 *.svg
 *.cpel
+*.html
+*.csv
 *.txt
 *out*

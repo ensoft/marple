@@ -466,3 +466,4 @@ class StackParser:
                 logger.error("Unrecognized line: %s", line)
 
         logger.info("Conversion to stacks successful")
+

@@ -14,11 +14,19 @@ echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo
 printf "Done.\n"
 
 printf "Installing pip... "
-python3 -mpip install -U pip
+# sudo python3 -mpip install -U pip
 printf "Done.\n"
 
 printf "Installing numpy, matplotlib... "
 sudo apt-get -qq install python3-tk
-python3 -mpip install -U numpy matplotlib
+sudo python3 -mpip install -U numpy matplotlib
+printf "Done.\n"
+
+printf "Installing IPython... "
+sudo pip3 -qqq install ipython
+printf "Done.\n"
+
+printf "Installing pandas... "
+sudo pip3 -qqq install pandas
 printf "Done.\n"
 
