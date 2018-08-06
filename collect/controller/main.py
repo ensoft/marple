@@ -23,6 +23,7 @@ from common import (
 )
 
 import collect.interface.perf as perf
+import collect.interface.iosnoop as iosnoop
 
 from collect.writer import write
 
@@ -60,33 +61,35 @@ def _collect_and_store(args, parser):
     # Save latest filename to temporary file for display module
     file.export_out_filename(filename)
 
-    #TODO: get all options from either args or config
+    # TODO: get all options from either args or config
     # Use user specified time for data collection, otherwise standard value
     time = args.time if args.time is not None \
                      else parser.get_default_time()
 
     # Call appropriate function based on user input
     if args.cpu:
-        #cpu.sched_collect_and_store(time, filename)
-        pass
+        controller = API.GenericController(perf.SchedulingEvents(time),
+                                           write.WriterCPEL(),
+                                           filename)
+        controller.run()
     elif args.disk:
-        pass
-        #disk_io.collect_and_store(time, filename)
+        controller = API.GenericController(iosnoop.DiskLatency(time),
+                                           write.Writer(), filename)
+        controller.run()
     elif args.ipc:
-        pass
-        #ipc.collect_and_store(time, filename)
+        # TODO args.ipc
+        return
     elif args.lib:
-        pass
-        #libs.collect_and_store(time, filename)
+        # TODO args.lib
+        return
     elif args.mem:
-        pass
-        #mem.collect_and_store(time, filename)
+        # TODO args.mems
+        return
     elif args.stack:
         options = perf.StackTrace.Options(parser.get_default_frequency(),
                                           parser.get_system_wide())
-        print(options)
         controller = API.GenericController(perf.StackTrace(time),
-                                           write.Writer(), options, filename)
+                                           write.Writer(), filename)
         controller.run()
 
     output.print_("Done.")

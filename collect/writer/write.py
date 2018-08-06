@@ -12,41 +12,45 @@ formatted objects and writes them into a file that was provided by the user.
 """
 __all__ = (
     'Writer',
-    'create_cpu_event_data_cpel'
+    'WriterCPEL'
 )
 
 import logging
 import struct
 from datetime import datetime
 
-from common import datatypes
+from common import datatypes, util
 
 logger = logging.getLogger("writer.write")
 logger.setLevel(logging.DEBUG)
 
 
 class Writer:
-    def write(self, data, filename):
+    @staticmethod
+    def write(data, filename):
         with open(filename, "w") as out:
             for datum in data:
                 out.write(str(datum) + "\n")
 
 
-def create_cpu_event_data_cpel(sched_events, filename):
-    """
-    Saves the event data from the generator in a file in CPEL format.
+class WriterCPEL(Writer):
+    @staticmethod
+    @util.Override(Writer)
+    def write(sched_events, filename):
+        """
+        Saves the event data from the generator in a file in CPEL format.
 
-    :param sched_events:
-        An iterator of :class:`SchedEvent` objects.
-    :param filename:
-        The name of the file into which to store the output.
+        :param sched_events:
+            An iterator of :class:`SchedEvent` objects.
+        :param filename:
+            The name of the file into which to store the output.
 
 
-    """
-    logger.info("Enter create_cpu_event_data_cpel.")
+        """
+        logger.info("Enter create_cpu_event_data_cpel.")
 
-    cpel_writer = CpelWriter(sched_events)
-    cpel_writer.write(filename)
+        cpel_writer = CpelWriter(sched_events)
+        cpel_writer.write(filename)
 
 
 class CpelWriter:
@@ -388,7 +392,7 @@ class CpelWriter:
 
 
 if __name__ == "__main__":
-    create_cpu_event_data_cpel([datatypes.SchedEvent(datum="test_name (pid: "
+    WriterCPEL.write([datatypes.SchedEvent(datum="test_name (pid: "
                                                            "1234)",
                                                      track="cpu 2",
                                                      time=11112221,
