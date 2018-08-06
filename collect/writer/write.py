@@ -18,6 +18,7 @@ __all__ = (
 import logging
 import struct
 from datetime import datetime
+
 from common import datatypes
 
 logger = logging.getLogger("writer.write")
@@ -59,7 +60,7 @@ class CpelWriter:
     ENDIAN_BIT = 0
     # FILE_VERSION: int value of 1 for showing this is a CPEL file
     FILE_VERSION = 1
-    # FILE_STRING_TABLE_NAME: str, name of the (only) string table of the file.
+    # FILE_STRING_TABLE_NAME: str, name of the (only) file string table (64b).
     FILE_STRING_TABLE_NAME = "FileStrtab" + 54 * "\x00"
 
     def __init__(self, event_objects):
@@ -348,7 +349,7 @@ class CpelWriter:
     def _pad_strings(self):
         """Makes sure the string section is padded to the nearest four bytes"""
         padnum = 4 - (len(self._string_resource) % 4)
-        for index in range(padnum):
+        for _ in range(padnum):
             self._string_resource += "\x00"
             self.section_length[1] += 1
 
@@ -402,4 +403,4 @@ if __name__ == "__main__":
                                                      track="cpu 1",
                                                      time=11112222,
                                                      type="event_type")],
-                               "MUT.cpel")
+                               "../test/converter/example_scheddata.cpel")

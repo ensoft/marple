@@ -74,15 +74,15 @@ class CPELParser:
         # Octet_offset, 	Data
         # 0x0 	    Endian bit (0x80), File Version, 7 bits (0x1...0x7F)
         # 0x1 	    Unused, 8 bits
-        # 0x2-0x3 	Number of sections (16 bits) (NSECTIONS)
+        # 0x2-0x3 	Number of sections (16 bits)
         # 0x4 	    File date (32-bits) (POSIX "epoch" format)
 
         (file_info, number_of_sections, file_date) = \
             struct.unpack(">cxhi", file_descriptor.read(8))
 
-        print("Endian-bit: {} ({}-endian)".format(file_info[0] >> 7, "little"
-                                                  if (file_info[0] >> 7) == 1
-                                                  else "big"))
+        print("Endian-bit: {} ({}-endian)"
+              .format(file_info[0] >> 7, "little" if (file_info[0] >> 7) == 1
+                      else "big"))
         print("File version: {}".format(file_info[0] & 127))
         print("Number of sections: {}".format(number_of_sections))
         print("File date: {}".format(datetime.fromtimestamp(file_date)))
@@ -254,13 +254,18 @@ class CPELParser:
         for index in range(0, int(section_length), 12):
             (event_code, event_offset, datum_offset) = struct.unpack(
                 ">LLL", binary_content[index:index + 12])
-            print("{}\t{}[{}] (\"{}\")\t{}[{}] (\"{}\")".format(event_code,
-                                                                table_name,
-                                                                event_offset,
-                  self._get_string(table_name, event_offset),
-                                                                table_name,
-                                                                datum_offset,
-                  self._get_string(table_name, datum_offset)))
+            print("{}\t{}[{}] (\"{}\")\t{}[{}] (\"{}\")"
+                  .format(event_code,
+                          table_name,
+                          event_offset,
+                          self._get_string(
+                              table_name,
+                              event_offset),
+                          table_name,
+                          datum_offset,
+                          self._get_string(
+                              table_name,
+                              datum_offset)))
 
     def _parse_track_definition_section(self, binary_content: bytes,
                                         section_length: int,
@@ -286,7 +291,7 @@ class CPELParser:
                                                             index:index + 8])
             print("{}\t{}[{}] (\"{}\")".format(track_id, table_name,
                                                track_offset, self._get_string(
-                                                table_name, track_offset)))
+                                                  table_name, track_offset)))
 
     def _parse_event_section(self, binary_content: bytes, section_length: int,
                              table_name: str):
@@ -306,16 +311,18 @@ class CPELParser:
         # 	unsigned long event_datum;
         # };
         print("time \t\t\t\t\t track \t event_code \t event_datum:")
-        for index in range(0, int(section_length)-20, 20):
+        for index in range(0, int(section_length) - 20, 20):
             (time0, time1, track, event_code, event_datum) = struct.unpack(
                 ">LLLLL", binary_content[index:index + 20])
 
             time = (time0 << 32) | time1
-            print("time:\t{} \t track:{:5d} \t event:{:5d} \t\t{}".format(time,
-                                                                    track,
-                                                         event_code,
-                                                 self._get_string(
-                                                     table_name, event_datum)))
+            print("time:\t{} \t track:{:5d} \t event:{:5d} \t\t{}"
+                  .format(time,
+                          track,
+                          event_code,
+                          self._get_string(
+                              table_name,
+                              event_datum)))
 
     def parse_file(self):
         """ The main function of the parser, parses the CPEL file. """
