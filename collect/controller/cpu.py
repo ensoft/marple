@@ -36,11 +36,8 @@ def sched_collect_and_store(time, filename):
                 "for %s seconds. Output filename: %s", time, filename)
 
     # Collect relevant data using perf
-    collecter = perf.Scheduling(time)
-    collecter.collect()
-
-    # Create SchedEvent object generator
-    sched_data = collecter.get()
+    collecter = perf.SchedulingEvents(time)
+    sched_data = collecter.collect()
 
     # Create file from the SchedEvent objects
     write.create_cpu_event_data_cpel(sched_data, filename)

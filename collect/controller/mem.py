@@ -21,7 +21,7 @@ logger = logging.getLogger("collect.controller.mem")
 logger.setLevel(logging.DEBUG)
 
 
-def collect_and_store(time, filename):
+def collect_and_store(time, filename, malloc=True):
     """
     Uses one of the interface modules to collect memory data.
 
@@ -35,10 +35,17 @@ def collect_and_store(time, filename):
     logger.info("Enter mem collect_and_store function. Recording memory data "
                 "for %s seconds. Output filename: %s", time, filename)
 
-    # Collect and write data using perf
-    collecter = perf.Memory(time)
-    collecter.collect()
-    data = collecter.get()
+    # Select collecter
+    if malloc:
+        collecter = perf.MemoryMalloc
+    else:
+        collecter = perf.MemoryEvents
+
+    # Create data collecter object
+    collecter_obj = collecter(time)
+
+    # Collect data
+    data = collecter_obj.collect()
 
     # Write data
     writer = write.Writer(data, filename)

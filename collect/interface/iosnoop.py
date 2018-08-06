@@ -17,9 +17,10 @@ import logging
 import os
 import subprocess
 from typing import NamedTuple
+from io import StringIO
 
 from common.datatypes import Datapoint
-from collect.interface.interface import Interface
+from collect.interface.collecter import Collecter
 from common import util
 
 
@@ -32,7 +33,7 @@ ROOT_DIR = str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(
 IOSNOOP_SCRIPT = ROOT_DIR + "util/perf-tools/iosnoop"
 
 
-class Disk(Interface):
+class DiskLatency(Collecter):
     class Options(NamedTuple):
         pass
 
@@ -41,30 +42,26 @@ class Disk(Interface):
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
-        self.data_generator = None
 
-    @util.Override(Interface)
+    @util.Override(Collecter)
     def collect(self):
-        logger.info("Enter Disk.collect")
+        logger.info("Enter " + __name__)
 
         sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(self.time)],
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
-        logger.debug(sub_process.stderr.read().decode())
+        out, err = sub_process.communicate()
 
-        self.data_generator = (line.decode()
-                               for line in sub_process.stdout.readlines())
+        logger.debug(err.decode())
 
-    @util.Override(Interface)
-    def get(self):
-        logger.info("Enter Disk.get")
+        lines = StringIO(out.decode())
 
-        # Skip over two lines of header
-        next(self.data_generator)
-        next(self.data_generator)
+        # Skip two lines of header
+        lines.readline()
+        lines.readline()
 
         # Process rest of file
-        for line in self.data_generator:
+        for line in lines:
             values = line.split()
             if len(values) < 9:
                 continue  # skip footer lines

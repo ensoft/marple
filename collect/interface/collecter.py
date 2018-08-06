@@ -5,7 +5,8 @@
 
 from typing import NamedTuple
 
-class Interface:
+
+class Collecter:
 
     _DEFAULT_OPTIONS = None
 
@@ -16,8 +17,5 @@ class Interface:
     class Options(NamedTuple):
         pass
 
-    def collect(self):  # @@@ TODO is collect() necessary?
-        pass
-
-    def get(self):
+    def collect(self):
         pass

@@ -43,12 +43,11 @@ def collect_and_store(time, filename):
     frequency = config.get_default_frequency() if \
         config.get_default_frequency() is not None else _COLLECTION_FREQUENCY
 
-    options = perf.Stack.Options(frequency, "-a")
+    options = perf.StackTrace.Options(frequency, "-a")
 
     # Collect and write data using perf
-    collecter = perf.Stack(time, options)
-    collecter.collect()
-    data = collecter.get()
+    collecter = perf.StackTrace(time, options)
+    data = collecter.collect()
 
     # Write data
     writer = write.Writer(data, filename)

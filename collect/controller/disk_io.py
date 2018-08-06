@@ -38,18 +38,17 @@ def collect_and_store(time, filename, latency=True):
     logger.info("Enter diskIO collect_and_store function. Recording disk I/O "
                 "data for %s seconds. Output filename: %s", time, filename)
 
-    # Select interface
+    # Select collecter
     if latency:
-        interface = iosnoop
+        collecter = iosnoop.DiskLatency
     else:
-        interface = perf
+        collecter = perf.DiskBlockRequests
 
     # Create data collecter object
-    collecter = interface.Disk(time)
+    collecter_obj = collecter(time)
 
     # Collect data
-    collecter.collect()
-    data = collecter.get()
+    data = collecter_obj.collect()
 
     # Write data
     writer = write.Writer(data, filename)

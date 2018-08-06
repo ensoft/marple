@@ -12,10 +12,11 @@ Calls perf to collect data, format it, and has functions that create data
 """
 
 __all__ = (
-    'Memory',
-    'Stack',
-    'Scheduling',
-    'Disk'
+    'MemoryEvents',
+    'MemoryMalloc',
+    'StackTrace',
+    'SchedulingEvents',
+    'DiskBlockRequests'
 )
 
 import logging
@@ -28,7 +29,7 @@ from typing import NamedTuple
 from common import (
     datatypes
 )
-from collect.interface.interface import Interface
+from collect.interface.collecter import Collecter
 
 # Constants for perf to stacks conversion
 INCLUDE_TID = False
@@ -40,60 +41,29 @@ logger.setLevel(logging.DEBUG)
 # @@@ TODO add blocking based on config file
 
 
-class Memory(Interface):
+class MemoryEvents(Collecter):
 
     class Options(NamedTuple):
-        malloc_probe: bool
-        mem_events: bool
+        pass
 
-    _DEFAULT_OPTIONS = Options(malloc_probe=True, mem_events=False)
+    _DEFAULT_OPTIONS = None
 
     @util.check_kernel_version("2.6")
-    @util.Override(Interface)
+    @util.Override(Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
-    @util.Override(Interface)
+    @util.Override(Collecter)
     def collect(self):
         logger.info("Enter Memory.collect")
 
-        if self.options.malloc_probe:
-            logger.info("Creating probe on malloc...")
+        logger.info("Tracing memory events...")
 
-            # Delete old probes and create a new one tracking allocation size
-            # @@@ TODO THIS IS ARCHITECTURE SPECIFIC CURRENTLY
-            sub_process = subprocess.Popen(
-                ["perf", "probe", "-q", "--del", "*malloc*"],
-                stderr=subprocess.PIPE)
-            _, err = sub_process.communicate()
-            logger.debug(err.decode())
-
-            sub_process = subprocess.Popen(
-                ["perf", "probe", "-qx", "/lib/x86_64-linux-gnu/libc.so.6",
-                 "malloc:1 size=%di"], stderr=subprocess.PIPE)
-            _, err = sub_process.communicate()
-            logger.debug(err.decode())
-
-            # Record perf data
-            logger.info("Tracing malloc calls...")
-            sub_process = subprocess.Popen(
-                ["perf", "record", "-ag", "-e", "probe_libc:malloc:",
-                 "sleep", str(self.time)], stderr=subprocess.PIPE)
-            _, err = sub_process.communicate()
-            logger.debug(err.decode())
-
-        elif self.options.mem_events:
-            logger.info("Tracing memory events...")
-
-            sub_process = subprocess.Popen(
-                ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
-                 "sleep", str(self.time)], stderr=subprocess.PIPE)
-            _, err = sub_process.communicate()
-            logger.debug(err.decode())
-
-    @util.Override(Interface)
-    def get(self):
-        logger.info("Enter Memory.get")
+        sub_process = subprocess.Popen(
+            ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
+             "sleep", str(self.time)], stderr=subprocess.PIPE)
+        _, err = sub_process.communicate()
+        logger.debug(err.decode())
 
         sub_process = subprocess.Popen(["perf", "script"],
                                        stdout=subprocess.PIPE,
@@ -106,7 +76,58 @@ class Memory(Interface):
         return stack_parser.stack_collapse()
 
 
-class Stack(Interface):
+class MemoryMalloc(Collecter):
+
+    class Options(NamedTuple):
+        pass
+
+    _DEFAULT_OPTIONS = None
+
+    @util.check_kernel_version("2.6")
+    @util.Override(Collecter)
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        super().__init__(time, options)
+
+    @util.Override(Collecter)
+    def collect(self):
+        logger.info("Enter Memory.collect")
+
+        logger.info("Creating probe on malloc...")
+
+        # Delete old probes and create a new one tracking allocation size
+        # @@@ TODO THIS IS ARCHITECTURE SPECIFIC CURRENTLY
+        sub_process = subprocess.Popen(
+            ["perf", "probe", "-q", "--del", "*malloc*"],
+            stderr=subprocess.PIPE)
+        _, err = sub_process.communicate()
+        logger.debug(err.decode())
+
+        sub_process = subprocess.Popen(
+            ["perf", "probe", "-qx", "/lib*/*/libc.so.*",
+             "malloc:1 size=%di"], stderr=subprocess.PIPE)
+        _, err = sub_process.communicate()
+        logger.debug(err.decode())
+
+        # Record perf data
+        logger.info("Tracing malloc calls...")
+        sub_process = subprocess.Popen(
+            ["perf", "record", "-ag", "-e", "probe_libc:malloc:",
+             "sleep", str(self.time)], stderr=subprocess.PIPE)
+        _, err = sub_process.communicate()
+        logger.debug(err.decode())
+
+        sub_process = subprocess.Popen(["perf", "script"],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+        out, err = sub_process.communicate()
+
+        logger.error(err.decode())
+
+        stack_parser = StackParser(out.decode())
+        return stack_parser.stack_collapse()
+
+
+class StackTrace(Collecter):
 
     class Options(NamedTuple):
         frequency: int
@@ -118,7 +139,7 @@ class Stack(Interface):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
-    @util.Override(Interface)
+    @util.Override(Collecter)
     def collect(self):
         logger.info("Enter Stack.collect")
 
@@ -131,10 +152,6 @@ class Stack(Interface):
         _, err = sub_process.communicate()
         logger.debug(err.decode())
 
-    @util.Override(Interface)
-    def get(self):
-        logger.info("Enter Stack.get")
-
         sub_process = subprocess.Popen(["perf", "script"],
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
@@ -147,7 +164,7 @@ class Stack(Interface):
         return stack_parser.stack_collapse()
 
 
-class Scheduling(Interface):
+class SchedulingEvents(Collecter):
 
     class Options(NamedTuple):
         pass
@@ -158,7 +175,7 @@ class Scheduling(Interface):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
-    @util.Override(Interface)
+    @util.Override(Collecter)
     def collect(self):
         logger.info("Enter Scheduling.collect")
 
@@ -166,10 +183,6 @@ class Scheduling(Interface):
                                         str(self.time)], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
         logger.debug(err.decode())
-
-    @util.Override(Interface)
-    def get(self):
-        logger.info("Enter Scheduling.get")
 
         sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
                                         "comm,pid,cpu,time,event"],
@@ -216,7 +229,7 @@ class Scheduling(Interface):
             yield event
 
 
-class Disk(Interface):
+class DiskBlockRequests(Collecter):
 
     class Options(NamedTuple):
         pass
@@ -227,7 +240,7 @@ class Disk(Interface):
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
-    @util.Override(Interface)
+    @util.Override(Collecter)
     def collect(self):
         logger.info("Enter Disk.collect")
 
@@ -236,10 +249,6 @@ class Disk(Interface):
              "sleep", str(self.time)], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
         logger.debug(err.decode())
-
-    @util.Override(Interface)
-    def get(self):
-        logger.info("Enter Disk.get")
 
         sub_process = subprocess.Popen(["perf", "script"],
                                        stdout=subprocess.PIPE,
@@ -466,4 +475,3 @@ class StackParser:
                 logger.error("Unrecognized line: %s", line)
 
         logger.info("Conversion to stacks successful")
-
