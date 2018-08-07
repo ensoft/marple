@@ -1,5 +1,6 @@
 import struct
 import unittest
+from unittest.mock import patch
 
 import collect.writer.write as converter
 from collect.test import util
@@ -86,7 +87,9 @@ class CPELTest(SchedTest):
     # Well known output file
     example_file = "example_scheddata.cpel"
 
-    def test_symbol_table_added_consistently(self):
+    @patch("collect.converter.main.CpelWriter._insert_object_symbols")
+    @patch("collect.converter.main.CpelWriter._write_symbols")
+    def test_symbol_table_added_consistently(self, write_mock, insert_mock):
         """
         Checks that either symbol table is not used, or used consistently.
 
@@ -95,7 +98,20 @@ class CPELTest(SchedTest):
         places. This test checks this.
 
         """
-        pass
+        filename = self._TEST_DIR + "symbol_test.cpel"
+        writer = converter.CpelWriter(self.testEvents)
+        writer.write(filename)
+
+        # Check whether symbol write gets called in write method. Split
+        if write_mock.called:
+            # Make sure that the collect function has called the insert fn
+            self.assertTrue(insert_mock.called)
+            self.assertNotEquals(writer.section_length[2], 0)
+            self.assertEqual(writer.no_of_sections, 5)
+        else:
+            self.assertFalse(insert_mock.called)
+            self.assertEqual(writer.section_length[2], 0)
+            self.assertEqual(writer.no_of_sections, 4)
 
     def _compare_headers(self, file1, file2):
         """Helper function to compare headers between two CPEL files."""
