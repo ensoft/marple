@@ -29,10 +29,17 @@ __all__ = (
 
 import math
 from typing import NamedTuple
+import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
+
+from common.datatypes import Datapoint
+from common import util
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 # @@@ TODO save interactive files (see pickle package)
 # @@@ TODO scroll to zoom
@@ -97,15 +104,12 @@ class HeatMap:
     """
     def __init__(self, datafile, labels,
                  parameters=DEFAULT_PARAMETERS):
-        # Create input/output filenames
-        self.datafile = datafile
-
         # Set parameters
         self.labels = labels
         self.params = parameters
 
         # Get data
-        self.x_data, self.y_data = self._get_data()
+        self.x_data, self.y_data = self._get_data(datafile)
 
         # Get values calculated from data
         self.comps = self._get_data_comps()
@@ -130,6 +134,7 @@ class HeatMap:
 
     # The two methods below are not static as we would like a HeatMap instance
     # to be created before they are used.
+    @util.log(logger)
     def save(self, outputfile):
         """
         Save the heat map to disk.
@@ -140,6 +145,7 @@ class HeatMap:
         """
         plt.savefig(outputfile, bbox_inches="tight")
 
+    @util.log(logger)
     def show(self):
         plt.show()
 
@@ -189,32 +195,33 @@ class HeatMap:
         x: float
         y: float
 
-    def _get_data(self, time=True):
+
+    @util.log(logger)
+    def _get_data(self, datafile, time=True):
         """
         Gets heatmap data from a data file.
 
-        File is assumed to be two columns of values "x y".
-        Assume that x values are time, so they are normalised to
-        start from zero.
+        File is generated from writing :class:`Datapoint` objects to strings,
+        one on each line.
 
         :param time:
-            True if x values are time, and so should be normalised.
+            True if x values should be normalised to start from zero.
         :return:
             A pair of sequences: x values, y values.
 
         """
-        with open(self.datafile, "r") as file:
+        with open(datafile, "r") as file:
             # Get data
-            xyz_values = [line.split(",") for line in file]
+            datapoints = [Datapoint.from_string(line) for line in file]
 
-            x_values = [float(value[0]) for value in xyz_values]
-            y_values = [float(value[1]) for value in xyz_values]
+            x_values = [dp.x for dp in datapoints]
+            y_values = [dp.y for dp in datapoints]
 
             if time:
                 # Normalize x-axis values to start from zero
                 x_values = [x - min(x_values) for x in x_values]
 
-            return x_values, y_values
+        return x_values, y_values
 
     def _create_axes(self):
         """

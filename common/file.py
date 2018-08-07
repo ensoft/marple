@@ -22,7 +22,7 @@ import uuid
 
 from . import paths
 
-logger = logging.getLogger("common.file")
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
@@ -96,6 +96,6 @@ def import_out_filename():
         with open(paths.VAR_DIR + "filename", "r") as saved_filename:
             return saved_filename.readline()
     except FileNotFoundError:
-        logger.debug("Unable to find filename helper file in %s"
+        logger.error("Unable to find filename helper file in %s"
                      , str(paths.VAR_DIR))
         raise

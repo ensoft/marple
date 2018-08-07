@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# -------------------------------------------------------------
+# marple - Runs marple
+# July 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
 export PYTHONPATH=.
 sudo python3 main.py "$@"
 

@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # treemap.py - Generates a treemap representation of the data
-# July 2018 - Andrei Diaconu
+# July 2018 - Andrei Diaconu, Hrutvik Kanabar
 # -------------------------------------------------------------
 """
 Displays the collected data as a treemap
@@ -10,7 +10,15 @@ Displays the collected data as a treemap
 from util.d3plus import d3IpyPlus as d3
 import subprocess
 import os
-import common.file as file
+import logging
+
+from common import (
+    file,
+    util
+)
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
     __file__)))) + "/"
@@ -22,6 +30,7 @@ __all__ = (
 )
 
 
+@util.log(logger)
 def generate_csv(in_file, out_file):
     """
     Creates a semicolon separated file from a stack parser output.
@@ -79,6 +88,7 @@ def generate_csv(in_file, out_file):
         return max_num_proc
 
 
+@util.log(logger)
 def show(in_file, out_file):
     """
     Displays the input stack as a treemap using the d3IpyPlus tool. Because of
@@ -106,6 +116,6 @@ def show(in_file, out_file):
     with open(DISPLAY_DIR + out_file, "w") as out:
         out.write(tmap.dump_html(data))
 
-    username = os.environ['SUDO_USER']  # @@@ TODO test this
+    username = os.environ['SUDO_USER']
     subprocess.call(["su", "-", "-c", "firefox " +
                      DISPLAY_DIR + out_file, username])

@@ -1,10 +1,9 @@
 import struct
 import unittest
 
-import collect.converter.main as converter
-from collect.converter.datatypes import SchedEvent
-from collect.converter.datatypes import StackEvent
+import collect.writer.write as converter
 from collect.test import util
+from common.datatypes import StackEvent, SchedEvent
 
 
 class _BaseTest(util.BaseTest):
@@ -22,7 +21,7 @@ class StackTest(_BaseTest):
     def check_create_stack_data(self, example, expected):
         filename = self._TEST_DIR + "create_stackdata_test"
 
-        # Run converter on example input (implicitly tests hashability)
+        # Run writer on example input (implicitly tests hashability)
         converter.create_stack_data_unsorted(example, filename)
 
         # Get the generated output

@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
-# main.py - user interface, parses and applies collect commands
-# June-July 2018 - Franz Nowak
+# write.py - user interface, parses and applies collect commands
+# June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
 """
@@ -17,28 +17,24 @@ import logging
 import os
 
 from common import (
-    config,
     exceptions,
-    file
+    file,
+    output,
+    util
 )
-from . import (
-    cpu,
-    disk_io,
-    ipc,
-    libs,
-    mem,
-    stack
+from collect.interface import (
+    perf,
+    iosnoop
 )
+from collect.writer import write
+from collect.controller import API
+
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: {}'.format(__name__))
 
 
-# COLLECTION_TIME - int constant specifying the default data collection time
-_COLLECTION_TIME = 10
-
-logger = logging.getLogger('collect.controller.main')
-logger.setLevel(logging.DEBUG)
-
-
-def _collect_and_store(args):
+@util.log(logger)
+def _collect_and_store(args, parser):
     """
     Calls the relevant functions that user chose and stores output in file.
 
@@ -47,9 +43,6 @@ def _collect_and_store(args):
         Passed by main function.
 
     """
-    logger.info("Enter collect and store function. Applying logic evaluating "
-                "and applying input parameters: %s"
-                , args)
 
     # Use user output filename specified, otherwise create a unique one
     if args.outfile is not None:
@@ -66,25 +59,41 @@ def _collect_and_store(args):
     # Save latest filename to temporary file for display module
     file.export_out_filename(filename)
 
+    # TODO: get all options from either args or config
     # Use user specified time for data collection, otherwise standard value
-    time = args.time if args.time is not None else config.get_default_time() \
-        if config.get_default_time() is not None else _COLLECTION_TIME
+    time = args.time if args.time is not None \
+                     else parser.get_default_time()
 
     # Call appropriate function based on user input
     if args.cpu:
-        cpu.sched_collect_and_store(time, filename)
+        controller = API.GenericController(perf.SchedulingEvents(time),
+                                           write.WriterCPEL(),
+                                           filename)
+        controller.run()
     elif args.disk:
-        disk_io.collect_and_store(time, filename)
+        controller = API.GenericController(iosnoop.DiskLatency(time),
+                                           write.Writer(), filename)
+        controller.run()
     elif args.ipc:
-        ipc.collect_and_store(time, filename)
+        # TODO args.ipc
+        return
     elif args.lib:
-        libs.collect_and_store(time, filename)
+        # TODO args.lib
+        return
     elif args.mem:
-        mem.collect_and_store(time, filename)
+        # TODO args.mems
+        return
     elif args.stack:
-        stack.collect_and_store(time, filename)
+        options = perf.StackTrace.Options(parser.get_default_frequency(),
+                                          parser.get_system_wide())
+        controller = API.GenericController(perf.StackTrace(time),
+                                           write.Writer(), filename)
+        controller.run()
+
+    output.print_("Done.")
 
 
+@util.log(logger)
 def _args_parse(argv):
     """
     Creates a parser that parses the collect command.
@@ -111,15 +120,12 @@ def _args_parse(argv):
 
     """
 
-    logger.info("Enter _args_parse function. Creates parser.")
-
     # Create parser object
     parser = argparse.ArgumentParser(prog="marple collect",
                                      description="Collect performance data")
 
     # Add options for the modules
     module_collect = parser.add_mutually_exclusive_group(required=True)
-
     module_collect.add_argument("-c", "--cpu", action="store_true",
                                 help="gather cpu scheduling events")
     module_collect.add_argument("-d", "--disk", action="store_true",
@@ -143,11 +149,11 @@ def _args_parse(argv):
     time.add_argument("-t", "--time", type=int,
                       help="time in seconds that data is collected")
 
-    logger.info("Parsing input arguments")
     return parser.parse_args(argv)
 
 
-def main(argv):
+@util.log(logger)
+def main(argv, parser):
     """
     The main function of the controller.
 
@@ -157,10 +163,9 @@ def main(argv):
         a list of command line arguments from call in main module
 
     """
-    logger.info("Enter controller main function with arguments %s", str(argv))
 
     # Parse arguments
     args = _args_parse(argv)
 
     # Call the appropriate functions to collect input
-    _collect_and_store(args)
+    _collect_and_store(args, parser)

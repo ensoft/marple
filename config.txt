@@ -1,0 +1,8 @@
+[General]
+blocking:false
+time:10
+frequency:99
+system_wide: -a
+
+[Display]
+stacks: flamegraph

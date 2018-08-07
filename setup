@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# -------------------------------------------------------------
+# setup - Sets up marple
+# July-Aug 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
+printf "Updating... "
+sudo apt-get -qq update
+printf "Done.\n"
+
 printf "Installing linux-tools... "
 sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r`
 printf "Done.\n"
@@ -8,20 +17,14 @@ printf "Changing sudoers file... "
 echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo
 printf "Done.\n"
 
-printf "Installing pip... "
+# printf "Installing pip... "
 # sudo python3 -mpip install -U pip
+# printf "Done.\n"
+
+printf "Installing Numpy, Matplotlib... "
+sudo apt-get -qq install python3-numpy python3-matplotlib
 printf "Done.\n"
 
-printf "Installing numpy, matplotlib... "
-sudo apt-get -qq install python3-tk
-sudo python3 -mpip install -U numpy matplotlib
+printf "Installing IPython, Pandas, TK... "
+sudo apt-get -qq install python3-ipython python3-tk python3-pandas
 printf "Done.\n"
-
-printf "Installing IPython... "
-sudo pip3 -qqq install ipython
-printf "Done.\n"
-
-printf "Installing pandas... "
-sudo pip3 -qqq install pandas
-printf "Done.\n"
-
