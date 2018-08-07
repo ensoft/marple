@@ -2,13 +2,14 @@ import struct
 import unittest
 
 import collect.converter.main as converter
-from collect.converter import datatypes
+from collect.converter.datatypes import SchedEvent
+from collect.converter.datatypes import StackEvent
 from collect.test import util
-from collect.converter.datatypes import StackEvent, SchedEvent
 
 
 class _BaseTest(util.BaseTest):
     """Base test class"""
+    pass
 
 # -----------------------------------------------------------------------------
 # Tests
@@ -69,23 +70,15 @@ class StackTest(_BaseTest):
 class SchedTest(_BaseTest):
     """Class for testing creation and conversion of event object data"""
 
-    def setUp(self):
-        # Inherit temporary test directory.
-        super().setUp()
-
-        # Create Event iterators for testing
-        self.testEvents = [datatypes.SchedEvent(datum="test_name (pid: "
-                                                      "1234)",
-                                                      track="cpu 2",
-                                                      time=11112221,
-                                                      type="event_type"
-                                                ),
-                           datatypes.SchedEvent(datum="test_name2 (pid: "
-                                                      "1234)",
-                                                      track="cpu 1",
-                                                      time=11112222,
-                                                      type="event_type")
-                           ]
+    # Create Event iterators for testing
+    testEvents = [SchedEvent(datum="test_name (pid: 1234)",
+                             track="cpu 2",
+                             time=11112221,
+                             type="event_type"),
+                  SchedEvent(datum="test_name2 (pid: 1234)",
+                             track="cpu 1",
+                             time=11112222,
+                             type="event_type")]
 
 
 class CPELTest(SchedTest):
@@ -94,12 +87,21 @@ class CPELTest(SchedTest):
     # Well known output file
     example_file = "example_scheddata.cpel"
 
+    def test_symbol_table_added_consistently(self):
+        """
+        Checks that either symbol table is not used, or used consistently.
+
+        Original implementation left the symbol table section methods
+        unimplemented. If they get added later, changes have to be made in 5
+        places. This test checks this.
+
+        """
+        pass
+
     def _compare_headers(self, file1, file2):
         """Helper function to compare headers between two CPEL files."""
-        (first_byte1, nr_of_sections1, _) = struct.unpack(">cxhi",
-                                                          file1.read(8))
-        (first_byte2, nr_of_sections2, _) = struct.unpack(">cxhi",
-                                                          file2.read(8))
+        first_byte1, nr_of_sections1, _ = struct.unpack(">cxhi", file1.read(8))
+        first_byte2, nr_of_sections2, _ = struct.unpack(">cxhi", file2.read(8))
         self.assertEqual(first_byte1, first_byte2)
         self.assertEqual(nr_of_sections1, nr_of_sections2)
 
@@ -138,7 +140,7 @@ class CPELTest(SchedTest):
         with open(filename, "rb") as file_:
 
             # Get number of sections
-            (_, nr_of_sections) = struct.unpack(">hh", file_.read(4))
+            _, nr_of_sections = struct.unpack(">hh", file_.read(4))
 
             # Skip the rest of the header, to the string table
             file_.read(8)
@@ -154,9 +156,9 @@ class CPELTest(SchedTest):
                 return len(string_table)
 
             # Iterate through non string table sections
-            for index in range(1, nr_of_sections):
+            for _ in range(1, nr_of_sections):
 
-                (this_section_nr, length) = struct.unpack(">ii", file_.read(8))
+                this_section_nr, length = struct.unpack(">ii", file_.read(8))
 
                 # Check whether this is the droid we're looking for
                 if this_section_nr == required_section_nr:
@@ -182,15 +184,15 @@ class CPELTest(SchedTest):
         filename = self._TEST_DIR + "create_scheddata_test_variations.cpel"
 
         # Two different events with different data, track and event:
-        converter.create_cpu_event_data_cpel([datatypes.SchedEvent(datum="d1",
-                                                                   track="t1",
-                                                                   time=1,
-                                                                   type="e1"),
-                                              datatypes.SchedEvent(datum="d2",
-                                                                   track="t2",
-                                                                   time=2,
-                                                                   type="e2")]
-                                             , filename)
+        converter.create_cpu_event_data_cpel([SchedEvent(datum="d1",
+                                                         track="t1",
+                                                         time=1,
+                                                         type="e1"),
+                                              SchedEvent(datum="d2",
+                                                         track="t2",
+                                                         time=2,
+                                                         type="e2")],
+                                             filename)
 
         # Number of strings should be 8, 6 plus name of section plus format str
         self.assertEqual(self._get_nr_of_entries(filename, 1), 8)
@@ -206,15 +208,15 @@ class CPELTest(SchedTest):
         filename = self._TEST_DIR + "create_scheddata_test_variations.cpel"
 
         # Two different events with same data, track, and event:
-        converter.create_cpu_event_data_cpel([datatypes.SchedEvent(datum="d",
-                                                                   track="1",
-                                                                   time=1,
-                                                                   type="e"),
-                                              datatypes.SchedEvent(datum="d",
-                                                                   track="1",
-                                                                   time=1,
-                                                                   type="e")]
-                                             , filename)
+        converter.create_cpu_event_data_cpel([SchedEvent(datum="d",
+                                                         track="1",
+                                                         time=1,
+                                                         type="e"),
+                                              SchedEvent(datum="d",
+                                                         track="1",
+                                                         time=1,
+                                                         type="e")],
+                                             filename)
 
         # There should be 5 strings in the string table, 3 plus table name + %s
         self.assertEqual(self._get_nr_of_entries(filename, 1), 5)
@@ -225,3 +227,4 @@ class CPELTest(SchedTest):
 
         # Despite the same timing, there were two events so number should be two
         self.assertEqual(self._get_nr_of_entries(filename, 5), 2)
+
