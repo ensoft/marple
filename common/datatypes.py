@@ -159,7 +159,7 @@ class StackData(NamedTuple):
 
     """
     # Could have more attributes if needed
-    weight: float
+    weight: int
     stack: tuple
 
     def __str__(self):
@@ -200,7 +200,7 @@ class StackData(NamedTuple):
             if len(fields) != 2:
                 raise exceptions.DatatypeException(
                     "StackData - incorrect no. of values in datatype string")
-            weight = float(fields[0])
+            weight = int(fields[0])
             stack_list = fields[1].split(";")
             stack = tuple(stack_list)
             return StackData(weight=weight, stack=stack)

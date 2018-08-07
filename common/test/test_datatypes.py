@@ -89,43 +89,43 @@ class StackDataTest(unittest.TestCase):
 
     def test_empty_stack_field(self):
         """Ensure empty stack field"""
-        result = datatypes.StackData.from_string("0.0,")
+        result = datatypes.StackData.from_string("0,")
         self.assertEqual(result.stack, ('',),
                          msg="Expected stack field empty, was actually {}"
                          .format(result.stack))
 
     def test_with_newline_n(self):
         """Ensure from_string copes with newlines"""
-        expected = datatypes.StackData(0.0, ('A', 'B'))
-        actual = datatypes.StackData.from_string('0.0,A;B\n')
+        expected = datatypes.StackData(0, ('A', 'B'))
+        actual = datatypes.StackData.from_string('0,A;B\n')
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
 
     def test_with_newline_r(self):
         """Ensure from_string copes with newlines"""
-        expected = datatypes.StackData(0.0, ('A', 'B'))
-        actual = datatypes.StackData.from_string('0.0,A;B\r')
+        expected = datatypes.StackData(0, ('A', 'B'))
+        actual = datatypes.StackData.from_string('0,A;B\r')
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
 
     def test_with_newline_rn(self):
         """Ensure from_string copes with newlines"""
-        expected = datatypes.StackData(0.0, ('A', 'B'))
-        actual = datatypes.StackData.from_string('0.0,A;B\r\n')
+        expected = datatypes.StackData(0, ('A', 'B'))
+        actual = datatypes.StackData.from_string('0,A;B\r\n')
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
 
     def test_without_newline(self):
         """Ensure from_string works without newlines"""
-        expected = datatypes.StackData(0.0, ('A', 'B'))
-        actual = datatypes.StackData.from_string('0.0,A;B')
+        expected = datatypes.StackData(0, ('A', 'B'))
+        actual = datatypes.StackData.from_string('0,A;B')
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
 
     def test_to_string(self):
         """Test datapoints are correctly converted to strings."""
-        sd = datatypes.StackData(0.0, ('A', 'B'))
-        expected = '0.0,A;B'
+        sd = datatypes.StackData(0, ('A', 'B'))
+        expected = '0,A;B'
         actual = str(sd)
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
