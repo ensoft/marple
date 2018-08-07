@@ -60,32 +60,15 @@ def generate_csv(in_file, out_file):
         out_file.write("value;")
         for i in range(1, max_num_proc):
             out_file.write(str(i) + ";")
-        # Last valuedoesn't have a semicolon after
+        # Last value doesn't have a semicolon after
         out_file.write(str(i + 1))
         out_file.write('\n')
 
         with open(in_file, "r") as read_file:
             for line in read_file:
-                # Get rid of the newline char
-                call_stack = line[:len(line) - 1]
+                call_stack = line.replace(",", ";")
+                out_file.write(call_stack)
 
-                # Since the depths of the call stacks are variable,
-                # we need the weights to be displayed at the beginning of
-                # each line, so that we can use them as the value field for
-                # the tree map. So we delete the number and prepend it to the
-                # line.
-                num = ""
-                i = len(call_stack) - 1
-                while call_stack[i] != ' ':
-                    num += call_stack[i]
-                    i -= 1
-                # We deleted the number so we want to adjust the line
-                call_stack = call_stack[:i]
-
-                # Reverse the number since we read it backwards and prepend it
-                num = num[::-1]
-                call_stack = num + ';' + call_stack
-                out_file.write(call_stack + '\n')
         return max_num_proc
 
 
