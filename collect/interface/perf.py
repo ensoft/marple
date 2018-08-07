@@ -448,7 +448,7 @@ class StackParser:
                 # Matches empty line
                 stack_folded = self._make_stack()
                 if stack_folded:
-                    yield datatypes.StackData(weight=1.0, stack=stack_folded)
+                    yield datatypes.StackData(weight=1, stack=stack_folded)
                     # @@@ TODO: generalise to allow different weights
             # event record start
             elif self._line_is_baseline(line):

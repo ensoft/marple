@@ -64,32 +64,31 @@ def _collect_and_store(args, parser):
     time = args.time if args.time is not None \
                      else parser.get_default_time()
 
-    # Call appropriate function based on user input
+    # Select appropriate interfaces based on user input
     if args.cpu:
-        controller = API.GenericController(perf.SchedulingEvents(time),
-                                           write.WriterCPEL(),
-                                           filename)
-        controller.run()
+        collecter = perf.SchedulingEvents(time)
+        writer = write.WriterCPEL()
     elif args.disk:
-        controller = API.GenericController(iosnoop.DiskLatency(time),
-                                           write.Writer(), filename)
-        controller.run()
+        collecter = iosnoop.DiskLatency(time)
+        writer = write.Writer()
     elif args.ipc:
-        # TODO args.ipc
-        return
+        raise NotImplementedError("IPC not implemented")  # TODO
     elif args.lib:
-        # TODO args.lib
-        return
+        raise NotImplementedError("IPC not implemented")  # TODO
     elif args.mem:
-        # TODO args.mems
-        return
+        collecter = perf.MemoryEvents(time)
+        writer = write.Writer()
     elif args.stack:
         options = perf.StackTrace.Options(parser.get_default_frequency(),
                                           parser.get_system_wide())
-        controller = API.GenericController(perf.StackTrace(time),
-                                           write.Writer(), filename)
-        controller.run()
+        collecter = perf.StackTrace(time, options)
+        writer = write.Writer()
+    else:
+        raise argparse.ArgumentError("Arguments not recognised")
 
+    # Run collection
+    controller = API.GenericController(collecter, writer, filename)
+    controller.run()
     output.print_("Done.")
 
 
