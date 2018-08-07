@@ -6,7 +6,6 @@
 Displays the collected data as a treemap
 
 """
-
 from util.d3plus import d3IpyPlus as d3
 import subprocess
 import os
@@ -59,8 +58,10 @@ def generate_csv(in_file, out_file):
 
         # Header of the csv
         out_file.write("value;")
-        for i in range(1, max_num_proc + 1):
+        for i in range(1, max_num_proc):
             out_file.write(str(i) + ";")
+        # Last valuedoesn't have a semicolon after
+        out_file.write(str(i + 1))
         out_file.write('\n')
 
         with open(in_file, "r") as read_file:
