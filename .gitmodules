@@ -1,0 +1,3 @@
+[submodule "vpp"]
+	path = vpp
+	url = https://github.com/vpp-dev/vpp
