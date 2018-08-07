@@ -65,7 +65,7 @@ def log(logger):
                 out = fn(*args, **kwargs)
             except Exception:
                 # Catch and log any exceptions
-                logger.exception("Exception in {}".format(fn.___name__))
+                logger.exception("Exception in {}".format(fn.__name__))
                 # Re-raise the exception
                 raise
 
