@@ -22,8 +22,8 @@ from common import (
 from display import (
     flamegraph,
     heatmap,
-    treemap
-)
+    treemap,
+    g2)
 
 
 logger = logging.getLogger(__name__)
@@ -51,8 +51,10 @@ def _display(args):
         file.find_unique_out_filename("display", ending=".svg")
 
     if args.cpu:
-        # Stub
-        raise NotImplementedError("display cpu data")
+        if args.n:
+            raise NotImplementedError("display cpu data")
+        else:
+            g2.show(input_filename)
     elif args.disk:
         if args.n:
             labels = heatmap.AxesLabels(x='Time', x_units='seconds',
