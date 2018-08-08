@@ -28,3 +28,25 @@ printf "Done.\n"
 printf "Installing IPython, Pandas, TK... "
 sudo apt-get -qq install python3-ipython python3-tk python3-pandas
 printf "Done.\n"
+
+printf "Installing dependencies for vpp/g2..."
+sudo apt install libgtk2.0-dev
+printf "Done.\n"
+
+printf "Adding vpp/g2 to marple...\n"
+# initialise the submodule
+git submodule init
+git submodule update
+
+# do some config
+cd vpp/src
+libtoolize
+aclocal
+autoconf
+automake --add-missing
+autoreconf
+
+# install g2
+cd ../build-root
+make g2-install
+printf "Done.\n"
