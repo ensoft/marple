@@ -76,7 +76,7 @@ def show(image):
     Uses firefox to display the flamegraph.
 
     :param image:
-        The image file containing the flamegraph.
+        The name of the image file containing the flamegraph.
 
     """
     username = os.environ['SUDO_USER'] #@@@ TODO test this
