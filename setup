@@ -5,48 +5,86 @@
 # July-Aug 2018 - Hrutvik Kanabar
 # -------------------------------------------------------------
 
+# Set up marple directory
+MARPLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
+# Set up spinner so user knows script is not frozen
+show_spinner()
+{   
+    PID=$!
+    i=1
+    sp="/-\|"
+    echo -n ' '
+    while [ -d /proc/$PID ]
+    do
+        printf "\b${sp:i++%${#sp}:1}"
+	sleep 1
+    done
+    echo -ne '\b'
+}
+
 printf "Updating... "
-sudo apt-get -qq update
+sudo apt-get -qq update &
+show_spinner
 printf "Done.\n"
 
 printf "Installing linux-tools... "
-sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r`
+sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r` &
+show_spinner
 printf "Done.\n"
 
 printf "Changing sudoers file... "
 echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo
 printf "Done.\n"
 
-# printf "Installing pip... "
-# sudo python3 -mpip install -U pip
-# printf "Done.\n"
-
 printf "Installing Numpy, Matplotlib... "
-sudo apt-get -qq install python3-numpy python3-matplotlib
+sudo apt-get -qq install python3-numpy python3-matplotlib &
+show_spinner
 printf "Done.\n"
 
 printf "Installing IPython, Pandas, TK... "
-sudo apt-get -qq install python3-ipython python3-tk python3-pandas
+sudo apt-get -qq install python3-ipython python3-tk python3-pandas &
+show_spinner
 printf "Done.\n"
 
-printf "Installing dependencies for vpp/g2..."
-sudo apt install libgtk2.0-dev
+printf "Installing dependencies for vpp/g2... "
+sudo apt-get -qq install libgtk2.0-dev &
+show_spinner
 printf "Done.\n"
 
-printf "Adding vpp/g2 to marple...\n"
+printf "Adding vpp/g2 submodule... "
 # initialise the submodule
-git submodule init
-git submodule update
+git submodule --quiet init &
+show_spinner
+git submodule --quiet update &
+show_spinner
+printf "Done.\n"
 
+printf "Configuring vpp/g2... "
 # do some config
 cd vpp/src
-libtoolize
-aclocal
-autoconf
-automake --add-missing
-autoreconf
+libtoolize --quiet &
+show_spinner
+aclocal &
+show_spinner
+autoconf &
+show_spinner
+automake --add-missing &
+show_spinner
+autoreconf & 
+show_spinner
+printf "Done.\n"
 
+printf "Installing vpp/g2... "
 # install g2
 cd ../build-root
-make g2-install
+# TODO find better way of silencing this
+make --silent g2-install >/dev/null &
+show_spinner
+printf "Done.\n"
+
+printf "Creating symlink... "
+cd /usr/bin
+sudo ln -s ${MARPLE_DIR}/marple marple
+source ~/.bashrc
 printf "Done.\n"

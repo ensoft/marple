@@ -5,6 +5,20 @@
 # July 2018 - Hrutvik Kanabar
 # -------------------------------------------------------------
 
-export PYTHONPATH=.
-sudo python3 main.py "$@"
+# Resolve symlinks to get true marple dir
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+    DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+    # if $SOURCE was a relative symlink, we need to resolve it relative to the 
+    # path where the symlink file was located
+done
+MARPLE_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
+
+# Set python path
+export PYTHONPATH={$MARPLE_DIR}/
+
+# Run marple
+sudo python3 ${MARPLE_DIR}/main.py "$@"
 
