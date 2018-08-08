@@ -129,7 +129,7 @@ class PyD3Plus(object):
         container = """<div id='{cont}' style='height:{height}px;width:{width}px'></div>""" \
             .format(cont=self.container_id, height=self.height,
                     width=self.width)
-        display(HTML(container))
+        #display(HTML(container))
 
     def format_data(self, data):
         """Process data in a format recognizable in Javascript

@@ -53,8 +53,15 @@ def generate_csv(in_file, out_file):
         max_num_proc = 0
         with open(in_file, "r") as read_file:
             for line in read_file:
-                if max_num_proc < line.count(';') + 1:
-                    max_num_proc = line.count(';') + 1
+                cnt = line.count(';')
+                # If we don't have any ';' characters raise error
+                if cnt == 0:
+                    raise ValueError
+                if max_num_proc < line.count(';'):
+                    max_num_proc = line.count(';')
+
+        # number of fields in a line is 1 plus the number of ';' characters
+        max_num_proc += 1
 
         # Header of the csv
         out_file.write("value;")
@@ -85,7 +92,7 @@ def show(in_file, out_file):
 
     # Temp file for the csv file
     temp_file = file.create_unique_temp_filename()
-    max_num_proc = generate_csv(DISPLAY_DIR + in_file, temp_file)
+    max_num_proc = generate_csv(in_file, temp_file)
 
     # Generate the ids we use for the hierarchies and the columns of the input
     # file
@@ -97,7 +104,7 @@ def show(in_file, out_file):
     data = d3.from_csv(temp_file, ';', columns=cols)
     tmap = d3.TreeMap(id=ids[0:DEPTH], value="value", color="value",
                       legend=True, width=700)
-    with open(DISPLAY_DIR + out_file, "w") as out:
+    with open(out_file, "w") as out:
         out.write(tmap.dump_html(data))
 
     username = os.environ['SUDO_USER']
