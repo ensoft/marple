@@ -21,6 +21,7 @@
 __all__ = (
     'AxesLabels',
     'GraphParameters',
+    'HeatmapException',
     'DEFAULT_PARAMETERS',
     'HeatMap',
     'HeatMap.show',
@@ -40,6 +41,7 @@ from common import util
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
+
 
 # @@@ TODO save interactive files (see pickle package)
 # @@@ TODO scroll to zoom
@@ -88,6 +90,11 @@ class GraphParameters(NamedTuple):
     y_res: float
 
 
+class HeatmapException(Exception):
+    def __init__(self, msg):
+        super().__init__("Error in display.heatmap: " + msg)
+
+
 DEFAULT_PARAMETERS = GraphParameters(figure_size=10.0, scale=5.0, y_res=10.0)
 
 
@@ -102,14 +109,15 @@ class HeatMap:
     To save, use :func:`HeatMap.save`.
 
     """
+
     def __init__(self, datafile, labels,
-                 parameters=DEFAULT_PARAMETERS):
+                 parameters=DEFAULT_PARAMETERS, time=True):
         # Set parameters
         self.labels = labels
         self.params = parameters
 
         # Get data
-        self.x_data, self.y_data = self._get_data(datafile)
+        self.x_data, self.y_data = self._get_data(datafile, time)
 
         # Get values calculated from data
         self.comps = self._get_data_comps()
@@ -195,7 +203,6 @@ class HeatMap:
         x: float
         y: float
 
-
     @util.log(logger)
     def _get_data(self, datafile, time=True):
         """
@@ -217,6 +224,8 @@ class HeatMap:
             x_values = [dp.x for dp in datapoints]
             y_values = [dp.y for dp in datapoints]
 
+            if len(x_values) == 0 or len(y_values) == 0:
+                raise HeatmapException("No data in input file.")
             if time:
                 # Normalize x-axis values to start from zero
                 x_values = [x - min(x_values) for x in x_values]
@@ -237,8 +246,8 @@ class HeatMap:
         fig.canvas.set_window_title('Heat map')
 
         # Set axis labels
-        plt.xlabel(self.labels.x+' / '+self.labels.x_units, va="top")
-        plt.ylabel(self.labels.y+' / '+self.labels.y_units,
+        plt.xlabel(self.labels.x + ' / ' + self.labels.x_units, va="top")
+        plt.ylabel(self.labels.y + ' / ' + self.labels.y_units,
                    rotation=90, va="bottom")
 
         # Set figure size
@@ -306,6 +315,10 @@ class HeatMap:
         y_ax_min = max(self.comps.y_min, self.pos.y - self.comps.y_delta)
         y_ax_max = min(self.comps.y_max, self.pos.y + self.comps.y_delta)
 
+        if x_ax_min >= x_ax_max or y_ax_min >= y_ax_max:
+            raise HeatmapException("Invalid axes bounds generated - change "
+                                   "scaling parameters.")
+
         self.axes.axis([x_ax_min, x_ax_max, y_ax_min, y_ax_max])
 
     def _redraw(self):
@@ -317,14 +330,14 @@ class HeatMap:
         # Create sliders for scrollable axes
         x_slider = plt.axes([0.2, 0.95, 0.6, 0.015])
         x_slider_pos = Slider(x_slider,
-                              'Position of x-axis\n/ '+self.labels.x_units,
+                              'Position of x-axis\n/ ' + self.labels.x_units,
                               self.comps.x_min + self.comps.x_delta,
                               self.comps.x_max - self.comps.x_delta)
         x_slider_pos.valtext.set_visible(False)
 
         y_slider = plt.axes([0.2, 0.9, 0.6, 0.015])
         y_slider_pos = Slider(y_slider,
-                              'Position of y-axis\n/ '+self.labels.y_units,
+                              'Position of y-axis\n/ ' + self.labels.y_units,
                               self.comps.y_min + self.comps.y_delta,
                               self.comps.y_max - self.comps.y_delta)
         y_slider_pos.valtext.set_visible(False)
