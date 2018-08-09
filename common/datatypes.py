@@ -1,45 +1,45 @@
 # -------------------------------------------------------------
-# test_datatypes.py - intermediate form of data to be converted
+# datatypes.py - intermediate form of data between collect and display
 # June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
-Data types comprising the interface between the
-collect and display packages
+Data types comprising the interface between the collect and display packages.
+
+Usage: data types can be constructed using the constructors, or from a standard
+string representation using the from_string method. The standard representation
+is the one given by the __str__ method for each class, allowing a data type
+object to be converted to standard representation using casting.
 
 """
 
 __all__ = (
     'Datapoint',
-    'Datapoint.from_string',
     'StackData',
-    'StackData.from_string',
     'SchedEvent',
-    'SchedEvent.from_string'
 )
 
 
-from typing import NamedTuple
+import typing
 import logging
 
-from common import (
-    exceptions,
-    util
-)
+from common import exceptions
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
 
-class SchedEvent(NamedTuple):  # @@@ TODO make this more general
+
+class SchedEvent(typing.NamedTuple):  # @@@ TODO make this more general
     """
     Represents a single scheduler event.
-    :key time:
+
+    .. atrribute:: time:
         The timestamp of the event in Cpu ticks.
-    :key type:
+    .. atrribute:: type:
         The type of the event.
-    :key track:
+    .. atrribute:: track:
         The track that the event belongs to (e.g. cpu core, process, ...)
-    :key datum:
+    .. atrribute:: datum:
         The data belonging to this event, (e.g. process id etc, cpu ... )
 
     """
@@ -51,36 +51,34 @@ class SchedEvent(NamedTuple):  # @@@ TODO make this more general
     def __str__(self):
         """
         Converts an event to standard comma-separated value string format.
+
         The string does not have a line break at the end.
         Format: <time>,<type>,<track>,<datum>
         Note that the fields cannot contain commas.
 
         """
-        result = str(self.time) + "," + self.type + "," + self.track + "," + \
-                     self.datum
-        return result
-
-    def __repr__(self):
-        return self.__str__()
+        return ",".join((str(self.time), self.type, self.track, self.datum))
 
     @classmethod
     def from_string(cls, string):
         """
-        Converts a standard string representation of a scheduling event into
-        a :class:`Sched` object.
-        Can throw :class:`exceptions.DatatypeException`.
+        Converts a standard representation to a :class:`SchedEvent` object.
+
         Tolerant to whitespace/trailing linebreaks.
 
         :param string:
             The string to convert.
+
+        :raises:
+            exceptions.DatatypeException
         :return:
             The resulting :class:`SchedEvent` object.
 
         """
         try:
-            fields = string.strip().split(",")
-            return SchedEvent(time=int(fields[0]), type=fields[1],
-                              track=fields[2], datum=fields[3])
+            time, type, track, datum = string.strip().split(",")
+            return SchedEvent(time=int(time), type=type,
+                              track=track, datum=datum)
         except IndexError as ie:
             raise exceptions.DatatypeException(
                 "SchedEvent - not enough values in datatype string "
@@ -91,15 +89,15 @@ class SchedEvent(NamedTuple):  # @@@ TODO make this more general
                 "('{}')".format(string)) from ve
 
 
-class Datapoint(NamedTuple):
+class Datapoint(typing.NamedTuple):
     """
     Represents a single 2D datapoint, potentially with added info.
 
-    x:
+    .. atrribute:: x:
         The independent variable value.
-    y:
+    .. atrribute:: y:
         The dependent variable value.
-    info:
+    .. atrribute:: info:
         Additional info for the datapoint.
 
     """
@@ -110,36 +108,34 @@ class Datapoint(NamedTuple):
     def __str__(self):
         """
         Converts a datapoint to standard comma-separated value string format.
+
         The string does not have a line break at the end.
         Format: <x>,<y>,<info>
         Note that the info field cannot contain commas. Use semicolons as
         separators if necessary.
 
         """
-        result = str(self.x) + "," + str(self.y) + "," + self.info
-        return result
-
-    def __repr__(self):
-        return self.__str__()
+        return ",".join((str(self.x), str(self.y), self.info))
 
     @classmethod
     def from_string(cls, string):
         """
-        Converts a standard string representation of a datapoint into
-        a :class:`Datapoint` object.
-        Can throw :class:`exceptions.DatatypeException`.
+        Converts a standard representation into a :class:`Datapoint` object.
+
         Tolerant to whitespace/trailing linebreaks.
 
         :param string:
             The string to convert.
+
+        :raises:
+            exceptions.DatatypeException
         :return:
             The resulting :class:`Datapoint` object.
 
         """
         try:
-            fields = string.strip().split(",")
-            return Datapoint(x=float(fields[0]), y=float(fields[1]),
-                             info=fields[2])
+            x, y, info = string.strip().split(",")
+            return Datapoint(x=float(x), y=float(y), info=info)
         except IndexError as ie:
             raise exceptions.DatatypeException(
                 "Datapoint - not enough values in datatype string "
@@ -150,62 +146,52 @@ class Datapoint(NamedTuple):
                 "('{}')".format(string)) from ve
 
 
-class StackData(NamedTuple):
+class StackData(typing.NamedTuple):
     """
-    Represents a single stack
+    Represents a single stack.
 
-    weight:
+    .. atrribute:: weight:
         The relative weighting of the stack in the data.
-    stack:
-        The stack as a tuple (<baseline>, <stackline>. ...)
+    .. atrribute:: stack:
+        The stack as a tuple of strings (<baseline>, <stackline>. ...)
 
     """
     # Could have more attributes if needed
     weight: int
-    stack: tuple
+    stack: typing.Tuple[str]
 
     def __str__(self):
         """
         Converts a stack datum to standard comma-separated value string format.
+
         The string does not have a line break at the end.
         Format: <weight>,<baseline>;<stackline1>;<stackline2>;...
         Note that baselines and stacklines should not contain
         commas or semicolons.
 
         """
-        result = str(self.weight) + ","
-        for stack_line in self.stack[:-1]:
-            result += stack_line + ";"
-        result += self.stack[-1]
-        return result
-
-
-    def __repr__(self):
-        return self.__str__()
+        return "{},{}".format(self.weight, ";".join(self.stack))
 
     @classmethod
     def from_string(cls, string):
         """
-        Converts a standard string representation of a stack datum into
-        a :class:`StackData` object.
-        Can throw :class:`exceptions.DatatypeException`.
+        Converts a standard representation into a :class:`StackData` object.
+
         Tolerant to whitespace/trailing linebreaks.
 
         :param string:
             The string to convert.
+
+        :raises:
+            exceptions.DatatypeException
         :return:
             The resulting :class:`StackData` object.
 
         """
         try:
-            fields = string.strip().split(",")
-            if len(fields) != 2:
-                raise exceptions.DatatypeException(
-                    "StackData - incorrect no. of values in datatype string")
-            weight = int(fields[0])
-            stack_list = fields[1].split(";")
-            stack = tuple(stack_list)
-            return StackData(weight=weight, stack=stack)
+            weight, stack = string.strip().split(",")
+            stack_tuple = tuple(stack.split(';'))
+            return StackData(weight=int(weight), stack=stack_tuple)
         except ValueError as ve:
             raise exceptions.DatatypeException(
                 "StackData - could not convert datatype string "

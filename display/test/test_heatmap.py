@@ -5,23 +5,26 @@ from io import StringIO
 from display import heatmap
 
 
-class HeatMapTest(unittest.TestCase):
+class _BaseHeatMapTest(unittest.TestCase):
     """ Test class for display.heatmap module """
 
     # Set up test data
-    test_params = heatmap.GraphParameters(figure_size=10, scale=10, y_res=8)
-    test_labels = heatmap.AxesLabels("X", "Y", "X units", "Y units", "Colorbar")
-    test_comps = heatmap.HeatMap._DataComps(x_min=1.0, x_max=5.0,
-                                            y_min=6.0, y_max=10.0,
-                                            y_median=8.0,
-                                            x_bins=100.0, y_bins=10.0,
-                                            x_bin_size=0.04, y_bin_size=0.4,
-                                            x_delta=4, y_delta=40)
-    test_x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
-    test_y_data = [6.0, 7.0, 8.0, 9.0, 10.0]
-    test_string = "1.0,6.0,info1\n2.0,7.0,info2\n3.0,8.0,info3\n" \
-                  "4.0,9.0,info4\n5.0,10.0,info5"
+    def setUp(self):
+        self.test_params = heatmap.GraphParameters(figure_size=10, scale=10, y_res=8)
+        self.test_labels = heatmap.AxesLabels("X", "Y", "X units", "Y units", "Colorbar")
+        self.test_comps = heatmap.HeatMap._DataStats(x_min=1.0, x_max=5.0,
+                                                y_min=6.0, y_max=10.0,
+                                                y_median=8.0,
+                                                x_bins=100.0, y_bins=10.0,
+                                                x_bin_size=0.04, y_bin_size=0.4,
+                                                x_delta=4, y_delta=40)
+        self.test_x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
+        self.test_y_data = [6.0, 7.0, 8.0, 9.0, 10.0]
+        self.test_string = "1.0,6.0,info1\n2.0,7.0,info2\n3.0,8.0,info3\n" \
+                          "4.0,9.0,info4\n5.0,10.0,info5"
 
+
+class GetDataTest(_BaseHeatMapTest):
     @mock.patch("builtins.open")
     def test_empty_data(self, open_mock):
         """
@@ -37,7 +40,7 @@ class HeatMapTest(unittest.TestCase):
 
         # Test that correct exception is raised (including message)
         with self.assertRaises(heatmap.HeatmapException) as de:
-            hm._get_data("empty_data", time=True)
+            hm._get_data("empty_data", normalised=True)
         err = de.exception
         self.assertEqual(str(err),
                          "Error in display.heatmap: No data in input file.")
@@ -60,7 +63,7 @@ class HeatMapTest(unittest.TestCase):
         hm = object.__new__(heatmap.HeatMap)
 
         # Test that correct data is produced
-        x, y = hm._get_data("simple_data", time=False)
+        x, y = hm._get_data("simple_data", normalised=False)
         self.assertEqual(x, [1.0, 3.0])
         self.assertEqual(y, [2.0, 4.0])
 
@@ -83,16 +86,18 @@ class HeatMapTest(unittest.TestCase):
         hm = object.__new__(heatmap.HeatMap)
 
         # Test that correct data is produced
-        x, y = hm._get_data("simple_data", time=True)
+        x, y = hm._get_data("simple_data", normalised=True)
         self.assertEqual(x, [0.0, 2.0])
         self.assertEqual(y, [2.0, 4.0])
 
         # Test that correct file methods were called
         open_mock.assert_called_once_with("simple_data", "r")
 
-    def test_get_data_comps(self):
+
+class GetDataStatsTest(_BaseHeatMapTest):
+    def test_get_data_stats(self):
         """
-        Ensure HeatMap._get_data_comps() method correctly computes measures
+        Ensure HeatMap._get_data_stats() method correctly computes measures
         from the data.
 
         """
@@ -102,9 +107,11 @@ class HeatMapTest(unittest.TestCase):
         hm.y_data = self.test_y_data
         hm.params = self.test_params
 
-        actual = hm._get_data_comps()
+        actual = hm._get_data_stats()
         self.assertEqual(self.test_comps, actual)
 
+
+class SetAxesLimitsTest(_BaseHeatMapTest):
     def test_set_malformed_axes_limits(self):
         """
         Ensure HeatMap._set_axes_limits() copes with invalid scale/figure_size
@@ -116,12 +123,12 @@ class HeatMapTest(unittest.TestCase):
 
         # Create blank heatmap object to access methods, set up data
         hm = object.__new__(heatmap.HeatMap)
-        hm.comps = heatmap.HeatMap._DataComps(x_min=1.0, x_max=5.0,
-                                              y_min=6.0, y_max=10.0,
-                                              y_median=8.0,
-                                              x_bins=5.0, y_bins=10.0,
-                                              x_bin_size=0.8, y_bin_size=0.4,
-                                              x_delta=0.8, y_delta=0.4)
+        hm.data_stats = heatmap.HeatMap._DataStats(x_min=1.0, x_max=5.0,
+                                                   y_min=6.0, y_max=10.0,
+                                                   y_median=8.0,
+                                                   x_bins=5.0, x_bin_size=0.8,
+                                                   y_bins=10.0,y_bin_size=0.4,
+                                                   x_delta=0.8, y_delta=0.4)
         hm.pos = test_pos
 
         # Ensure correct exception raised
@@ -143,7 +150,7 @@ class HeatMapTest(unittest.TestCase):
 
         # Create blank heatmap object to access methods, set up data
         hm = object.__new__(heatmap.HeatMap)
-        hm.comps = self.test_comps
+        hm.data_stats = self.test_comps
         hm.params = self.test_params
         hm.pos = test_pos
 
@@ -159,9 +166,11 @@ class HeatMapTest(unittest.TestCase):
                     self.test_comps.y_min, self.test_comps.y_max]
         axes_mock.axis.assert_called_once_with(expected)
 
+
+class InitTest(_BaseHeatMapTest):
     @mock.patch('display.heatmap.np')
     @mock.patch('display.heatmap.plt')
-    @mock.patch('display.heatmap.Slider')
+    @mock.patch('display.heatmap.widgets.Slider')
     @mock.patch('builtins.open')
     def test_init(self, open_mock, slider_mock, pyplot_mock, numpy_mock):
         """
@@ -207,7 +216,7 @@ class HeatMapTest(unittest.TestCase):
 
         # RUN TRHOUGH INIT - CHECK VALUES/FUNCTION CALLS ARE AS EXPECTED
         hm = heatmap.HeatMap("init_data", self.test_labels, self.test_params,
-                             time=False)
+                             normalise=False)
 
         # Check field values
         self.assertEqual(hm.labels, self.test_labels)
@@ -217,8 +226,8 @@ class HeatMapTest(unittest.TestCase):
         self.assertEqual(hm.x_data, self.test_x_data)
         self.assertEqual(hm.y_data, self.test_y_data)
 
-        # Check _get_data_comps()
-        self.assertEqual(hm.comps, self.test_comps)
+        # Check _get_data_stats()
+        self.assertEqual(hm.data_stats, self.test_comps)
 
         # Check _create_axes()
         fig_mock.canvas.set_window_title.assert_called_once_with("Heat map")

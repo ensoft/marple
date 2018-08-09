@@ -1,10 +1,22 @@
+# -------------------------------------------------------------
+# test_datatypes.py - test module for datatypes used in marple
+# August 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
+""" Tests the datatypes used in marple. """
+
 import unittest
 
 from common import datatypes
 from common import exceptions
 
+class _DatatypeBaseTest(unittest.TestCase):
+    def check_from_str(self, in_str, expected):
+        actual = expected.from_string(in_str)
+        self.assertEqual(expected, actual, msg='Expected {}, got {}'
+                         .format(expected, actual))
 
-class DatapointTest(unittest.TestCase):
+class DatapointTest(_DatatypeBaseTest):
     """Test datapoints are correctly converted to/from strings."""
 
     def test_empty_string(self):
@@ -34,42 +46,33 @@ class DatapointTest(unittest.TestCase):
     def test_with_newline_n(self):
         """Ensure from_string copes with newlines"""
         expected = datatypes.Datapoint(0.0, 0.0, 'info')
-        actual = datatypes.Datapoint.from_string('0.0,0.0,info\n')
-        self.assertEqual(expected, actual, msg='Expected {}, got {}'
-                         .format(expected, actual))
+        self.check_from_str('0.0,0.0,info\n', expected)
 
     def test_with_newline_r(self):
         """Ensure from_string copes with newlines"""
         expected = datatypes.Datapoint(0.0, 0.0, 'info')
-        actual = datatypes.Datapoint.from_string('0.0,0.0,info\r')
-        self.assertEqual(expected, actual, msg='Expected {}, got {}'
-                         .format(expected, actual))
+        self.check_from_str('0.0,0.0,info\r', expected)
 
     def test_with_newline_rn(self):
         """Ensure from_string copes with newlines"""
         expected = datatypes.Datapoint(0.0, 0.0, 'info')
-        actual = datatypes.Datapoint.from_string('0.0,0.0,info\r\n')
-        self.assertEqual(expected, actual, msg='Expected {}, got {}'
-                         .format(expected, actual))
+        self.check_from_str('0.0,0.0,info\r\n', expected)
 
     def test_without_newline(self):
         """Ensure from_string works without newlines"""
         expected = datatypes.Datapoint(0.0, 0.0, 'info')
-        actual = datatypes.Datapoint.from_string('0.0,0.0,info')
-        self.assertEqual(expected, actual, msg='Expected {}, got {}'
-                         .format(expected, actual))
+        self.check_from_str('0.0,0.0,info', expected)
 
     def test_to_string(self):
         """Test datapoints are correctly converted to strings."""
         dp = datatypes.Datapoint(0.0, 0.0, 'info')
         expected = '0.0,0.0,info'
-        print("hello")
         actual = str(dp)
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
 
 
-class StackDataTest(unittest.TestCase):
+class StackDataTest(_DatatypeBaseTest):
     """Test stack data are correctly converted to/from strings."""
 
     def test_empty_string(self):
@@ -97,30 +100,22 @@ class StackDataTest(unittest.TestCase):
     def test_with_newline_n(self):
         """Ensure from_string copes with newlines"""
         expected = datatypes.StackData(0, ('A', 'B'))
-        actual = datatypes.StackData.from_string('0,A;B\n')
-        self.assertEqual(expected, actual, msg='Expected {}, got {}'
-                         .format(expected, actual))
+        self.check_from_str('0,A;B\n', expected)
 
     def test_with_newline_r(self):
         """Ensure from_string copes with newlines"""
         expected = datatypes.StackData(0, ('A', 'B'))
-        actual = datatypes.StackData.from_string('0,A;B\r')
-        self.assertEqual(expected, actual, msg='Expected {}, got {}'
-                         .format(expected, actual))
+        self.check_from_str('0,A;B\r', expected)
 
     def test_with_newline_rn(self):
         """Ensure from_string copes with newlines"""
         expected = datatypes.StackData(0, ('A', 'B'))
-        actual = datatypes.StackData.from_string('0,A;B\r\n')
-        self.assertEqual(expected, actual, msg='Expected {}, got {}'
-                         .format(expected, actual))
+        self.check_from_str('0,A;B\r\n', expected)
 
     def test_without_newline(self):
         """Ensure from_string works without newlines"""
         expected = datatypes.StackData(0, ('A', 'B'))
-        actual = datatypes.StackData.from_string('0,A;B')
-        self.assertEqual(expected, actual, msg='Expected {}, got {}'
-                         .format(expected, actual))
+        self.check_from_str('0,A;B', expected)
 
     def test_to_string(self):
         """Test datapoints are correctly converted to strings."""
