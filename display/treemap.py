@@ -108,5 +108,4 @@ def show(in_file, out_file):
         out.write(tmap.dump_html(data))
 
     username = os.environ['SUDO_USER']
-    subprocess.call(["su", "-", "-c", "firefox " +
-                     DISPLAY_DIR + out_file, username])
+    subprocess.call(["su", "-", "-c", "firefox " + out_file, username])

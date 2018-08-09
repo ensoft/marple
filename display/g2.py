@@ -32,4 +32,4 @@ def show(cpel_data):
 
     """
     subprocess.call(["vpp/build-root/install-native/g2/bin/g2", "--cpel-input",
-                     DISPLAY_DIR + cpel_data])
+                     cpel_data])
