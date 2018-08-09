@@ -5,6 +5,8 @@
 # July-Aug 2018 - Hrutvik Kanabar
 # -------------------------------------------------------------
 
+# TODO find better way of silencing commands than redirect to /dev/null
+
 # Set up marple directory
 MARPLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
@@ -24,62 +26,61 @@ show_spinner()
 }
 
 printf "Updating... "
-sudo apt-get -qq update &
+sudo apt-get -qq update > /dev/null &
 show_spinner
 printf "Done.\n"
 
 printf "Installing linux-tools... "
-sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r` &
+sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r` > /dev/null &
 show_spinner
 printf "Done.\n"
 
 printf "Changing sudoers file... "
-echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo
+echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo > /dev/null
 printf "Done.\n"
 
 printf "Installing Numpy, Matplotlib... "
-sudo apt-get -qq install python3-numpy python3-matplotlib &
+sudo apt-get -qq install python3-numpy python3-matplotlib > /dev/null &
 show_spinner
 printf "Done.\n"
 
 printf "Installing IPython, Pandas, TK... "
-sudo apt-get -qq install python3-ipython python3-tk python3-pandas &
+sudo apt-get -qq install python3-ipython python3-tk python3-pandas > /dev/null &
 show_spinner
 printf "Done.\n"
 
 printf "Installing dependencies for vpp/g2... "
-sudo apt-get -qq install libgtk2.0-dev &
+sudo apt-get -qq install libgtk2.0-dev > /dev/null &
 show_spinner
 printf "Done.\n"
 
 printf "Adding vpp/g2 submodule... "
 # initialise the submodule
-git submodule --quiet init &
+git submodule --quiet init > /dev/null &
 show_spinner
-git submodule --quiet update &
+git submodule --quiet update > /dev/null &
 show_spinner
 printf "Done.\n"
 
 printf "Configuring vpp/g2... "
 # do some config
 cd vpp/src
-libtoolize --quiet &
+libtoolize --quiet > /dev/null &
 show_spinner
-aclocal &
+aclocal > /dev/null &
 show_spinner
-autoconf &
+autoconf > /dev/null &
 show_spinner
-automake --add-missing &
+automake --add-missing > /dev/null &
 show_spinner
-autoreconf & 
+autoreconf > /dev/null & 
 show_spinner
 printf "Done.\n"
 
 printf "Installing vpp/g2... "
 # install g2
 cd ../build-root
-# TODO find better way of silencing this
-make --silent g2-install >/dev/null &
+make --silent g2-install > /dev/null &
 show_spinner
 printf "Done.\n"
 
