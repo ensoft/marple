@@ -24,6 +24,7 @@ from common import datatypes, util
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
 
+
 class Writer:
     @staticmethod
     @util.log(logger)
@@ -346,7 +347,7 @@ class CpelWriter:
         # };
 
         for time, track_id, event_code, event_datum in self.event_data:
-            
+
             # Split time up into two 32 bit unsigned longs
             times = self._convert_time(time)
             data = struct.pack(">LLLLL", times[0], times[1], track_id,

@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# API.py - a unified interface for all the controllers
+# generic_controller.py - a unified interface for all the controllers
 # August 2018 - Andrei Diaconu, Hrutvik Kanabar
 # -------------------------------------------------------------
 

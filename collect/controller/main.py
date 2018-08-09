@@ -27,7 +27,7 @@ from collect.interface import (
     iosnoop
 )
 from collect.writer import write
-from collect.controller import API
+from collect.controller import generic_controller
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
@@ -87,7 +87,7 @@ def _collect_and_store(args, parser):
         raise argparse.ArgumentError("Arguments not recognised")
 
     # Run collection
-    controller = API.GenericController(collecter, writer, str(filename))
+    controller = generic_controller.GenericController(collecter, writer, str(filename))
     controller.run()
     output.print_("Done.")
 

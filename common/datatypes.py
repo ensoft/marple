@@ -13,7 +13,9 @@ __all__ = (
     'Datapoint',
     'Datapoint.from_string',
     'StackData',
-    'StackData.from_string'
+    'StackData.from_string',
+    'SchedEvent',
+    'SchedEvent.from_string'
 )
 
 
