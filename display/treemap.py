@@ -91,7 +91,7 @@ def show(in_file, out_file):
     """
 
     # Temp file for the csv file
-    temp_file = file.create_unique_temp_filename()
+    temp_file = str(file.TempFileName())
     max_num_proc = generate_csv(in_file, temp_file)
 
     # Generate the ids we use for the hierarchies and the columns of the input

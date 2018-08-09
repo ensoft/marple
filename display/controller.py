@@ -43,12 +43,17 @@ def _display(args):
 
     """
     # Try to use the specified input file, otherwise use last one created
-    input_filename = args.infile if args.infile is not None else \
-        file.import_out_filename()
+    if args.infile is not None:
+        input_filename = str(file.DataFileName(args.infile))
+    else:
+        input_filename = str(file.DataFileName.import_filename())
+
     # Use user output filename specified, otherwise create a unique one
-    #   Do not let the user decide because they might overwrite the input!
-    output_filename = args.outfile if args.outfile is not None else \
-        file.find_unique_out_filename("display", ending=".svg")
+    # DO NOT let the user decide because they might overwrite the input!
+    if args.outfile is not None:
+        output_filename = file.DisplayFileName(given_name=args.outfile)
+    else:
+        output_filename = file.DisplayFileName()
 
     if args.cpu:
         if args.n:
@@ -63,11 +68,13 @@ def _display(args):
             hmap = heatmap.HeatMap(input_filename, labels,
                                    heatmap.DEFAULT_PARAMETERS)
             hmap.show()
-            hmap.save(output_filename)
+            output_filename.set_options("heatmap", "svg")
+            hmap.save(str(output_filename))
         else:
             stacks = flamegraph.read(input_filename)
-            flamegraph.make(stacks, output_filename, colouring="io")
-            flamegraph.show(output_filename)
+            output_filename.set_options("flamegraph", "svg")
+            flamegraph.make(stacks, str(output_filename), colouring="io")
+            flamegraph.show(str(output_filename))
     elif args.ipc:
         # Stub
         raise NotImplementedError("display ipc data")
@@ -79,17 +86,20 @@ def _display(args):
             raise NotImplementedError("display-numeric memory data")
         else:
             stacks = flamegraph.read(input_filename)
-            flamegraph.make(stacks, output_filename, colouring="mem")
-            flamegraph.show(output_filename)
+            output_filename.set_options("flamegraph", "svg")
+            flamegraph.make(stacks, str(output_filename), colouring="mem")
+            flamegraph.show(str(output_filename))
     elif args.stack:
         if args.n:
             raise NotImplementedError("display-numeric stack data")
         elif args.t:
-            treemap.show(input_filename, output_filename + ".html")
+            output_filename.set_options("treemap", "html")
+            treemap.show(input_filename, str(output_filename))
         else:
             stacks = flamegraph.read(input_filename)
-            flamegraph.make(stacks, output_filename)
-            flamegraph.show(output_filename)
+            output_filename.set_options("flamegraph", "svg")
+            flamegraph.make(stacks, str(output_filename))
+            flamegraph.show(str(output_filename))
 
 
 @util.log(logger)

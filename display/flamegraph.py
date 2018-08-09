@@ -52,7 +52,7 @@ def make(stack_data, out_filename, colouring=None):
         "--color=" option.
 
     """
-    temp_file = file.create_unique_temp_filename()
+    temp_file = str(file.TempFileName())
     counts = collections.Counter()
     for stack in stack_data:
         new_counts = collections.Counter({stack.stack: stack.weight})

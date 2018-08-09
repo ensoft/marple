@@ -12,90 +12,89 @@ Can also export them to disk.
 
 """
 
-__all__ = ["find_unique_out_filename", "create_out_filename_generic",
-           "create_unique_temp_filename", "import_out_filename",
-           "export_out_filename"]
+__all__ = (
+    'DisplayFileName',
+    'DataFileName',
+    'TempFileName'
+)
 
 import logging
 import os
-import uuid
+from datetime import datetime
 
-from . import paths
+from common import paths
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def find_unique_out_filename(module, ending=None):
-    """
-    Finds a (uniquely numbered) generic output filename that is not taken.
+class _FileName:
 
-    :param module:
-        The module after which the file should be named
-    :param ending:
-        Optional file extension
+    def __init__(self, option, extension, given_name=None, path=paths.OUT_DIR):
+        self.datetime = datetime.now()
+        self.option = option
+        self.extension = extension
+        if given_name == "":
+            raise FileNotFoundError("Cannot have empty file name.")
+        elif given_name is None:
+            self.given_name = None
+            self.path = path
+        else:
+            dir_name = os.path.dirname(given_name)
+            if os.path.isdir(dir_name):
+                self.path = dir_name + "/"
+                self.given_name = os.path.basename(given_name)
+            else:
+                self.path = path
+                self.given_name = given_name
 
-    :return:
-        A generic filename that does not yet exist in the output
-        directory.
-    """
+    def __str__(self):
+        if self.given_name is None:
+            date = self.datetime.strftime("%Y-%m-%d_%H:%M:%S.%f")
+            result = self.path + date
+            if self.option is None:
+                result += "." + self.extension
+            else:
+                result += "_" + self.option + "." + self.extension
+        else:
+            result = self.path + self.given_name
+        return result
 
-    filename = create_out_filename_generic(module, ending=ending)
-
-    i = 1
-    while os.path.isfile(filename):
-        filename = create_out_filename_generic("collect", number=i,
-                                               ending=".data")
-        i += 1
-
-    return filename
-
-
-def create_out_filename_generic(module, number=None, ending=None):
-    """
-    Create a, not necessarily unique, generic output filename.
-
-    Creates a generic output filename from the module, a number, and a file
-        ending.
-
-    :param module:
-        The module after which the file should be named.
-    :param number:
-        Optional numbering of the file.
-    :param ending:
-        Optional ending of the file.
-    :return:
-        A generic filename including the module name, and the specified number
-        and a file ending.
-    """
-
-    filename = "out-" + str(module)
-
-    if number is not None:
-        filename += str(number)
-    if ending is not None:
-        filename += str(ending)
-
-    return filename
+    def __repr__(self):
+        return self.__str__()
 
 
-def create_unique_temp_filename():
-    """Create a new unique generic filename for a file in the temp directory"""
-    return paths.TMP_DIR + str(uuid.uuid4()) + ".tmp"
+class DisplayFileName(_FileName):
+
+    def __init__(self, option=None,
+                 extension="marple.display", given_name=None):
+        super().__init__(option, extension, given_name)
+
+    def set_options(self, option, extension):
+        self.option = option
+        self.extension = extension
 
 
-def export_out_filename(filename):
-    """Saves the output filename in a file on disk"""
-    with open(paths.VAR_DIR + "filename", "w") as fn:
-        fn.write(filename)
+class DataFileName(_FileName):
+
+    def __init__(self, given_name=None):
+        super().__init__(None, "marple", given_name)
+
+    def export_filename(self):
+        with open(paths.VAR_DIR + "filename", "w") as file:
+            file.write(str(self))
+
+    @classmethod
+    def import_filename(cls):
+        try:
+            with open(paths.VAR_DIR + "filename", "r") as saved_filename:
+                return saved_filename.readline().strip()
+        except FileNotFoundError:
+            logger.error("Unable to find filename helper file in %s" %
+                         str(paths.VAR_DIR))
+            raise
 
 
-def import_out_filename():
-    """Gets the output filename from disk"""
-    try:
-        with open(paths.VAR_DIR + "filename", "r") as saved_filename:
-            return saved_filename.readline()
-    except FileNotFoundError:
-        logger.error("Unable to find filename helper file in %s"
-                     , str(paths.VAR_DIR))
-        raise
+class TempFileName(_FileName):
+    def __init__(self):
+        super().__init__(None, "tmp", path=paths.TMP_DIR)

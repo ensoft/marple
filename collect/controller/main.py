@@ -52,12 +52,12 @@ def _collect_and_store(args, parser):
             answer = input()
             if answer not in ("y", "yes"):
                 raise exceptions.AbortedException
-        filename = args.outfile
+        filename = file.DataFileName(args.outfile)
     else:
-        filename = file.find_unique_out_filename("collect", ending=".data")
+        filename = file.DataFileName()
 
     # Save latest filename to temporary file for display module
-    file.export_out_filename(filename)
+    filename.export_filename()
 
     # TODO: get all options from either args or config
     # Use user specified time for data collection, otherwise standard value
@@ -87,7 +87,7 @@ def _collect_and_store(args, parser):
         raise argparse.ArgumentError("Arguments not recognised")
 
     # Run collection
-    controller = API.GenericController(collecter, writer, filename)
+    controller = API.GenericController(collecter, writer, str(filename))
     controller.run()
     output.print_("Done.")
 
