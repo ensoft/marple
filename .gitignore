@@ -10,3 +10,4 @@ out/
 *.csv
 *out*
 venv/
+.cache*
