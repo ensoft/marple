@@ -95,7 +95,7 @@ class SchedTest(util.BaseTest):
                              type="event_type")]
 
 
-@unittest.skip("Failing - Franz to fix") # TODO
+#@unittest.skip("Failing - Franz to fix") # TODO
 class CPELTest(SchedTest):
     """Class for testing conversion from event objects to CPEL"""
 
@@ -147,10 +147,10 @@ class CPELTest(SchedTest):
     def test_basic_file(self):
         """Creates a test file in test directory and compares it with example"""
         filename = self._TEST_DIR + "create_scheddata_test.cpel"
-        writer = write.Writer()
-        writer.write(self.testEvents, filename)
-        with open(filename, "rb") as test_file, open(self.example_file,
-                                                     "rb") as correct_file:
+        writer = write.CpelWriter(self.testEvents)
+        writer.write(filename)
+        with open(filename, "rb") as test_file, \
+                open(self.example_file, "rb") as correct_file:
             self._compare_headers(test_file, correct_file)
             self._compare_files(test_file, correct_file)
 
@@ -215,10 +215,10 @@ class CPELTest(SchedTest):
         filename = self._TEST_DIR + "create_scheddata_test_variations.cpel"
 
         # Two different events with different data, track and event:
-        writer = write.Writer()
-        writer.write([SchedEvent(datum="d1", track="t1", time=1, type="e1"),
-                      SchedEvent(datum="d2", track="t2", time=2, type="e2")],
-                     filename)
+        writer = write.CpelWriter([SchedEvent(datum="d1", track="t1", time=1,
+                                          type="e1"),
+                      SchedEvent(datum="d2", track="t2", time=2, type="e2")])
+        writer.write(filename)
 
         # Number of strings should be 8, 6 plus name of section plus format str
         self.assertEqual(self._get_nr_of_entries(filename, 1), 8)
@@ -234,10 +234,9 @@ class CPELTest(SchedTest):
         filename = self._TEST_DIR + "create_scheddata_test_variations.cpel"
 
         # Two different events with same data, track, and event:
-        writer = write.Writer()
-        writer.write([SchedEvent(datum="d", track="1", time=1, type="e"),
-                      SchedEvent(datum="d", track="1", time=1, type="e")],
-                     filename)
+        writer = write.CpelWriter([SchedEvent(datum="d", track="1", time=1, type="e"),
+                      SchedEvent(datum="d", track="1", time=1, type="e")])
+        writer.write(filename)
 
         # There should be 5 strings in the string table, 3 plus table name + %s
         self.assertEqual(self._get_nr_of_entries(filename, 1), 5)
