@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# perf.py - interacts with Brendan Gregg's iosnoop tool
+# iosnoop.py - interacts with Brendan Gregg's iosnoop tool
 # July 2018 - Hrutvik Kanabar
 # -------------------------------------------------------------
 

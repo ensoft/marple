@@ -1,3 +1,10 @@
+# -------------------------------------------------------------
+# test_iosnoop.py - tests for interaction with iosnoop
+# August 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
+""" Test iosnoop interactions. """
+
 import unittest
 from unittest import mock
 
@@ -6,7 +13,13 @@ from common import datatypes
 
 
 class _IosnoopCollecterBaseTest(unittest.TestCase):
-    # Override run to apply patches for all tests
+    """
+    Base test for perf data collection testing.
+
+    Mocks out subprocess and logging for all tests by overriding run().
+    Sets useful class variables.
+
+    """
     time = 5
 
     def run(self, result=None):
@@ -23,10 +36,8 @@ class _IosnoopCollecterBaseTest(unittest.TestCase):
 
 
 class DiskLatencyTest(_IosnoopCollecterBaseTest):
-
-    @mock.patch('collect.interface.perf.StackParser')
-    def test(self, stack_parse_mock):
-
+    """ Test disk latency data collection. """
+    def test(self):
         collecter = iosnoop.DiskLatency(self.time, None)
         datapoints = list(collecter.collect())
 

@@ -1,19 +1,26 @@
-import os
+# -------------------------------------------------------------
+# test_perf.py - tests for interaction with perf
+# July-August 2018 - Franz Nowak, Hrutvik Kanabar
+# -------------------------------------------------------------
+
+""" Test perf interactions and stack parsing. """
+
 import unittest
 from unittest import mock
-from io import StringIO
 
 from collect.interface import perf
 from common import datatypes
 
-_THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-_DATA_DIR = os.path.join(_THIS_DIR, "data")
-
-_SCHED_EVENTS = ["abc"]
-
 
 class _PerfCollecterBaseTest(unittest.TestCase):
-    # Override run to apply patches for all tests
+    """
+    Base test for perf data collection testing.
+
+    Mocks out subprocess and logging for all tests by overriding run().
+    Sets useful class variables.
+
+    """
+
     time = 5
 
     def run(self, result=None):
@@ -29,15 +36,16 @@ class _PerfCollecterBaseTest(unittest.TestCase):
 
 
 class MemoryEventsTest(_PerfCollecterBaseTest):
-
+    """ Test memory event collection. """
     @mock.patch('collect.interface.perf.StackParser')
     def test(self, stack_parse_mock):
         collecter = perf.MemoryEvents(self.time, None)
         collecter.collect()
 
         expected_calls = [
-            mock.call(['perf', 'record', '-ag', '-e', "'{mem-loads,mem-stores}'",
-                       'sleep', str(self.time)], stderr=self.pipe_mock),
+            mock.call(['perf', 'record', '-ag', '-e',
+                       "'{mem-loads,mem-stores}'", 'sleep', str(self.time)],
+                      stderr=self.pipe_mock),
             mock.call().communicate(),
             mock.call(['perf', 'script'], stdout=self.pipe_mock,
                       stderr=self.pipe_mock),
@@ -58,7 +66,7 @@ class MemoryEventsTest(_PerfCollecterBaseTest):
 
 
 class MemoryMallocTest(_PerfCollecterBaseTest):
-
+    """ Test memory malloc probe collection. """
     @mock.patch('collect.interface.perf.StackParser')
     def test(self, stack_parse_mock):
         collecter = perf.MemoryMalloc(self.time, None)
@@ -94,7 +102,7 @@ class MemoryMallocTest(_PerfCollecterBaseTest):
 
 
 class StackTraceTest(_PerfCollecterBaseTest):
-
+    """ Test stack trace collection. """
     @mock.patch('collect.interface.perf.StackParser')
     def test(self, stack_parse_mock):
         options = perf.StackTrace.Options(frequency=1, cpufilter="filter")
@@ -124,9 +132,10 @@ class StackTraceTest(_PerfCollecterBaseTest):
 
 
 class SchedulingEventsTest(_PerfCollecterBaseTest):
-
+    """ Test scheduling event collection. """
     @mock.patch('collect.interface.perf.re')
     def test_success(self, re_mock):
+        """ Test successful regex matching. """
         # Set up mocks
         match_mock = re_mock.match.return_value
         match_mock.group.side_effect = [
@@ -176,6 +185,7 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
 
     @mock.patch('collect.interface.perf.re')
     def test_no_match(self, re_mock):
+        """ Test failed regex matching. """
         # Set up mocks
         re_mock.match.return_value = None
 
@@ -215,7 +225,7 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
 
 
 class DiskBlockRequestsTest(_PerfCollecterBaseTest):
-
+    """ Test disk block request data collection. """
     @mock.patch('collect.interface.perf.StackParser')
     def test(self, stack_parse_mock):
         collecter = perf.DiskBlockRequests(self.time, None)
@@ -346,15 +356,15 @@ class StackParserTest(unittest.TestCase):
         # Example of a single stack from perf extracted stack data
         sample_stack = \
             "swapper     0 [003] 687886.672908:  108724462 cycles:ppp:\n" \
-             "ffffffffa099768b intel_idle ([kernel.kallsyms])\n" \
-             "ffffffffa07e5ce4 cpuidle_enter_state ([kernel.kallsyms])\n" \
-             "ffffffffa07e5f97 cpuidle_enter ([kernel.kallsyms])\n" \
-             "ffffffffa00d299c do_idle ([kernel.kallsyms])\n" \
-             "ffffffffa00d2723 call_cpuidle ([kernel.kallsyms])\n" \
-             "ffffffffa00d2be3 cpu_startup_entry ([kernel.kallsyms])\n" \
-             "ffffffffa00581cb start_secondary ([kernel.kallsyms])\n" \
-             "ffffffffa00000d5 secondary_startup_64 ([kernel.kallsyms])\n" \
-             "\n"
+            "ffffffffa099768b intel_idle ([kernel.kallsyms])\n" \
+            "ffffffffa07e5ce4 cpuidle_enter_state ([kernel.kallsyms])\n" \
+            "ffffffffa07e5f97 cpuidle_enter ([kernel.kallsyms])\n" \
+            "ffffffffa00d299c do_idle ([kernel.kallsyms])\n" \
+            "ffffffffa00d2723 call_cpuidle ([kernel.kallsyms])\n" \
+            "ffffffffa00d2be3 cpu_startup_entry ([kernel.kallsyms])\n" \
+            "ffffffffa00581cb start_secondary ([kernel.kallsyms])\n" \
+            "ffffffffa00000d5 secondary_startup_64 ([kernel.kallsyms])\n" \
+            "\n"
 
         # Expected output data
         expected = [datatypes.StackData(weight=1, stack=(
