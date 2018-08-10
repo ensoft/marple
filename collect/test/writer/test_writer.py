@@ -95,7 +95,6 @@ class SchedTest(util.BaseTest):
                              type="event_type")]
 
 
-#@unittest.skip("Failing - Franz to fix") # TODO
 class CPELTest(SchedTest):
     """Class for testing conversion from event objects to CPEL"""
 
@@ -216,8 +215,9 @@ class CPELTest(SchedTest):
 
         # Two different events with different data, track and event:
         writer = write.CpelWriter([SchedEvent(datum="d1", track="t1", time=1,
-                                          type="e1"),
-                      SchedEvent(datum="d2", track="t2", time=2, type="e2")])
+                                              type="e1"),
+                                   SchedEvent(datum="d2", track="t2", time=2,
+                                              type="e2")])
         writer.write(filename)
 
         # Number of strings should be 8, 6 plus name of section plus format str
@@ -234,8 +234,10 @@ class CPELTest(SchedTest):
         filename = self._TEST_DIR + "create_scheddata_test_variations.cpel"
 
         # Two different events with same data, track, and event:
-        writer = write.CpelWriter([SchedEvent(datum="d", track="1", time=1, type="e"),
-                      SchedEvent(datum="d", track="1", time=1, type="e")])
+        writer = write.CpelWriter([SchedEvent(datum="d", track="1", time=1,
+                                              type="e"),
+                                   SchedEvent(datum="d", track="1", time=1,
+                                              type="e")])
         writer.write(filename)
 
         # There should be 5 strings in the string table, 3 plus table name + %s
