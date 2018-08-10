@@ -39,6 +39,11 @@ printf "Changing sudoers file... "
 echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo > /dev/null
 printf "Done.\n"
 
+printf "Removing old numpy libraries... "
+pip3 uninstall -y numpy > /dev/null &
+show_spinner
+printf "Done.\n"
+
 printf "Installing Numpy, Matplotlib... "
 sudo apt-get -qq install python3-numpy python3-matplotlib > /dev/null &
 show_spinner
