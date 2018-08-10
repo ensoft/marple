@@ -15,7 +15,7 @@ class GenericController:
     A blind generic controller
 
     """
-    def __init__(self, collecter, writer, filename):
+    def __init__(self, collecter, writer, filename, header):
         """
         Initialises the Controller
         :param collecter: class that resides in one of the interfaces,
@@ -25,8 +25,10 @@ class GenericController:
                        generic writer interface; it writes the data in some
                        format
         :param filename: the filename we use to write the data
+        :param header: the header of the file; used to recognize the file type
 
         """
+        self.header = header
         self.collecter = collecter
         self.writer = writer
         self.filename = filename
@@ -35,9 +37,8 @@ class GenericController:
     def run(self):
         # We collect the data first
         data = self.collecter.collect()
-
         # We then write it
-        self.writer.write(data, self.filename)
+        self.writer.write(data, self.filename, self.header)
 
 
 

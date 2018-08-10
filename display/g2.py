@@ -13,6 +13,7 @@ import os
 import subprocess
 
 from common import util
+from common import file
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -31,5 +32,13 @@ def show(cpel_data):
         The name of the CPEL file containing the data to be displayed.
 
     """
+    tmp = file.TempFileName()
+    with open(cpel_data, "rb") as read:
+        read.readline()
+        data = read.read()
+
+    with open(str(tmp), "wb") as write:
+        write.write(data)
+
     subprocess.call(["vpp/build-root/install-native/g2/bin/g2", "--cpel-input",
-                     cpel_data])
+                     str(tmp)])

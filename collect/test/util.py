@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# util.py - Test utilities
+# util_display.py - Test utilities
 #
 # July 2018, Matt Ware
 #

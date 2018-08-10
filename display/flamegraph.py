@@ -33,6 +33,8 @@ FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
 def read(in_filename):
     """Read stack events from a file in standard format."""
     with open(in_filename, "r") as in_file:
+        # Skip first line, header
+        in_file.readline()
         for line in in_file.readlines():
             yield StackData.from_string(line)
 

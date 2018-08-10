@@ -49,32 +49,35 @@ def generate_csv(in_file, out_file):
     :param out_file: a semicolon separated file generated from the in_file;
                      expects an absolute path
     """
-    with open(out_file, "w") as file_out:
-        max_num_proc = 0
-        with open(in_file, "r") as read_file:
-            for line in read_file:
-                cnt = line.count(';')
-                # If we don't have any ';' characters raise error
-                if cnt == 0:
-                    raise ValueError
-                if max_num_proc < line.count(';'):
-                    max_num_proc = line.count(';')
+    max_num_proc = 0
+    with open(in_file, "r") as read_file:
+        # Skip first line, header
+        read_file.readline()
 
-        # number of fields in a line is 1 plus the number of ';' characters
+        for line in read_file:
+            cnt = line.count(';')
+            # If we don't have any ';' characters raise error
+            if cnt == 0:
+                print(line)
+                raise ValueError("Invalid format of the file!")
+            if max_num_proc < cnt:
+                max_num_proc = cnt
+        # Number of fields in a line is 1 plus the number of ';' characters
         max_num_proc += 1
 
+    with open(out_file, "w") as out_file:
         # Header of the csv
-        file_out.write("value;")
-        for i in range(1, max_num_proc):
-            file_out.write(str(i) + ";")
-        # Last value doesn't have a semicolon after
-        file_out.write(str(i + 1))
-        file_out.write('\n')
+        out_file.write("value;" +
+                       ";".join([str(i) for i in range(1, max_num_proc + 1)]) +
+                       "\n")
 
         with open(in_file, "r") as read_file:
+            # Skip first line, header
+            read_file.readline()
+
             for line in read_file:
-                call_stack = line.replace(",", ";")
-                file_out.write(call_stack)
+                call_stack = line.replace("#", ";")
+                out_file.write(call_stack)
 
         return max_num_proc
 
@@ -108,4 +111,5 @@ def show(in_file, out_file):
         out.write(tmap.dump_html(data))
 
     username = os.environ['SUDO_USER']
-    subprocess.call(["su", "-", "-c", "firefox " + out_file, username])
+    subprocess.call(["su", "-", "-c", "firefox " +
+                     out_file, username])
