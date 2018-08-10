@@ -1,14 +1,10 @@
 import os
-
-from unittest.mock import patch
+import unittest
+from unittest import mock
+from io import StringIO
 
 from collect.interface import perf
 from common import datatypes
-from collect.test import util
-
-# -----------------------------------------------------------------------------
-# Globals
-#
 
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 _DATA_DIR = os.path.join(_THIS_DIR, "data")
@@ -16,76 +12,248 @@ _DATA_DIR = os.path.join(_THIS_DIR, "data")
 _SCHED_EVENTS = ["abc"]
 
 
-# -----------------------------------------------------------------------------
-# Helpers
-#
+class _PerfCollecterBaseTest(unittest.TestCase):
+    # Override run to apply patches for all tests
+    time = 5
 
-class _BaseTest(util.BaseTest):
-    """Base test class for perf testing."""
-    pass
+    def run(self, result=None):
+        with mock.patch('collect.interface.perf.subprocess') as subproc_mock, \
+             mock.patch('collect.interface.perf.logger') as log_mock:
+            self.subproc_mock = subproc_mock
+            self.log_mock = log_mock
+            self.subproc_mock.Popen.return_value.communicate.side_effect = \
+                [(b"test_out1", b"test_err1"), (b"test_out2", b"test_err2"),
+                 (b"test_out3", b"test_err3"), (b"test_out4", b"test_err4")]
+            self.pipe_mock = self.subproc_mock.PIPE
+            super().run(result)
 
 
-class _StackParserTest(_BaseTest):
-    """Base test class for testing the stack parser class."""
+class MemoryEventsTest(_PerfCollecterBaseTest):
+
+    @mock.patch('collect.interface.perf.StackParser')
+    def test(self, stack_parse_mock):
+        collecter = perf.MemoryEvents(self.time, None)
+        collecter.collect()
+
+        expected_calls = [
+            mock.call(['perf', 'record', '-ag', '-e', "'{mem-loads,mem-stores}'",
+                       'sleep', str(self.time)], stderr=self.pipe_mock),
+            mock.call().communicate(),
+            mock.call(['perf', 'script'], stdout=self.pipe_mock,
+                      stderr=self.pipe_mock),
+            mock.call().communicate()
+
+        ]
+
+        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+
+        expected_logs = [
+            mock.call("test_err1"),
+            mock.call("test_err2")
+        ]
+        self.log_mock.error.assert_has_calls(expected_logs)
+
+        stack_parse_mock.assert_called_once_with("test_out2")
+        stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
+
+
+class MemoryMallocTest(_PerfCollecterBaseTest):
+
+    @mock.patch('collect.interface.perf.StackParser')
+    def test(self, stack_parse_mock):
+        collecter = perf.MemoryMalloc(self.time, None)
+        collecter.collect()
+
+        expected_calls = [
+            mock.call(['perf', 'probe', '-q', '--del', '*malloc*'],
+                      stderr=self.pipe_mock),
+            mock.call().communicate(),
+            mock.call(["perf", "probe", "-qx", "/lib*/*/libc.so.*",
+                       "malloc:1 size=%di"], stderr=self.pipe_mock),
+            mock.call().communicate(),
+            mock.call(['perf', 'record', '-ag', '-e', 'probe_libc:malloc:',
+                       'sleep', str(self.time)], stderr=self.pipe_mock),
+            mock.call().communicate(),
+            mock.call(['perf', 'script'], stdout=self.pipe_mock,
+                      stderr=self.pipe_mock),
+            mock.call().communicate()
+        ]
+
+        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+
+        expected_logs = [
+            mock.call("test_err1"),
+            mock.call("test_err2"),
+            mock.call("test_err3"),
+            mock.call("test_err4")
+        ]
+        self.log_mock.error.assert_has_calls(expected_logs)
+
+        stack_parse_mock.assert_called_once_with("test_out4")
+        stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
+
+
+class StackTraceTest(_PerfCollecterBaseTest):
+
+    @mock.patch('collect.interface.perf.StackParser')
+    def test(self, stack_parse_mock):
+        options = perf.StackTrace.Options(frequency=1, cpufilter="filter")
+        collecter = perf.StackTrace(self.time, options)
+        collecter.collect()
+
+        expected_calls = [
+            mock.call(['perf', 'record', '-F', str(options.frequency),
+                       options.cpufilter, '-g', '--', 'sleep', str(self.time)],
+                      stderr=self.pipe_mock),
+            mock.call().communicate(),
+            mock.call(['perf', 'script'], stdout=self.pipe_mock,
+                      stderr=self.pipe_mock),
+            mock.call().communicate()
+        ]
+
+        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+
+        expected_logs = [
+            mock.call("test_err1"),
+            mock.call("test_err2"),
+        ]
+        self.log_mock.error.assert_has_calls(expected_logs)
+
+        stack_parse_mock.assert_called_once_with("test_out2")
+        stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
+
+
+class SchedulingEventsTest(_PerfCollecterBaseTest):
+
+    @mock.patch('collect.interface.perf.re')
+    def test_success(self, re_mock):
+        # Set up mocks
+        match_mock = re_mock.match.return_value
+        match_mock.group.side_effect = [
+            "111.999",
+            "test_name",
+            "test_pid",
+            "4",
+            "test_event"
+        ]
+
+        collecter = perf.SchedulingEvents(self.time, None)
+        sched_events = list(collecter.collect())
+
+        expected_calls = [
+            mock.call(['perf', 'sched', 'record', 'sleep',
+                       str(self.time)], stderr=self.pipe_mock),
+            mock.call().communicate(),
+            mock.call(['perf', 'sched', 'script', '-F',
+                       'comm,pid,cpu,time,event'],
+                      stdout=self.pipe_mock, stderr=self.pipe_mock),
+            mock.call().communicate()
+        ]
+
+        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+
+        expected_logs = [
+            mock.call("test_err1"),
+            mock.call("test_err2")
+        ]
+
+        self.log_mock.error.assert_has_calls(expected_logs)
+
+        re_mock.match.assert_called_once_with(r"\s*"
+                                              r"(?P<name>\S+(\s+\S+)*)\s+"
+                                              r"(?P<pid>\d+)\s+"
+                                              r"\[(?P<cpu>\d+)\]\s+"
+                                              r"(?P<time>\d+.\d+):\s+"
+                                              r"(?P<event>\S+)",
+                                              "test_out2")
+
+        expected_event = datatypes.SchedEvent(datum="test_name (pid: test_pid)",
+                                              track="cpu 4",
+                                              time=111000999,
+                                              type="test_event")
+
+        self.assertIn(expected_event, sched_events)
+
+    @mock.patch('collect.interface.perf.re')
+    def test_no_match(self, re_mock):
+        # Set up mocks
+        re_mock.match.return_value = None
+
+        collecter = perf.SchedulingEvents(self.time, None)
+        sched_events = list(collecter.collect())
+
+        expected_calls = [
+            mock.call(['perf', 'sched', 'record', 'sleep',
+                       str(self.time)], stderr=self.pipe_mock),
+            mock.call().communicate(),
+            mock.call(['perf', 'sched', 'script', '-F',
+                       'comm,pid,cpu,time,event'],
+                      stdout=self.pipe_mock, stderr=self.pipe_mock),
+            mock.call().communicate()
+        ]
+
+        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+
+        expected_logs = [
+            mock.call("test_err1"),
+            mock.call("test_err2"),
+            mock.call("Failed to parse event data: %s Expected format: name "
+                      "pid cpu time event", "test_out2")
+        ]
+
+        self.log_mock.error.assert_has_calls(expected_logs)
+
+        re_mock.match.assert_called_once_with(r"\s*"
+                                              r"(?P<name>\S+(\s+\S+)*)\s+"
+                                              r"(?P<pid>\d+)\s+"
+                                              r"\[(?P<cpu>\d+)\]\s+"
+                                              r"(?P<time>\d+.\d+):\s+"
+                                              r"(?P<event>\S+)",
+                                              "test_out2")
+
+        self.assertEqual([], sched_events)
+
+
+class DiskBlockRequestsTest(_PerfCollecterBaseTest):
+
+    @mock.patch('collect.interface.perf.StackParser')
+    def test(self, stack_parse_mock):
+        collecter = perf.DiskBlockRequests(self.time, None)
+        collecter.collect()
+
+        expected_calls = [
+            mock.call(['perf', 'record', '-ag', '-e', 'block:block_rq_insert',
+                       'sleep', str(self.time)], stderr=self.pipe_mock),
+            mock.call().communicate(),
+            mock.call(['perf', 'script'], stderr=self.pipe_mock,
+                      stdout=self.pipe_mock),
+            mock.call().communicate()
+        ]
+
+        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+
+        expected_logs = [
+            mock.call("test_err1"),
+            mock.call("test_err2")
+        ]
+
+        self.log_mock.error.assert_has_calls(expected_logs)
+
+        stack_parse_mock.assert_called_once_with("test_out2")
+        stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
+
+
+class StackParserTest(unittest.TestCase):
+    """Test class for the StackParser class."""
     def setUp(self):
         """Creates a generic empty StackParser object."""
         super().setUp()
         self.stack_parser = perf.StackParser("")
 
     def tearDown(self):
-        """Deallocates the StackParser objec.t"""
+        """Deallocates the StackParser object"""
         super().tearDown()
         self.stack_parser = None
-
-
-# -----------------------------------------------------------------------------
-# Tests
-#
-
-class DataGenTest(_BaseTest):
-    """Test class for the _sched_data_get() generator."""
-
-    def test_basic(self):
-        """
-        Basic test for _sched_data_get().
-
-        Write some formatted data to a temporary file, and check that
-        _sched_data_get correctly converts it.
-
-        """
-
-        def event_to_str(sched_event):
-            return "{} {} [00{}] {}: {}".format(*sched_event)
-
-        # Expected event data
-        # e.g. perf   961 [000] 707827.248468:       sched:sched_wakeup:
-        expected = [datatypes.SchedEvent("name1", 12345, 1, "1232.454",
-                                         "event1"),
-                    datatypes.SchedEvent("name2", 67890, 3, "678.99",
-                                         "event2")]
-
-        filename = self._TEST_DIR + "data_gen_test"
-
-        # Create a file with formatted data
-        with open(filename, "w") as file_:
-            # file_.writelines(event_to_str(entry) for entry in expected)
-            for entry in expected:
-                file_.write(event_to_str(entry) + "\n")
-
-        # Run _sched_data_get() to get a generator of items.
-        actual = list(perf._sched_data_gen(filename))
-
-        self.assertEqual(expected, actual)
-
-    def test_sched_data_neg(self):
-        """Test when data_gen is passed an invalid file."""
-        with self.assertRaises(FileNotFoundError):
-            list(perf._sched_data_gen(self._TEST_DIR +
-                                      "this/file/definitely/doesnt/exist"))
-
-
-class StackParserTest(_StackParserTest):
-    """Test class for the StackParser class."""
 
     def test_is_empty(self):
         """Tests the function recognising an empty line."""
@@ -134,13 +302,13 @@ class StackParserTest(_StackParserTest):
         # Check that the event_filter defaulted:
         self.assertTrue(self.stack_parser.event_filter == "cycles")
 
-    @patch("collect.interface.perf.INCLUDE_PID", True)
+    @mock.patch("collect.interface.perf.INCLUDE_PID", True)
     def test_parse_baseline_pid(self):
         """Tests creation of pname with pid."""
         self.stack_parser._parse_baseline(line="java 27 464.116: cycles:")
         self.assertTrue(self.stack_parser._pname == "java-27")
 
-    @patch("collect.interface.perf.INCLUDE_TID", True)
+    @mock.patch("collect.interface.perf.INCLUDE_TID", True)
     def test_parse_baseline_tid(self):
         """Tests creation of pname with pid and tid."""
         self.stack_parser._parse_baseline(line="java 27/1 464.116: cycles:")
@@ -177,31 +345,33 @@ class StackParserTest(_StackParserTest):
 
         # Example of a single stack from perf extracted stack data
         sample_stack = \
-            ["swapper     0 [003] 687886.672908:  108724462 cycles:ppp:\n" 
-             "ffffffffa099768b intel_idle ([kernel.kallsyms])\n"
-             "ffffffffa07e5ce4 cpuidle_enter_state ([kernel.kallsyms])\n"
-             "ffffffffa07e5f97 cpuidle_enter ([kernel.kallsyms])\n"
-             "ffffffffa00d299c do_idle ([kernel.kallsyms])\n"
-             "ffffffffa00d2723 call_cpuidle ([kernel.kallsyms])\n"
-             "ffffffffa00d2be3 cpu_startup_entry ([kernel.kallsyms])\n"
-             "ffffffffa00581cb start_secondary ([kernel.kallsyms])\n"
-             "ffffffffa00000d5 secondary_startup_64 ([kernel.kallsyms])\n"
-             "\n"]
+            "swapper     0 [003] 687886.672908:  108724462 cycles:ppp:\n" \
+             "ffffffffa099768b intel_idle ([kernel.kallsyms])\n" \
+             "ffffffffa07e5ce4 cpuidle_enter_state ([kernel.kallsyms])\n" \
+             "ffffffffa07e5f97 cpuidle_enter ([kernel.kallsyms])\n" \
+             "ffffffffa00d299c do_idle ([kernel.kallsyms])\n" \
+             "ffffffffa00d2723 call_cpuidle ([kernel.kallsyms])\n" \
+             "ffffffffa00d2be3 cpu_startup_entry ([kernel.kallsyms])\n" \
+             "ffffffffa00581cb start_secondary ([kernel.kallsyms])\n" \
+             "ffffffffa00000d5 secondary_startup_64 ([kernel.kallsyms])\n" \
+             "\n"
 
         # Expected output data
-        expected = [datatypes.StackEvent(stack=(
+        expected = [datatypes.StackData(weight=1, stack=(
             "swapper", "secondary_startup_64", "start_secondary",
             "cpu_startup_entry", "call_cpuidle", "do_idle", "cpuidle_enter",
             "cpuidle_enter_state", "intel_idle"))]
 
-        filename = self._TEST_DIR + "stack_collapse_test"
+        # # Mock a file with sample data
+        # file_mock = StringIO("")
+        # file_mock.writelines(sample_stack)
+        # context_mock =  open_mock.return_value
+        # context_mock.__enter__.return_value = file_mock
 
-        # Create a file with formatted data
-        with open(filename, "w") as file_:
-            file_.writelines(sample_stack)
-
-        self.stack_parser.filename = filename
+        self.stack_parser.data = sample_stack
+        self.stack_parser.event_filter = ""
 
         # Run the whole stack_collapse function
-        events = self.stack_parser.stack_collapse()
-        self.assertTrue(list(events) == expected)
+        events = list(self.stack_parser.stack_collapse())
+
+        self.assertEqual(expected, events)

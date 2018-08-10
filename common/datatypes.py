@@ -158,7 +158,7 @@ class StackData(typing.NamedTuple):
     """
     # Could have more attributes if needed
     weight: int
-    stack: typing.Tuple[str]
+    stack: tuple
 
     def __str__(self):
         """

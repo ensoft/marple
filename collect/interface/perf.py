@@ -60,7 +60,7 @@ class MemoryEvents(Collecter):
             ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
-        logger.debug(err.decode())
+        logger.error(err.decode())
 
         sub_process = subprocess.Popen(["perf", "script"],
                                        stdout=subprocess.PIPE,
@@ -94,20 +94,20 @@ class MemoryMalloc(Collecter):
             ["perf", "probe", "-q", "--del", "*malloc*"],
             stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
-        logger.debug(err.decode())
+        logger.error(err.decode())
 
         sub_process = subprocess.Popen(
             ["perf", "probe", "-qx", "/lib*/*/libc.so.*",
              "malloc:1 size=%di"], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
-        logger.debug(err.decode())
+        logger.error(err.decode())
 
         # Record perf data
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "probe_libc:malloc:",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
-        logger.debug(err.decode())
+        logger.error(err.decode())
 
         sub_process = subprocess.Popen(["perf", "script"],
                                        stdout=subprocess.PIPE,
@@ -142,7 +142,7 @@ class StackTrace(Collecter):
                                         str(self.time)],
                                        stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
-        logger.debug(err.decode())
+        logger.error(err.decode())
 
         sub_process = subprocess.Popen(["perf", "script"],
                                        stdout=subprocess.PIPE,
@@ -173,7 +173,7 @@ class SchedulingEvents(Collecter):
         sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
                                         str(self.time)], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
-        logger.debug(err.decode())
+        logger.error(err.decode())
 
         sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
                                         "comm,pid,cpu,time,event"],
@@ -216,6 +216,7 @@ class SchedulingEvents(Collecter):
                                          track=track,
                                          time=time_int,
                                          type=match.group("event"))
+            print(event)
 
             yield event
 
@@ -238,7 +239,7 @@ class DiskBlockRequests(Collecter):
             ["perf", "record", "-ag", "-e", "block:block_rq_insert",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
-        logger.debug(err.decode())
+        logger.error(err.decode())
 
         sub_process = subprocess.Popen(["perf", "script"],
                                        stdout=subprocess.PIPE,
