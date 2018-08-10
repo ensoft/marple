@@ -51,7 +51,7 @@ class DiskLatency(Collecter):
                                        stderr=subprocess.PIPE)
         out, err = sub_process.communicate()
 
-        logger.debug(err.decode())
+        logger.error(err.decode())
 
         lines = StringIO(out.decode())
 
