@@ -321,14 +321,14 @@ class StackParser:
         return re.match(self._stackline, line) is not None
 
     def _make_stack(self):
-        """Creates a stack tuple from cached data and yields it."""
+        """Creates a stack tuple from cached data and returns it."""
 
         # if there is no pname, we have not processed one yet, which means
         #   that past ones have been filtered (_pname used as flag)
         if self._pname is None:
             return None
 
-        # Finish making the stack and yield it
+        # Finish making the stack and return it
         self._stack.insert(0, self._pname)
 
         stack_folded = tuple(self._stack)
