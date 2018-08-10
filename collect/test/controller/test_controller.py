@@ -1,25 +1,17 @@
-from unittest.mock import patch
+# -------------------------------------------------------------
+# test_controller.py - test the controller for the collect module.
+# June - August 2018 - Franz Nowak, Hrutvik Kanabar
+# -------------------------------------------------------------
 
-from collect.controller import cpu
-from collect.controller import main as collect_parser
-from collect.test import util
-from common import config
+# TODO add tests once collect UI has been updated
 
+import unittest
+from unittest import mock
 
-# -----------------------------------------------------------------------------
-# Helpers
-#
-
-
-class _BaseTest(util.BaseTest):
-    """Base test class for controller testing."""
+import collect.controller.main as collect
 
 
-# -----------------------------------------------------------------------------
-# Tests
-#
-
-class _ParseTest(_BaseTest):
+class _ParseTest(unittest.TestCase):
     """Class for testing that parsing works correctly"""
     @staticmethod
     def check_calls(argv, cls, fn, args, **kwargs):
@@ -38,46 +30,7 @@ class _ParseTest(_BaseTest):
         :param kwargs:
             The keyword arguments to the function that was stubbed out.
         """
-        with patch.object(cls, fn) as call_mock:
-            collect_parser.main(argv)
+        with mock.patch.object(cls, fn) as call_mock:
+            collect.main(argv)
             call_mock.assert_called_once_with(*args, **kwargs)
 
-
-@patch("common.file.export_out_filename")
-@patch("common.file.create_out_filename_generic")
-class SchedTest(_ParseTest):
-    def test_controller_logic(self, filename_generator, export):
-        """Check that asking for cpu calls the right function"""
-        filename_generator.return_value = "filename"
-        self.check_calls(["--cpu", "-t", "13"], cpu,
-                         "sched_collect_and_store", args=(13, "filename"))
-
-    @patch.object(cpu, "sched_collect_and_store")
-    def test_sched_collect_config_time(self, collect_sched,
-                                       filename_generator, export):
-        """Check that config default time is used if set in config"""
-        filename_generator.return_value = "filename"
-        with patch.object(config, "get_default_time", return_value=7) \
-                as get_time_mock:
-            collect_parser.main(["--cpu"])
-            get_time_mock.assert_called()
-            collect_sched.assert_called_once_with(7, "filename")
-
-    @patch.object(cpu, "sched_collect_and_store")
-    def test_sched_collect_default_time(self, collect_sched,
-                                        filename_generator, export):
-        """Check that module default time is used if not set in config"""
-        filename_generator.return_value = "filename"
-        with patch.object(config, "get_default_time", return_value=None) \
-                as get_time_mock:
-            collect_parser.main(["--cpu"])
-            get_time_mock.assert_called_once()
-            collect_sched.assert_called_once_with(10, "filename")
-
-    @patch.object(cpu, "sched_collect_and_store")
-    def test_sched_collect_create_filename(self, collect_sched,
-                                           filename_generator, export):
-        """Check that file default function is called to create filename"""
-        collect_parser.main(["--cpu"])
-        filename_generator.assert_called_once()
-        self.assertTrue(collect_sched.called)
