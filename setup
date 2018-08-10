@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------
 # setup - Sets up marple
-# July-Aug 2018 - Hrutvik Kanabar
+# July-Aug 2018 - Hrutvik Kanabar, Franz Nowak
 # -------------------------------------------------------------
 
 # TODO find better way of silencing commands than redirect to /dev/null
