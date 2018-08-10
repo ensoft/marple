@@ -33,6 +33,9 @@ FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
 def read(in_filename):
     """Read stack events from a file in standard format."""
     with open(in_filename, "r") as file:
+        # Skip first line, header
+        file.readline()
+
         for line in file.readlines():
             yield StackData.from_string(line)
 
@@ -80,6 +83,6 @@ def show(image):
 
     """
     username = os.environ['SUDO_USER'] #@@@ TODO test this
-    subprocess.call(["su", "-", "-c",  "firefox " + DISPLAY_DIR + image,
+    subprocess.call(["su", "-", "-c",  "firefox " + image,
                      username])
 

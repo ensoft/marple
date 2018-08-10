@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 from io import StringIO
 
-from collect.writer import write
+from collect.IO import write
 from common.datatypes import StackData, SchedEvent, Datapoint
 from collect.test import util
 

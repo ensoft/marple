@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# writer/write.py - Saves data objects into a file.
+# IO/write.py - Saves data objects into a file.
 # June-July 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
@@ -28,8 +28,19 @@ logger.debug('Entered module: {}'.format(__name__))
 class Writer:
     @staticmethod
     @util.log(logger)
-    def write(data, filename):
+    def write(data, filename, header):
+        """
+        Writes to a file the contents of an iterator
+
+        :param data: the data to be written
+        :param filename: the name of the file that data is going to be written
+                         to
+        :param header: the header format for the data
+        """
         with open(filename, "w") as out:
+            # We write the header of the file as the first line
+            out.write(header + '\n')
+
             for datum in data:
                 out.write(str(datum) + "\n")
 
@@ -38,7 +49,7 @@ class WriterCPEL(Writer):
     @staticmethod
     @util.log(logger)
     @util.Override(Writer)
-    def write(sched_events, filename):
+    def write(sched_events, filename, header):
         """
         Saves the event data from the generator in a file in CPEL format.
 
@@ -46,8 +57,7 @@ class WriterCPEL(Writer):
             An iterator of :class:`SchedEvent` objects.
         :param filename:
             The name of the file into which to store the output.
-
-
+        :param header: the header for the CPEL file; should be "CPEL"
         """
 
         cpel_writer = CpelWriter(sched_events)
@@ -407,8 +417,10 @@ class CpelWriter:
         """
         # Write linearly from data structures
         with open(filename, "wb") as file_:
+            # File header
+            file_.write(b'[CPEL]\n')
 
-            # Header
+            # CPEL Header
             self._write_file_header(file_)
 
             # String Table

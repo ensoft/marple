@@ -218,6 +218,9 @@ class HeatMap:
 
         """
         with open(datafile, "r") as file:
+            # Skip first line, header
+            file.readline()
+
             # Get data
             datapoints = [Datapoint.from_string(line) for line in file]
 

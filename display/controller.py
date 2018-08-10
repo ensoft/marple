@@ -17,7 +17,8 @@ import logging
 
 from common import (
     file,
-    util
+    util,
+    config
 )
 from display import (
     flamegraph,
@@ -29,13 +30,132 @@ from display import (
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
 
+display_options = {
+    '[CSV]': ['heatmap'],
+    '[STACK]': ['flamegraph', 'treemap'],
+    '[CPEL]': ['g2']
+}
+
+
+@util.log(logger)
+def _gen_treemap(*args):
+    #inp, out
+    """
+    Helper function that generates the treemap html file and shows it in the
+    browser
+
+    :param inp: input file
+    :param out: output file, as DisplayFileName object
+
+    """
+    print(args)
+    args[1].set_options("treemap", "html")
+    treemap.show(args[0], str(args[1]))
+
+
+@util.log(logger)
+def _gen_flamegraph(*args):
+    #inp, out
+    """
+    Helper function that generates the flamegraph svg file and shows it in the
+    browser
+
+    :param input: input file
+    :param output: output file, as a DisplayFileName object
+
+    """
+    stacks = flamegraph.read(args[0])
+    args[1].set_options("flamegraph", "svg")
+    flamegraph.make(stacks, str(args[1]))
+    flamegraph.show(str(args[1]))
+
+
+@util.log(logger)
+def _gen_g2(*args):
+    #inp
+    """
+    Helper function that generates the g2 representation
+    :param input: the input filename
+
+    """
+    g2.show(args[0])
+
+
+@util.log(logger)
+def _gen_heatmap(*args):
+    #inp, out, labels, params
+    """
+    Helper function that generates and displays the heatmap
+
+    :param input: input file
+    :param output: output file, as a DisplayFileName object
+    :param labels: labels for the axes
+    :param params: parameters for the heatmap, defaults to the defaults from
+                   heatmap
+
+    """
+    hmap = heatmap.HeatMap(args[0], args[2], args[3])
+    hmap.show()
+    args[1].set_options("heatmap", "svg")
+    hmap.save(str(args[1]))
+
+
+@util.log(logger)
+def _select_mode(file_type, args, possib_dict):
+    """
+    Captures the common pattern of selecting the right display.
+
+    :param file_type: the type of the file; can be:
+                        - [STACK]
+                        - [CSV]
+                        - [CPEL]
+    :param args: terminal arguments as a dictionary
+    :param posib_dict: a dictionary containing (key, value), where:
+                            - key: name of the display option
+                            - value: pair containing the function associated
+                                     with the display option and the arguments
+                                     it should be called with
+
+    """
+    # We create a config parser to read user setting from the config file
+    config_parser = config.Parser()
+
+    if file_type not in display_options:
+        raise KeyError("The file type {} is not supported "
+                        "yet".format(file_type))
+
+    options = display_options[file_type]
+    flag_args = False
+    for option in options:
+        if option in possib_dict and args[option]:
+            flag_args = True
+            funct_pair = possib_dict[option]
+    if flag_args:
+        funct = funct_pair[0]
+        arg = funct_pair[1]
+        funct(*arg)
+    else:
+        default = config_parser.get_option_from_section("Display",
+                                                        file_type[1:-1])
+        if default in possib_dict:
+            funct_pair = possib_dict[default]
+            funct = funct_pair[0]
+            arg = funct_pair[1]
+            funct(*arg)
+        else:
+            raise Exception(
+                "No valid args or config values found for {}. Either "
+                "add an arg in the terminal command or modify the "
+                "config file".format(file_type))
+
 
 @util.log(logger)
 def _display(args):
     """
     Displaying part of the controller module.
 
-    Deals with displaying data.
+    Deals with displaying data by using the selection function. See the
+    function for the selection criteria.
 
     :param args:
         Command line arguments for data-display
@@ -55,52 +175,33 @@ def _display(args):
     else:
         output_filename = file.DisplayFileName()
 
-    if args.cpu:
-        if args.n:
-            raise NotImplementedError("display cpu data")
-        else:
-            g2.show(input_filename)
-    elif args.disk:
-        if args.n:
-            labels = heatmap.AxesLabels(x='Time', x_units='seconds',
-                                        y='Latency', y_units='ms',
-                                        colorbar='No. accesses')
-            hmap = heatmap.HeatMap(input_filename, labels,
-                                   heatmap.DEFAULT_PARAMETERS)
-            hmap.show()
-            output_filename.set_options("heatmap", "svg")
-            hmap.save(str(output_filename))
-        else:
-            stacks = flamegraph.read(input_filename)
-            output_filename.set_options("flamegraph", "svg")
-            flamegraph.make(stacks, str(output_filename), colouring="io")
-            flamegraph.show(str(output_filename))
-    elif args.ipc:
-        # Stub
-        raise NotImplementedError("display ipc data")
-    elif args.lib:
-        # Stub
-        raise NotImplementedError("display library data")
-    elif args.mem:
-        if args.n:
-            raise NotImplementedError("display-numeric memory data")
-        else:
-            stacks = flamegraph.read(input_filename)
-            output_filename.set_options("flamegraph", "svg")
-            flamegraph.make(stacks, str(output_filename), colouring="mem")
-            flamegraph.show(str(output_filename))
-    elif args.stack:
-        if args.n:
-            raise NotImplementedError("display-numeric stack data")
-        elif args.t:
-            output_filename.set_options("treemap", "html")
-            treemap.show(input_filename, str(output_filename))
-        else:
-            stacks = flamegraph.read(input_filename)
-            output_filename.set_options("flamegraph", "svg")
-            flamegraph.make(stacks, str(output_filename))
-            flamegraph.show(str(output_filename))
+    # We read the file header
+    with open(input_filename, "rb") as source:
+        header = source.readline()[:-1]
+        header = header.decode()
 
+    if header == '[CPEL]':
+        posib_dict = {
+            'g2': (_gen_g2, [input_filename])
+        }
+    elif header == '[CSV]':
+        # We set the axes for the heatmap
+        labels = heatmap.AxesLabels(x='Time', x_units='seconds',
+                                    y='Latency', y_units='ms',
+                                    colorbar='No. accesses')
+        posib_dict = {
+            'heatmap': (_gen_heatmap, [input_filename, output_filename,
+                                       labels, heatmap.DEFAULT_PARAMETERS])
+        }
+    elif header == '[STACK]':
+        posib_dict = {
+            'treemap': (_gen_treemap, [input_filename, output_filename]),
+            'flamegraph': (_gen_flamegraph, [input_filename, output_filename])
+        }
+    else:
+        raise Exception("File not supported!")
+
+    _select_mode(header, vars(args), posib_dict)
 
 @util.log(logger)
 def _args_parse(argv):
@@ -108,20 +209,13 @@ def _args_parse(argv):
     Create a parser that parses the display command.
 
     Arguments that are created in the parser object:
-
-        cpu: CPU scheduling data
-        disk: disk I/O data
-        ipc: ipc efficiency
-        lib: library load times
-        mem: memory allocation/ deallocation
-        stack: stack tracing
+        fg: display with a flamegraph
+        tm: display with a treemap
+        g2: display with g2
+        hm: display with heatmap
 
         infile i: the filename of the file containing the input
         outfile o: the filename of the file that stores the output
-
-        g: graphical representation of data (default)
-        n: numerical representation of data
-
 
     :param argv:
         the arguments passed by the main function
@@ -138,31 +232,16 @@ def _args_parse(argv):
                                      description="Display collected data "
                                      "in required format")
 
-    # Add options for the modules
-    module_display = parser.add_mutually_exclusive_group(required=True)
-
-    module_display.add_argument("-c", "--cpu", action="store_true",
-                                help="gather cpu scheduling events")
-    module_display.add_argument("-d", "--disk", action="store_true",
-                                help="monitor disk input/output")
-    module_display.add_argument("-p", "--ipc", action="store_true",
-                                help="trace inter-process communication")
-    module_display.add_argument("-l", "--lib", action="store_true",
-                                help="gather library load times")
-    module_display.add_argument("-m", "--mem", action="store_true",
-                                help="trace memory allocation/ deallocation")
-    module_display.add_argument("-s", "--stack", action="store_true",
-                                help="gather general call stack tracing data")
-
     # Add flag and parameter for displaying type in case of display
     type_display = parser.add_mutually_exclusive_group()
-    type_display.add_argument("-g", action="store_true",
-                              help="graphical representation as an image ("
-                                   "default)")
-    type_display.add_argument("-n", action="store_true",
-                              help="numerical representation as a table")
-    type_display.add_argument("-t", action="store_true",
-                              help="treemap representation as an html")
+    type_display.add_argument("-fg", "--flamegraph", action="store_true",
+                              help="display as flamegraph")
+    type_display.add_argument("-tm", "--treemap", action="store_true",
+                              help="display as treemap")
+    type_display.add_argument("-g2", "--g2", action="store_true",
+                              help="display as g2 image")
+    type_display.add_argument("-hm", "--heatmap", action="store_true",
+                              help="display as heatmap")
 
     # Add flag and parameter for input filename
     filename = parser.add_argument_group()

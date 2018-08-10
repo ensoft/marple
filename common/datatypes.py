@@ -173,7 +173,7 @@ class StackData(NamedTuple):
         commas or semicolons.
 
         """
-        result = str(self.weight) + ","
+        result = str(self.weight) + "#"
         for stack_line in self.stack[:-1]:
             result += stack_line + ";"
         result += self.stack[-1]
@@ -198,7 +198,7 @@ class StackData(NamedTuple):
 
         """
         try:
-            fields = string.strip().split(",")
+            fields = string.strip().split("#")
             if len(fields) != 2:
                 raise exceptions.DatatypeException(
                     "StackData - incorrect no. of values in datatype string")

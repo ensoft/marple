@@ -5,4 +5,12 @@ frequency:99
 system_wide: -a
 
 [Display]
-stacks: flamegraph
+# Respect the following conventions:
+#   - possible file type: 'STACK', 'CSV', 'CPEL'
+#   - possible display options: * 'flamegraph'
+#                               * 'treemap'
+#                               * 'g2'
+#                               * 'heatmap'
+STACK: flamegraph
+CSV: heatmap
+CPEL: g2
