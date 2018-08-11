@@ -99,7 +99,7 @@ class CPELTest(SchedTest):
     """Class for testing conversion from event objects to CPEL"""
 
     # Well known output file
-    example_file = "example_scheddata.cpel"
+    example_file = "collect/test/writer/example_scheddata.cpel"
 
     @mock.patch("collect.writer.write.CpelWriter._insert_object_symbols")
     @mock.patch("collect.writer.write.CpelWriter._write_symbols")
@@ -143,7 +143,6 @@ class CPELTest(SchedTest):
             if not buffer1 or not buffer2:
                 break
 
-    @unittest.skip("Gives file not found error - TODO fix this") # TODO
     def test_basic_file(self):
         """Creates a test file in test directory and compares it with example"""
         filename = self._TEST_DIR + "create_scheddata_test.cpel"

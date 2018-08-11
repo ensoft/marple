@@ -10,15 +10,17 @@ install:
 before_script:
   - python -m pip install -q pytest-cov
   - python -m pip install -U -q pytest
+  - python -m pip install codecov
   - python -m pip install -q numpy matplotlib ipython pandas
   - sudo apt-get -qq install python3-pytest
   - export PYTHONPATH=${PWD}
 script:
-  - python -m pytest collect/ display/ common/ 
+  - python -m pytest --cov=collect --cov=display --cov=common collect/ display/ common/ 
+after_success:
+  - python -m codecov
 addons:
   apt:
     update: true
     config:
       retries: true
-
 
