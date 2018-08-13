@@ -19,8 +19,8 @@ class WriterTest(unittest.TestCase):
 
         # Run test
         writer = write.Writer()
-        writer.write([], "test")
-        self.assertEqual("", file_mock.getvalue())
+        writer.write([], "test", "[DUMMY]")
+        self.assertEqual("[DUMMY]\n", file_mock.getvalue())
 
     def test_stack_data(self, open_mock):
         # Create mocks
@@ -34,11 +34,11 @@ class WriterTest(unittest.TestCase):
             StackData(2, ("D", "E")),
             StackData(3, ("F", "G"))
         ]
-        expected = "1,A;B;C\n2,D;E\n3,F;G\n"
+        expected = "[STACK]\n1#A;B;C\n2#D;E\n3#F;G\n"
 
         # Run test
         writer = write.Writer()
-        writer.write(stack_data, "test")
+        writer.write(stack_data, "test", "[STACK]")
         self.assertEqual(expected, file_mock.getvalue())
 
     def test_datapoint_data(self, open_mock):
@@ -53,11 +53,11 @@ class WriterTest(unittest.TestCase):
             Datapoint(3.0, 4.51, 'info2'),
             Datapoint(0.0, 1.3, 'info3')
         ]
-        expected = "1.0,2.0,info1\n3.0,4.51,info2\n0.0,1.3,info3\n"
+        expected = "[CSV]\n1.0,2.0,info1\n3.0,4.51,info2\n0.0,1.3,info3\n"
 
         # Run test
         writer = write.Writer()
-        writer.write(dp_data, "test")
+        writer.write(dp_data, "test", "[CSV]")
         self.assertEqual(expected, file_mock.getvalue())
 
     def test_sched_data(self, open_mock):
@@ -72,12 +72,12 @@ class WriterTest(unittest.TestCase):
             SchedEvent(2, "type2", "track2", "datum2"),
             SchedEvent(3, "type3", "track3", "datum3")
         ]
-        expected = "1,type1,track1,datum1\n2,type2,track2,datum2\n" \
+        expected = "[CPEL]\n1,type1,track1,datum1\n2,type2,track2,datum2\n" \
                    "3,type3,track3,datum3\n"
 
         # Run test
         writer = write.Writer()
-        writer.write(sched_data, "test")
+        writer.write(sched_data, "test", "[CPEL]")
         self.assertEqual(expected, file_mock.getvalue())
 
 
@@ -101,13 +101,13 @@ class CPELTest(SchedTest):
     # Well known output file
     example_file = "collect/test/writer/example_scheddata.cpel"
 
-    @mock.patch("collect.writer.write.CpelWriter._insert_object_symbols")
-    @mock.patch("collect.writer.write.CpelWriter._write_symbols")
+    @mock.patch("collect.IO.write.CpelWriter._insert_object_symbols")
+    @mock.patch("collect.IO.write.CpelWriter._write_symbols")
     def test_symbol_table_added_consistently(self, write_mock, insert_mock):
         """
         Checks that either symbol table is not used, or used consistently.
 
-        Original implementation left the symbol table section methods
+        Original implementation left tself._TEST_DIR +he symbol table section methods
         unimplemented. If they get added later, changes have to be made in 5
         places. This test checks this.
 
@@ -150,6 +150,7 @@ class CPELTest(SchedTest):
         writer.write(filename)
         with open(filename, "rb") as test_file, \
                 open(self.example_file, "rb") as correct_file:
+            test_file.readline()
             self._compare_headers(test_file, correct_file)
             self._compare_files(test_file, correct_file)
 
@@ -168,6 +169,8 @@ class CPELTest(SchedTest):
         """
 
         with open(filename, "rb") as file_:
+            # Skip header
+            file_.readline()
 
             # Get number of sections
             _, nr_of_sections = struct.unpack(">hh", file_.read(4))

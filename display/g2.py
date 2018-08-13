@@ -30,17 +30,15 @@ DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
 
 
 class G2(GenericDisplay):
-    def __init_(self, *args):
+    def __init__(self, cpel_file):
         """
-        :param args[0] (cpel_filename):
+        Constructor for the g2.
+
+        :param cpel_filename:
             The name of the [CPEL] file to read data from
 
         """
-        if len(args) != 1:
-            raise Exception("Invalid number of parameters for the G2 class."
-                            "The correct ones are, in this order, in_filename, "
-                            "out_filename, colouring")
-        self.cpel_file = args[0]
+        self.cpel_file = cpel_file
 
     @util.Override(GenericDisplay)
     @util.log(logger)

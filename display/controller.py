@@ -9,6 +9,11 @@ Controller script - user interface, parses and applies display commands
 Handles interaction between the output modules (flamegraph, g2, etc.)
 It calls the relevant functions for each command.
 
+To add a new display mode:
+    1)
+    2)
+    3)
+
 """
 __all__ = "main"
 
@@ -30,6 +35,7 @@ from display import (
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
+# Display option for
 display_options = {
     '[CSV]': ['heatmap'],
     '[STACK]': ['flamegraph', 'treemap'],
@@ -38,72 +44,15 @@ display_options = {
 
 
 @util.log(logger)
-def _gen_treemap(*args):
-    #inp, out
-    """
-    Helper function that generates the treemap html file and shows it in the
-    browser
-
-    :param inp: input file
-    :param out: output file, as DisplayFileName object
-
-    """
-    print(args)
-    args[1].set_options("treemap", "html")
-    treemap.show(args[0], str(args[1]))
-
-
-# @util.log(logger)
-# def _gen_flamegraph(*args):
-#     #inp, out
-#     """
-#     Helper function that generates the flamegraph svg file and shows it in the
-#     browser
-#
-#     :param input: input file
-#     :param output: output file, as a DisplayFileName object
-#
-#     """
-#     stacks = flamegraph.read(args[0])
-#     args[1].set_options("flamegraph", "svg")
-#     flamegraph.make(stacks, str(args[1]))
-#     flamegraph.show(str(args[1]))
-
-
-@util.log(logger)
-def _gen_g2(*args):
-    #inp
-    """
-    Helper function that generates the g2 representation
-    :param input: the input filename
-
-    """
-    g2.show(args[0])
-
-
-@util.log(logger)
-def _gen_heatmap(*args):
-    #inp, out, labels, params
-    """
-    Helper function that generates and displays the heatmap
-
-    :param input: input file
-    :param output: output file, as a DisplayFileName object
-    :param labels: labels for the axes
-    :param params: parameters for the heatmap, defaults to the defaults from
-                   heatmap
-
-    """
-    hmap = heatmap.HeatMap(args[0], args[2], args[3])
-    hmap.show()
-    args[1].set_options("heatmap", "svg")
-    hmap.save(str(args[1]))
-
-
-@util.log(logger)
 def _select_mode(file_type, args, possib_dict):
     """
     Captures the common pattern of selecting the right display.
+    The priority of selection: args have the highest priority, if any is
+                               specified then we select that option; if the
+                               arg option is specified, but unsupported, or no
+                               arg is specified we look at the config file
+                               preferences for the particular type of file; if
+                               the option doesn't exist there we trow an error
 
     :param file_type: the type of the file; can be:
                         - [STACK]
@@ -120,28 +69,34 @@ def _select_mode(file_type, args, possib_dict):
     # We create a config parser to read user setting from the config file
     config_parser = config.Parser()
 
+    # If the file type is not recognized, throw error
     if file_type not in display_options:
         raise KeyError("The file type {} is not supported "
                         "yet".format(file_type))
 
+    # We retrieve the possible display options for the particular file type
     options = display_options[file_type]
+    # Flag to see if we encountered a cmd line argument, AND IT WAS A VALID
+    # OPTION
     flag_args = False
     for option in options:
+        # If the current option is in the dictionary, and it was specified in
+        # the cmd line, we got a match
         if option in possib_dict and args[option]:
             flag_args = True
-            funct_pair = possib_dict[option]
-    if flag_args:
-        funct = funct_pair[0]
-        arg = funct_pair[1]
-        funct(*arg)
-    else:
+            display_class = possib_dict[option]
+            display_class.show()
+            break
+
+    if not flag_args:
+        # No matches for the cmd line args, we try the config file
+        # We get the default option
         default = config_parser.get_option_from_section("Display",
                                                         file_type[1:-1])
+        # If it is valid, we use it, otherwise we raise an error
         if default in possib_dict:
-            funct_pair = possib_dict[default]
-            funct = funct_pair[0]
-            arg = funct_pair[1]
-            funct(*arg)
+            display_class = possib_dict[default]
+            display_class.show()
         else:
             raise Exception(
                 "No valid args or config values found for {}. Either "
@@ -177,12 +132,14 @@ def _display(args):
 
     # We read the file header
     with open(input_filename, "rb") as source:
+        # Strip ending newline
         header = source.readline()[:-1]
         header = header.decode()
 
+    # Create the dictionaries usde in the selection step
     if header == '[CPEL]':
         posib_dict = {
-            'g2': (_gen_g2, [input_filename])
+            'g2': g2.G2(input_filename)
         }
     elif header == '[CSV]':
         # We set the axes for the heatmap
@@ -190,18 +147,21 @@ def _display(args):
                                     y='Latency', y_units='ms',
                                     colorbar='No. accesses')
         posib_dict = {
-            'heatmap': (_gen_heatmap, [input_filename, output_filename,
-                                       labels, heatmap.DEFAULT_PARAMETERS])
+            'heatmap': heatmap.HeatMap(input_filename, output_filename,
+                                       labels, heatmap.DEFAULT_PARAMETERS, True)
         }
     elif header == '[STACK]':
         posib_dict = {
-            'treemap': (_gen_treemap, [input_filename, output_filename]),
-            'flamegraph': (_gen_flamegraph, [input_filename, output_filename])
+            'treemap': treemap.Treemap(25, input_filename, output_filename),
+            'flamegraph': flamegraph.Flamegraph(input_filename,
+                                                output_filename, None)
         }
     else:
         raise Exception("File not supported!")
 
+    # We select the display method based on args and the config file
     _select_mode(header, vars(args), posib_dict)
+
 
 @util.log(logger)
 def _args_parse(argv):

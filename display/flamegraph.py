@@ -35,25 +35,24 @@ FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
 
 
 class Flamegraph(GenericDisplay):
-    def __init__(self, *args):
+    def __init__(self, inp, out, coloring):
         """
+        Constructor for the flamegraph.
 
-        :param args[0] (in_filename):
+        :param inp:
             The name of the [Stack] file to read data from
-        :param args[1] (out_filename):
+        :param out:
             The name of the image file that will be created.
-        :param args[2] (colouring):
+        :param colouring:
             The colouring for the flamegraph as an argument string.
             As defined by Brendan Gregg's script, to go in the
             "--color=" option.
         """
-        if len(args) != 3:
-            raise Exception("Invalid number of parameters for the Flamegraph "
-                            "class. The correct ones are, in this order, "
-                            "in_filename, out_filename, colouring")
-        self.in_filename = args[0]
-        self.out_filename = args[1]
-        self.colouring = args[2]
+        self.in_filename = inp
+        out.set_options("treemap", "html")
+
+        self.out_filename = str(out)
+        self.colouring = coloring
 
     @util.log(logger)
     def _read(self):

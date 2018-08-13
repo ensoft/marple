@@ -3,6 +3,7 @@ from unittest import mock
 from io import StringIO
 
 from display import heatmap
+from common import file
 
 
 class _BaseHeatMapTest(unittest.TestCase):
@@ -20,8 +21,9 @@ class _BaseHeatMapTest(unittest.TestCase):
                                                 x_delta=4, y_delta=40)
         self.test_x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
         self.test_y_data = [6.0, 7.0, 8.0, 9.0, 10.0]
-        self.test_string = "1.0,6.0,info1\n2.0,7.0,info2\n3.0,8.0,info3\n" \
-                          "4.0,9.0,info4\n5.0,10.0,info5"
+        self.test_string = "[CSV]\n" \
+                           "1.0,6.0,info1\n2.0,7.0,info2\n3.0,8.0,info3\n" \
+                           "4.0,9.0,info4\n5.0,10.0,info5"
 
 
 class GetDataTest(_BaseHeatMapTest):
@@ -57,7 +59,7 @@ class GetDataTest(_BaseHeatMapTest):
         # Create mocks
         file_mock = open_mock.return_value
         file_mock.__enter__.return_value = \
-            StringIO("1.0,2.0,info1\n3.0,4.0,info2")
+            StringIO("[CSV]\n1.0,2.0,info1\n3.0,4.0,info2")
 
         # Create blank heatmap object to access methods
         hm = object.__new__(heatmap.HeatMap)
@@ -80,7 +82,7 @@ class GetDataTest(_BaseHeatMapTest):
         # Create mocks
         file_mock = open_mock.return_value
         file_mock.__enter__.return_value = \
-            StringIO("1.0,2.0,info1\n3.0,4.0,info2")
+            StringIO("[CSV]\n1.0,2.0,info1\n3.0,4.0,info2")
 
         # Create blank heatmap object to access methods
         hm = object.__new__(heatmap.HeatMap)
@@ -215,8 +217,10 @@ class InitTest(_BaseHeatMapTest):
         slider_mock.side_effect = [xslide_pos_mock, yslide_pos_mock]
 
         # RUN TRHOUGH INIT - CHECK VALUES/FUNCTION CALLS ARE AS EXPECTED
-        hm = heatmap.HeatMap("init_data", self.test_labels, self.test_params,
-                             normalise=False)
+        # Mock out file
+        out = file.DisplayFileName()
+        hm = heatmap.HeatMap("init_data", out, self.test_labels,
+                             self.test_params, normalise=False)
 
         # Check field values
         self.assertEqual(hm.labels, self.test_labels)
