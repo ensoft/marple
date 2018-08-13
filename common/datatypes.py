@@ -33,13 +33,13 @@ class SchedEvent(typing.NamedTuple):  # @@@ TODO make this more general
     """
     Represents a single scheduler event.
 
-    .. atrribute:: time:
+    .. attribute:: time:
         The timestamp of the event in Cpu ticks.
-    .. atrribute:: type:
+    .. attribute:: type:
         The type of the event.
-    .. atrribute:: track:
+    .. attribute:: track:
         The track that the event belongs to (e.g. cpu core, process, ...)
-    .. atrribute:: datum:
+    .. attribute:: datum:
         The data belonging to this event, (e.g. process id etc, cpu ... )
 
     """
@@ -53,8 +53,8 @@ class SchedEvent(typing.NamedTuple):  # @@@ TODO make this more general
         Converts an event to standard comma-separated value string format.
 
         The string does not have a line break at the end.
-        Format: <time>,<type>,<track>,<datum>
-        Note that the fields cannot contain commas.
+            Format: <time>,<type>,<track>,<datum>
+            Note that the fields cannot contain commas.
 
         """
         return ",".join((str(self.time), self.type, self.track, self.datum))
@@ -76,8 +76,8 @@ class SchedEvent(typing.NamedTuple):  # @@@ TODO make this more general
 
         """
         try:
-            time, type, track, datum = string.strip().split(",")
-            return SchedEvent(time=int(time), type=type,
+            time, type_, track, datum = string.strip().split(",")
+            return SchedEvent(time=int(time), type=type_,
                               track=track, datum=datum)
         except IndexError as ie:
             raise exceptions.DatatypeException(
@@ -93,11 +93,11 @@ class Datapoint(typing.NamedTuple):
     """
     Represents a single 2D datapoint, potentially with added info.
 
-    .. atrribute:: x:
+    .. attribute:: x:
         The independent variable value.
-    .. atrribute:: y:
+    .. attribute:: y:
         The dependent variable value.
-    .. atrribute:: info:
+    .. attribute:: info:
         Additional info for the datapoint.
 
     """
@@ -110,9 +110,9 @@ class Datapoint(typing.NamedTuple):
         Converts a datapoint to standard comma-separated value string format.
 
         The string does not have a line break at the end.
-        Format: <x>,<y>,<info>
-        Note that the info field cannot contain commas. Use semicolons as
-        separators if necessary.
+            Format: <x>,<y>,<info>
+            Note that the info field cannot contain commas. Use semicolons as
+            separators if necessary.
 
         """
         return ",".join((str(self.x), str(self.y), self.info))
@@ -150,9 +150,9 @@ class StackData(typing.NamedTuple):
     """
     Represents a single stack.
 
-    .. atrribute:: weight:
+    .. attribute:: weight:
         The relative weighting of the stack in the data.
-    .. atrribute:: stack:
+    .. attribute:: stack:
         The stack as a tuple of strings (<baseline>, <stackline>. ...)
 
     """
