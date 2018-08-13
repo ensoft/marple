@@ -45,18 +45,21 @@ class StackPlot(GenericDisplay):
             # Skip header line
             file_.readline()
             # Read the data, naming the columns X, Y, and INFO
-            df = pd.read_csv(file_, names=["X", "Y", "INFO"],
-                             header=None)
+            self.df = pd.read_csv(file_, names=["X", "Y", "INFO"],
+                                  header=None)
 
         # Extract unique info fields and convert array to list
-        i = np.unique(df.INFO)
-        labels = ['{}'.format(_i) for _i in i]
+        i = np.unique(self.df.INFO)
+        self.labels = ['{}'.format(_i) for _i in i]
 
         # Extract list of mem_sizes for labels
-        mem_size = [df[df.INFO == _i].Y for _i in i]
+        self.mem_size = [self.df[self.df.INFO == _i].Y for _i in i]
 
+    @util.log(logger)
+    @util.Override(GenericDisplay)
+    def show(self):
         # Create the plot
-        plt.stackplot(np.unique(df.X), mem_size, labels=labels)
+        plt.stackplot(np.unique(self.df.X), self.mem_size, labels=self.labels)
 
         # Set labels
         plt.xlabel('time/s')
@@ -65,9 +68,6 @@ class StackPlot(GenericDisplay):
         # Set legend
         plt.legend(loc='upper left')
 
-    @util.log(logger)
-    @util.Override(GenericDisplay)
-    def show(self):
         plt.show()
 
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     filename = "/tmp/stackplot.plt"
     with open(filename, "w") as file_:
         file_.writelines(io.StringIO("""
-        [Blubb]
+        [CSV]
         0,0,a
         0,0,b
         1,1,a
