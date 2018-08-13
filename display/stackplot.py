@@ -10,6 +10,8 @@ Adds colours and legend and fills in between the lines.
 """
 import logging
 
+from display.generic_display import GenericDisplay
+
 __all__ = ("StackPlot", )
 
 import pandas as pd
@@ -22,7 +24,7 @@ from common import util
 logger = logging.getLogger(__name__)
 
 
-class StackPlot:
+class StackPlot(GenericDisplay):
     """
     The class representing stackplots.
 
@@ -64,6 +66,7 @@ class StackPlot:
         plt.legend(loc='upper left')
 
     @util.log(logger)
+    @util.Override(GenericDisplay)
     def show(self):
         plt.show()
 

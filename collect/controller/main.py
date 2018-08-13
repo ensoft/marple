@@ -84,6 +84,7 @@ def _collect_and_store(args, parser):
     elif args.memgraph:
         collecter = smem.MemoryGraph(time)
         writer = write.Writer()
+        header = "[CSV]"
     elif args.stack:
         options = perf.StackTrace.Options(parser.get_default_frequency(),
                                           parser.get_system_wide())

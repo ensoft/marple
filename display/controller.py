@@ -24,22 +24,23 @@ from display import (
     flamegraph,
     heatmap,
     treemap,
-    g2)
+    g2,
+    stackplot)
 
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
-# Display option for
+# Display option for files
 display_options = {
-    '[CSV]': ['heatmap'],
+    '[CSV]': ['heatmap', 'stackplot'],
     '[STACK]': ['flamegraph', 'treemap'],
     '[CPEL]': ['g2']
 }
 
 
 @util.log(logger)
-def _select_mode(file_type, args, possib_dict):
+def _select_mode(file_type, args, possibilities_dict):
     """
     Captures the common pattern of selecting the right display.
     The priority of selection: args have the highest priority, if any is
@@ -54,7 +55,7 @@ def _select_mode(file_type, args, possib_dict):
                         - [CSV]
                         - [CPEL]
     :param args: terminal arguments as a dictionary
-    :param posib_dict: a dictionary containing (key, value), where:
+    :param possibilities_dict: a dictionary containing (key, value), where:
                             - key: name of the display option
                             - value: pair containing the function associated
                                      with the display option and the arguments
@@ -66,8 +67,7 @@ def _select_mode(file_type, args, possib_dict):
 
     # If the file type is not recognized, throw error
     if file_type not in display_options:
-        raise KeyError("The file type {} is not supported "
-                        "yet".format(file_type))
+        raise KeyError("The file type {} is not supported".format(file_type))
 
     # We retrieve the possible display options for the particular file type
     options = display_options[file_type]
@@ -77,9 +77,9 @@ def _select_mode(file_type, args, possib_dict):
     for option in options:
         # If the current option is in the dictionary, and it was specified in
         # the cmd line, we got a match
-        if option in possib_dict and args[option]:
+        if option in possibilities_dict and args[option]:
             flag_args = True
-            display_class = possib_dict[option]
+            display_class = possibilities_dict[option]
             display_class.show()
             break
 
@@ -89,8 +89,8 @@ def _select_mode(file_type, args, possib_dict):
         default = config_parser.get_option_from_section("Display",
                                                         file_type[1:-1])
         # If it is valid, we use it, otherwise we raise an error
-        if default in possib_dict:
-            display_class = possib_dict[default]
+        if default in possibilities_dict:
+            display_class = possibilities_dict[default]
             display_class.show()
         else:
             raise Exception(
@@ -98,15 +98,9 @@ def _select_mode(file_type, args, possib_dict):
                 "add an arg in the terminal command or modify the "
                 "config file".format(file_type))
 
-display_options = {
-    '[CSV]': ['heatmap'],
-    '[STACK]': ['flamegraph', 'treemap'],
-    '[CPEL]': ['g2']
-}
-
 
 @util.log(logger)
-def _select_mode(file_type, args, possib_dict):
+def _select_mode(file_type, args, possibilities_dict):
     """
     Captures the common pattern of selecting the right display.
 
@@ -115,7 +109,7 @@ def _select_mode(file_type, args, possib_dict):
                         - [CSV]
                         - [CPEL]
     :param args: terminal arguments as a dictionary
-    :param posib_dict: a dictionary containing (key, value), where:
+    :param possibilities_dict: a dictionary containing (key, value), where:
                             - key: name of the display option
                             - value: pair containing the function associated
                                      with the display option and the arguments
@@ -126,22 +120,21 @@ def _select_mode(file_type, args, possib_dict):
     config_parser = config.Parser()
 
     if file_type not in display_options:
-        raise KeyError("The file type {} is not supported "
-                        "yet".format(file_type))
+        raise KeyError("The file type {} is not supported".format(file_type))
 
     options = display_options[file_type]
-    flag_args = False
     for option in options:
-        if option in possib_dict and args[option]:
-            flag_args = True
-            display_class = possib_dict[option]
+        if option in possibilities_dict and args[option]:
+            display_class = possibilities_dict[option]
             display_class.show()
+            print(type(display_class))
             break
-    if not flag_args:
+    else:
+        # loop fell through without finding a factor (see python 3.7 doc 4.4)
         default = config_parser.get_option_from_section("Display",
                                                         file_type[1:-1])
-        if default in possib_dict:
-            display_class = possib_dict[default]
+        if default in possibilities_dict:
+            display_class = possibilities_dict[default]
             display_class.show()
         else:
             raise Exception(
@@ -182,22 +175,24 @@ def _display(args):
         header = source.readline()[:-1]
         header = header.decode()
 
-    # Create the dictionaries usde in the selection step
+    # Create the dictionaries used in the selection step
     if header == '[CPEL]':
-        posib_dict = {
+        possibilities_dict = {
             'g2': g2.G2(input_filename)
         }
     elif header == '[CSV]':
-        # We set the axes for the heatmap
-        labels = heatmap.AxesLabels(x='Time', x_units='seconds',
-                                    y='Latency', y_units='ms',
-                                    colorbar='No. accesses')
-        posib_dict = {
+        # Set the axes (for heatmap)
+        hm_labels = heatmap.AxesLabels(x='Time', x_units='seconds',
+                                       y='Latency', y_units='ms',
+                                       colorbar='No. accesses')
+        possibilities_dict = {
             'heatmap': heatmap.HeatMap(input_filename, output_filename,
-                                       labels, heatmap.DEFAULT_PARAMETERS, True)
+                                       hm_labels, heatmap.DEFAULT_PARAMETERS,
+                                       True),
+            'stackplot': stackplot.StackPlot(input_filename)
         }
     elif header == '[STACK]':
-        posib_dict = {
+        possibilities_dict = {
             'treemap': treemap.Treemap(25, input_filename, output_filename),
             'flamegraph': flamegraph.Flamegraph(input_filename,
                                                 output_filename, None)
@@ -206,7 +201,8 @@ def _display(args):
         raise Exception("File not supported!")
 
     # We select the display method based on args and the config file
-    _select_mode(header, vars(args), posib_dict)
+    _select_mode(header, vars(args), possibilities_dict)
+
 
 @util.log(logger)
 def _args_parse(argv):
@@ -218,6 +214,7 @@ def _args_parse(argv):
         tm: display with a treemap
         g2: display with g2
         hm: display with heatmap
+        sp: display with stackplot
 
         infile i: the filename of the file containing the input
         outfile o: the filename of the file that stores the output
@@ -247,6 +244,8 @@ def _args_parse(argv):
                               help="display as g2 image")
     type_display.add_argument("-hm", "--heatmap", action="store_true",
                               help="display as heatmap")
+    type_display.add_argument("-sp", "--stackplot", action="store_true",
+                              help="display as stackplot")
 
     # Add flag and parameter for input filename
     filename = parser.add_argument_group()
