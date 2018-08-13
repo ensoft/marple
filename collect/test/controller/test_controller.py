@@ -9,8 +9,8 @@
 # from unittest import mock
 #
 # import collect.controller.main as collect
-
-
+#
+#
 # class _ParseTest(unittest.TestCase):
 #     """Class for testing that parsing works correctly"""
 #     @staticmethod
@@ -33,4 +33,3 @@
 #         with mock.patch.object(cls, fn) as call_mock:
 #             collect.main(argv)
 #             call_mock.assert_called_once_with(*args, **kwargs)
-

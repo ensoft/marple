@@ -195,9 +195,9 @@ A new window will open looking something like the following:
 
 **Figure 3: An example of g2 program execution on an Ubuntu machine.**
 
- * At the bottom of the panel there is a time scale, ordering the *events* chronologically. 
+ * At the bottom of the panel there is a time scale, ordering the *events* chronologically.
 
- * On the right there are checkboxes to enable/disable visibility of certain *event types*. 
+ * On the right there are checkboxes to enable/disable visibility of certain *event types*.
 
  * Finally, there are many controls to scroll, zoom, search for processes/events etc. in the form of buttons on the bottom and bottom right.
 
@@ -278,4 +278,3 @@ The following is a list of resources for system profiling.
  * [Flamegraphs](http://www.brendangregg.com/flamegraphs.html )
 
  * [Flamegraphs github](https://github.com/brendangregg/FlameGraph )
-

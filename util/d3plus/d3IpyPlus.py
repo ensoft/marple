@@ -532,13 +532,13 @@ class _GeoMap2(PyD3Plus):
 
     def _get_tooltip(self):
         if self.tooltip:
-            return """ 
+            return """
                 .tooltipConfig({
                     body: function(d) {
                         var textx = "";
                         for (var k in tooltipkey) {
                             if(k in d){
-                                textx += "<p>"+k + ': '+ d[k]+"</p>";                      
+                                textx += "<p>"+k + ': '+ d[k]+"</p>";
                             }
                         }
                         return textx;
@@ -580,7 +580,7 @@ class _GeoMap2(PyD3Plus):
                     {tooltipconfig}
                     {title};
 
-                chart_{viz_name} 
+                chart_{viz_name}
                     .colorScalePosition({scalepos})
                     .render();
 

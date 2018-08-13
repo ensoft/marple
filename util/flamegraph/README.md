@@ -8,9 +8,9 @@ Example (click to zoom):
 Other sites:
 - The Flame Graph article in ACMQ and CACM: http://queue.acm.org/detail.cfm?id=2927301 http://cacm.acm.org/magazines/2016/6/202665-the-flame-graph/abstract
 - CPU profiling using Linux perf\_events, DTrace, SystemTap, or ktap: http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html
-- CPU profiling using XCode Instruments: http://schani.wordpress.com/2012/11/16/flame-graphs-for-instruments/  
-- CPU profiling using Xperf.exe: http://randomascii.wordpress.com/2013/03/26/summarizing-xperf-cpu-usage-with-flame-graphs/  
-- Memory profiling: http://www.brendangregg.com/FlameGraphs/memoryflamegraphs.html  
+- CPU profiling using XCode Instruments: http://schani.wordpress.com/2012/11/16/flame-graphs-for-instruments/
+- CPU profiling using Xperf.exe: http://randomascii.wordpress.com/2013/03/26/summarizing-xperf-cpu-usage-with-flame-graphs/
+- Memory profiling: http://www.brendangregg.com/FlameGraphs/memoryflamegraphs.html
 - Other examples, updates, and news: http://www.brendangregg.com/flamegraphs.html#Updates
 
 Flame graphs can be created in three steps:
@@ -210,5 +210,5 @@ cat broken.folded | ./flamegraph.pl --cp --colors mem > broken.svg
 
 Take a look at the demo directory for an example:
 
-palette-example-working.svg  
+palette-example-working.svg
 palette-example-broken.svg

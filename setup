@@ -12,7 +12,7 @@ MARPLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 # Set up spinner so user knows script is not frozen
 show_spinner()
-{   
+{
     PID=$!
     i=1
     sp="/-\|"
@@ -78,7 +78,7 @@ autoconf > /dev/null &
 show_spinner
 automake --add-missing > /dev/null &
 show_spinner
-autoreconf > /dev/null & 
+autoreconf > /dev/null &
 show_spinner
 printf "Done.\n"
 

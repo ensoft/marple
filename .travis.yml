@@ -6,7 +6,7 @@ install:
   - python -m pip install -U -q pip
   - sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r`
   - sudo apt-get -qq install libgtk2.0-dev
-  - echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo 
+  - echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo
 before_script:
   - python -m pip install -q pytest-cov
   - python -m pip install -U -q pytest
@@ -15,7 +15,7 @@ before_script:
   - sudo apt-get -qq install python3-pytest
   - export PYTHONPATH=${PWD}
 script:
-  - python -m pytest --cov=collect --cov=display --cov=common collect/ display/ common/ 
+  - python -m pytest --cov=collect --cov=display --cov=common collect/ display/ common/
 after_success:
   - python -m codecov
 addons:
@@ -23,4 +23,3 @@ addons:
     update: true
     config:
       retries: true
-

@@ -82,4 +82,3 @@ def show(image):
     username = os.environ['SUDO_USER'] #@@@ TODO test this
     subprocess.call(["su", "-", "-c",  "firefox " + image,
                      username])
-

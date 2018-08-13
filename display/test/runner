@@ -27,4 +27,3 @@ except ImportError:
 # Run all tests beneath this directory.
 all_tests = unittest.TestLoader().discover(str(this_dir), pattern="*.py")
 unittest.TextTestRunner().run(all_tests)
-

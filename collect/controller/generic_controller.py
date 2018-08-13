@@ -38,12 +38,3 @@ class GenericController:
 
         # We then write it
         self.writer.write(data, self.filename)
-
-
-
-
-
-
-
-
-

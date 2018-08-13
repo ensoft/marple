@@ -8,7 +8,7 @@
 """
 CPEL parser - Reads in a cpel binary file and displays its data by section.
 
-This is to understand the format, not just read the data, for which you would 
+This is to understand the format, not just read the data, for which you would
     use vpp/cpeldump.
 
 """
