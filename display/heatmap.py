@@ -50,15 +50,15 @@ class AxesLabels(NamedTuple):
     """
     Class for storing labellings for heat map axes.
 
-    .. atrribute:: x:
+    .. attribute:: x:
         Label for x-axis.
-    .. atrribute:: y:
+    .. attribute:: y:
         Label for y-axis.
-    .. atrribute:: x_units:
+    .. attribute:: x_units:
         Units for the x-axis.
-    .. atrribute:: y_units:
+    .. attribute:: y_units:
         Units for the y-axis.
-    .. atrribute:: colorbar:
+    .. attribute:: colorbar:
         Label for the colourbar.
 
     """
@@ -73,12 +73,12 @@ class GraphParameters(NamedTuple):
     """
     Class for storing heatmap graph display parameters.
 
-    .. atrribute:: figure_size:
+    .. attribute:: figure_size:
         The size of the square figure on-screen, in inches.
-    .. atrribute:: scale:
+    .. attribute:: scale:
         The scale of the graph - larger means more histogram bins
         (i.e. more zoomed in)
-    .. atrribute:: y_res:
+    .. attribute:: y_res:
         The resolution on the y-axis - larger means greater resolution.
 
     """
@@ -164,17 +164,17 @@ class HeatMap:
         """
         Internal class for storing values computed from the data.
 
-        .. atrribute:: x_min, x_max:
+        .. attribute:: x_min, x_max:
             Minimum and maximum x-axis datapoints.
-        .. atrribute:: y_min, y_max:
+        .. attribute:: y_min, y_max:
             Minimum and maximum y-axis datapoints.
-        .. atrribute:: y_median:
+        .. attribute:: y_median:
             Median y-axis datapoint, for calculating scaling of y-axis.
-        .. atrribute:: x_bins, x_bin_size:
+        .. attribute:: x_bins, x_bin_size:
             The number of bins on the x-axis, and their size.
-        .. atrribute:: y_bins, y_bin_size:
+        .. attribute:: y_bins, y_bin_size:
             The number of bins on the y-axis, and their size.
-        .. atrribute:: x_delta, y_delta:
+        .. attribute:: x_delta, y_delta:
             Delta values for x-axis and y-axis respectively.
             These are useful values for calculating
             how much of the graph should be visible.
@@ -197,9 +197,9 @@ class HeatMap:
         """
         Internal class for storing position of current viewport.
 
-        .. atrribute:: x:
+        .. attribute:: x:
             Position in x-axis.
-        .. atrribute:: y:
+        .. attribute:: y:
             Position in y-axis.
 
         """
