@@ -25,7 +25,7 @@ from common import util
 
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 ROOT_DIR = str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(
               __file__))))) + "/"

@@ -7,7 +7,7 @@ import logging
 from common import util
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 
 class GenericController:

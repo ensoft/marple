@@ -22,6 +22,7 @@ class _PerfCollecterBaseTest(unittest.TestCase):
     """
 
     time = 5
+    subproc_mock, log_mock, pipe_mock = None, None, None
 
     def run(self, result=None):
         with mock.patch('collect.interface.perf.subprocess') as subproc_mock, \

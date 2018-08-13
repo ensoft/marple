@@ -17,7 +17,7 @@ from common import (
 )
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
     __file__)))) + "/"
@@ -49,7 +49,7 @@ def generate_csv(in_file, out_file):
     :param out_file: a semicolon separated file generated from the in_file;
                      expects an absolute path
     """
-    with open(out_file, "w") as out_file:
+    with open(out_file, "w") as file_out:
         max_num_proc = 0
         with open(in_file, "r") as read_file:
             for line in read_file:
@@ -64,17 +64,17 @@ def generate_csv(in_file, out_file):
         max_num_proc += 1
 
         # Header of the csv
-        out_file.write("value;")
+        file_out.write("value;")
         for i in range(1, max_num_proc):
-            out_file.write(str(i) + ";")
+            file_out.write(str(i) + ";")
         # Last value doesn't have a semicolon after
-        out_file.write(str(i + 1))
-        out_file.write('\n')
+        file_out.write(str(i + 1))
+        file_out.write('\n')
 
         with open(in_file, "r") as read_file:
             for line in read_file:
                 call_stack = line.replace(",", ";")
-                out_file.write(call_stack)
+                file_out.write(call_stack)
 
         return max_num_proc
 

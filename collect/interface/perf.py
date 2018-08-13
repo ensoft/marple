@@ -36,7 +36,7 @@ INCLUDE_TID = False
 INCLUDE_PID = False
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 # @@@ TODO add blocking based on config file
 

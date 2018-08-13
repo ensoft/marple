@@ -2,11 +2,7 @@ import re
 import subprocess
 import time
 
-from collect.interface.collecter import Collecter
 from common import datatypes
-
-
-# class MemoryGraph(Collecter):
 
 
 def collect_memory_data(time_in_seconds: int, mode="name", number=5):
@@ -26,7 +22,7 @@ def collect_memory_data(time_in_seconds: int, mode="name", number=5):
 
     # Dict for the datapoints to be collected
     datapoints = {}
-    
+
     # Set to collect all labels that have been encountered
     labels = set()
 
@@ -75,7 +71,7 @@ def collect_memory_data(time_in_seconds: int, mode="name", number=5):
                 labels.add(label)
 
             datapoints[current_time][label] = float(int(memory/1024))
-            
+
         # Update the clock
         current_time = time.monotonic() - start_time
 

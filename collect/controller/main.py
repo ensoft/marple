@@ -30,7 +30,7 @@ from collect.writer import write
 from collect.controller import generic_controller
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 
 @util.log(logger)
@@ -84,7 +84,8 @@ def _collect_and_store(args, parser):
         collecter = perf.StackTrace(time, options)
         writer = write.Writer()
     else:
-        raise argparse.ArgumentError("Arguments not recognised")
+        raise argparse.ArgumentError(message="Arguments not recognised",
+                                     argument=args)
 
     # Run collection
     controller = generic_controller.GenericController(collecter, writer, str(filename))

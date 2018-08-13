@@ -1,6 +1,4 @@
-import struct
-import unittest
-import display.treemap as treemap
+from display import treemap
 import display.test.util_display as util
 from unittest.mock import patch
 
@@ -90,4 +88,3 @@ class TreemapTest(_BaseTest):
         self.assertEqual(mock_from_csv.call_args[1]['columns'],
                          ["value"] + [str(x) for x in
                                       range(1, mock_gen_csv.return_value + 1)])
-

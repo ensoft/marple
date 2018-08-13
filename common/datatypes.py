@@ -26,7 +26,7 @@ import logging
 from common import exceptions
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 
 class SchedEvent(typing.NamedTuple):  # @@@ TODO make this more general

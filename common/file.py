@@ -90,7 +90,7 @@ class DataFileName(_FileName):
             with open(paths.VAR_DIR + "filename", "r") as saved_filename:
                 return saved_filename.readline().strip()
         except FileNotFoundError:
-            logger.error("Unable to find filename helper file in %s" %
+            logger.error("Unable to find filename helper file in %s",
                          str(paths.VAR_DIR))
             raise
 

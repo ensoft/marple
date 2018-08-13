@@ -37,7 +37,7 @@ from common import util
 from common import datatypes
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 
 # @@@ TODO save interactive files (see pickle package)
@@ -235,7 +235,7 @@ class HeatMap:
         x_values = [dp.x for dp in datapoints]
         y_values = [dp.y for dp in datapoints]
 
-        if len(x_values) == 0 or len(y_values) == 0:
+        if not x_values or not y_values:
             raise HeatmapException("No data in input file.")
         if normalised:
             # Normalize x-axis values to start from zero

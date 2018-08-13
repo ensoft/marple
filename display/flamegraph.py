@@ -21,7 +21,7 @@ from common import (
 from common.datatypes import StackData
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
               __file__)))) + "/"
@@ -32,8 +32,8 @@ FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
 @util.log(logger)
 def read(in_filename):
     """Read stack events from a file in standard format."""
-    with open(in_filename, "r") as file:
-        for line in file.readlines():
+    with open(in_filename, "r") as in_file:
+        for line in in_file.readlines():
             yield StackData.from_string(line)
 
 

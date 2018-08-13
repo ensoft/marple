@@ -120,7 +120,7 @@ class CPELTest(SchedTest):
         if write_mock.called:
             # Make sure that the collect function has called the insert fn
             self.assertTrue(insert_mock.called)
-            self.assertNotEquals(writer.section_length[2], 0)
+            self.assertNotEqual(writer.section_length[2], 0)
             self.assertEqual(writer.no_of_sections, 5)
         else:
             self.assertFalse(insert_mock.called)

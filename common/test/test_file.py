@@ -9,6 +9,8 @@ from common import (
 
 
 class _FileBaseTest(unittest.TestCase):
+    date, now = None, None
+
     # Override run to apply patches for all tests
     def run(self, result=None):
         with mock.patch('common.file.datetime') as datetime:
@@ -100,7 +102,7 @@ class TestDataFileName(_FileBaseTest):
 
         open_mock.assert_called_once_with(paths.VAR_DIR + "filename", "r")
         log_mock.error.assert_called_once_with(
-            'Unable to find filename helper file in /var/lib/')
+            'Unable to find filename helper file in %s', '/var/lib/')
 
     @mock.patch('builtins.open')
     def test_import_success(self, open_mock):

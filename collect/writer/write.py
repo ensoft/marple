@@ -22,7 +22,7 @@ from datetime import datetime
 from common import datatypes, util
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 
 class Writer:

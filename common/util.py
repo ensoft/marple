@@ -8,7 +8,7 @@
 import platform
 import re
 
-import common.exceptions as exceptions
+from common import exceptions
 
 
 def check_kernel_version(required_kernel):
@@ -22,8 +22,8 @@ def check_kernel_version(required_kernel):
     def wrap(f):
         def wrapped_check(*args):
             target_kernel = platform.release()
-            delimited_rk = re.split('\.|-', required_kernel)
-            delimited_tk = re.split('\.|-', target_kernel)
+            delimited_rk = re.split(r'\.|-', required_kernel)
+            delimited_tk = re.split(r'\.|-', target_kernel)
             if delimited_tk[0:3] < delimited_rk[0:3]:
                 raise exceptions.NotSupportedException("Kernel not supported",
                                                        required_kernel)
