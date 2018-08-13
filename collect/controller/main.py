@@ -24,8 +24,8 @@ from common import (
 )
 from collect.interface import (
     perf,
-    iosnoop
-)
+    iosnoop,
+    smem)
 from collect.writer import write
 from collect.controller import generic_controller
 
@@ -61,8 +61,7 @@ def _collect_and_store(args, parser):
 
     # TODO: get all options from either args or config
     # Use user specified time for data collection, otherwise standard value
-    time = args.time if args.time is not None \
-                     else parser.get_default_time()
+    time = args.time if args.time is not None else parser.get_default_time()
 
     # Select appropriate interfaces based on user input
     if args.cpu:
@@ -78,6 +77,9 @@ def _collect_and_store(args, parser):
     elif args.mem:
         collecter = perf.MemoryEvents(time)
         writer = write.Writer()
+    elif args.memgraph:
+        collecter = smem.MemoryGraph(time)
+        writer = write.Writer()
     elif args.stack:
         options = perf.StackTrace.Options(parser.get_default_frequency(),
                                           parser.get_system_wide())
@@ -88,7 +90,8 @@ def _collect_and_store(args, parser):
                                      argument=args)
 
     # Run collection
-    controller = generic_controller.GenericController(collecter, writer, str(filename))
+    controller = generic_controller.GenericController(collecter, writer,
+                                                      str(filename))
     controller.run()
     output.print_("Done.")
 
@@ -136,6 +139,9 @@ def _args_parse(argv):
                                 help="gather library load times")
     module_collect.add_argument("-m", "--mem", action="store_true",
                                 help="trace memory allocation/ deallocation")
+    module_collect.add_argument("-g", "--memgraph", action="store_true",
+                                help="make a graph of memory allocation per "
+                                     "process by time")
     module_collect.add_argument("-s", "--stack", action="store_true",
                                 help="gather general call stack tracing data")
 
