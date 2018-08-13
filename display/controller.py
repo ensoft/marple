@@ -139,19 +139,15 @@ def _select_mode(file_type, args, possib_dict):
     for option in options:
         if option in possib_dict and args[option]:
             flag_args = True
-            funct_pair = possib_dict[option]
+            display_class = possib_dict[option]
     if flag_args:
-        funct = funct_pair[0]
-        arg = funct_pair[1]
-        funct(*arg)
+        display_class.show()
     else:
         default = config_parser.get_option_from_section("Display",
                                                         file_type[1:-1])
         if default in possib_dict:
-            funct_pair = possib_dict[default]
-            funct = funct_pair[0]
-            arg = funct_pair[1]
-            funct(*arg)
+            display_class = possib_dict[default]
+            display_class.show()
         else:
             raise Exception(
                 "No valid args or config values found for {}. Either "
