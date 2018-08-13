@@ -103,6 +103,61 @@ def _select_mode(file_type, args, possib_dict):
                 "add an arg in the terminal command or modify the "
                 "config file".format(file_type))
 
+display_options = {
+    '[CSV]': ['heatmap'],
+    '[STACK]': ['flamegraph', 'treemap'],
+    '[CPEL]': ['g2']
+}
+
+
+@util.log(logger)
+def _select_mode(file_type, args, possib_dict):
+    """
+    Captures the common pattern of selecting the right display.
+
+    :param file_type: the type of the file; can be:
+                        - [STACK]
+                        - [CSV]
+                        - [CPEL]
+    :param args: terminal arguments as a dictionary
+    :param posib_dict: a dictionary containing (key, value), where:
+                            - key: name of the display option
+                            - value: pair containing the function associated
+                                     with the display option and the arguments
+                                     it should be called with
+
+    """
+    # We create a config parser to read user setting from the config file
+    config_parser = config.Parser()
+
+    if file_type not in display_options:
+        raise KeyError("The file type {} is not supported "
+                        "yet".format(file_type))
+
+    options = display_options[file_type]
+    flag_args = False
+    for option in options:
+        if option in possib_dict and args[option]:
+            flag_args = True
+            funct_pair = possib_dict[option]
+    if flag_args:
+        funct = funct_pair[0]
+        arg = funct_pair[1]
+        funct(*arg)
+    else:
+        default = config_parser.get_option_from_section("Display",
+                                                        file_type[1:-1])
+        if default in possib_dict:
+            funct_pair = possib_dict[default]
+            funct = funct_pair[0]
+            arg = funct_pair[1]
+            funct(*arg)
+        else:
+            raise Exception(
+                "No valid args or config values found for {}. Either "
+                "add an arg in the terminal command or modify the "
+                "config file".format(file_type))
+
 
 @util.log(logger)
 def _display(args):
@@ -161,7 +216,6 @@ def _display(args):
 
     # We select the display method based on args and the config file
     _select_mode(header, vars(args), posib_dict)
-
 
 @util.log(logger)
 def _args_parse(argv):
