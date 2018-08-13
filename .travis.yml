@@ -17,6 +17,7 @@ script:
   - python -m pytest --cov=collect --cov=display --cov=common collect/ display/ common/
   - pylint -E collect display common --rcfile=pylintrc.txt
 after_success:
+  - python -m pylint collect display common --rcfile=pylintrc.txt
   - python -m codecov
 addons:
   apt:
@@ -24,5 +25,5 @@ addons:
     config:
       retries: true
   artifacts:
-    s3_region: eu-west-2
+    s3_region: us-west-1
     debug: true
