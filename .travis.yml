@@ -16,6 +16,7 @@ before_script:
   - export PYTHONPATH=${PWD}
 script:
   - python -m pytest --cov=collect --cov=display --cov=common collect/ display/ common/
+  - pylint -E collect display common --rcfile=pylintrc.txt
 after_success:
   - python -m codecov
 addons:
@@ -23,3 +24,6 @@ addons:
     update: true
     config:
       retries: true
+  artifacts:
+    s3_region: eu-west-2
+    debug: true
