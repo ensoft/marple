@@ -40,7 +40,7 @@ echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo > /dev/nu
 printf "Done.\n"
 
 printf "Removing old numpy libraries... "
-pip3 uninstall -y numpy > /dev/null &
+sudo -H pip3 uninstall -y numpy > /dev/null &
 show_spinner
 printf "Done.\n"
 
