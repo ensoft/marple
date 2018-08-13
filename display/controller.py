@@ -53,21 +53,21 @@ def _gen_treemap(*args):
     treemap.show(args[0], str(args[1]))
 
 
-@util.log(logger)
-def _gen_flamegraph(*args):
-    #inp, out
-    """
-    Helper function that generates the flamegraph svg file and shows it in the
-    browser
-
-    :param input: input file
-    :param output: output file, as a DisplayFileName object
-
-    """
-    stacks = flamegraph.read(args[0])
-    args[1].set_options("flamegraph", "svg")
-    flamegraph.make(stacks, str(args[1]))
-    flamegraph.show(str(args[1]))
+# @util.log(logger)
+# def _gen_flamegraph(*args):
+#     #inp, out
+#     """
+#     Helper function that generates the flamegraph svg file and shows it in the
+#     browser
+#
+#     :param input: input file
+#     :param output: output file, as a DisplayFileName object
+#
+#     """
+#     stacks = flamegraph.read(args[0])
+#     args[1].set_options("flamegraph", "svg")
+#     flamegraph.make(stacks, str(args[1]))
+#     flamegraph.show(str(args[1]))
 
 
 @util.log(logger)

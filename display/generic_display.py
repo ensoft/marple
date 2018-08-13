@@ -8,11 +8,9 @@ __all__ = "GenericDisplay"
 
 class GenericDisplay:
     """
-    An interface for display classes
+    An interface for display classes to implement
 
     """
-    def make(self):
-        pass
 
     def show(self):
         pass
