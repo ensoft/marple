@@ -12,7 +12,7 @@ Calls smem to collect memory data, format it, and has functions that create data
 """
 
 __all__ = (
-    "MemoryGraph"
+    "MemoryGraph",
 )
 
 
@@ -36,6 +36,12 @@ class MemoryGraph(Collecter):
         """
         mode: str
         number: int
+
+    _DEFAULT_OPTIONS = Options(mode="name", number=5)
+
+    @util.Override(Collecter)
+    def __init__(self, time_, options=_DEFAULT_OPTIONS):
+        super().__init__(time_, options)
 
     @util.Override(Collecter)
     def collect(self):
