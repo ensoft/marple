@@ -112,13 +112,14 @@ class HeatMap:
 
     """
 
-    def __init__(self, datafile, labels,
-                 parameters=DEFAULT_PARAMETERS, normalise=True):
+    def __init__(self, inp, out, labels, parameters, normalise):
         """
         Constructor for the heat map - initialises the heatmap.
 
         :param datafile:
             The input data file.
+        :param outfile:
+            The output file as a file object.
         :param labels:
             An object of :class:`AxesLabels`, storing labels for the heat map.
         :param parameters:
@@ -128,9 +129,12 @@ class HeatMap:
             True if the x-axis should be normalised to start from zero.
 
         """
+        out.set_options("heatmap", "svg")
+        self.output = str(out)
+
         self.labels = labels
         self.params = parameters
-        self.x_data, self.y_data = self._get_data(datafile, normalise)
+        self.x_data, self.y_data = self._get_data(inp, normalise)
 
         # Get values calculated from data
         self.data_stats = self._get_data_stats()
@@ -147,21 +151,13 @@ class HeatMap:
         self._create_sliders()
         self._add_annotations()
 
-    # The two methods below are not class/static methods as we would like a
+    # The method below are not class/static methods as we would like a
     # HeatMap instance to be created before they are used.
-    @util.log(logger)
-    def save(self, outputfile):
-        """
-        Save the heat map to disk.
-        This will fail if the file is not of the correct format.
-
-        :param outputfile:
-            The output file name.
-        """
-        plt.savefig(outputfile, bbox_inches="tight")
 
     @util.log(logger)
     def show(self):
+        # Save the figure in the output and then display it
+        plt.savefig(self.output, bbox_inches="tight")
         plt.show()
 
     class _DataStats(NamedTuple):
@@ -228,6 +224,9 @@ class HeatMap:
 
         """
         with open(datafile, "r") as file:
+            # Skip first line, header
+            file.readline()
+
             # Get data
             datapoints = [datatypes.Datapoint.from_string(line)
                           for line in file]

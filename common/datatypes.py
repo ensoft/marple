@@ -170,7 +170,10 @@ class StackData(typing.NamedTuple):
         commas or semicolons.
 
         """
-        return "{},{}".format(self.weight, ";".join(self.stack))
+        return "{}#{}".format(self.weight, ";".join(self.stack))
+
+    def __repr__(self):
+        return self.__str__()
 
     @classmethod
     def from_string(cls, string):
@@ -189,7 +192,7 @@ class StackData(typing.NamedTuple):
 
         """
         try:
-            weight, stack = string.strip().split(",")
+            weight, stack = string.strip().split("#")
             stack_tuple = tuple(stack.split(';'))
             return StackData(weight=int(weight), stack=stack_tuple)
         except ValueError as ve:

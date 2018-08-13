@@ -1,6 +1,7 @@
-from display import treemap
+from display.treemap import Treemap
 import display.test.util_display as util
 from unittest.mock import patch
+from common import file
 
 
 class _BaseTest(util.BaseTest):
@@ -20,7 +21,7 @@ class TreemapTest(_BaseTest):
         with open(stack, "w") as st:
             st.write(inpt)
 
-        treemap.generate_csv(stack, csv)
+        Treemap._generate_csv(stack, csv)
 
         outpt = ""
         with open(csv, "r") as file_:
@@ -35,8 +36,9 @@ class TreemapTest(_BaseTest):
                    "000000000;pname;call3;call4\n"
 
         # Get the output from a collapsed stack
-        inpt = "00000,pname;call1;call2\n" \
-               "000000000,pname;call3;call4\n"
+        inpt = "[STACK]\n" \
+               "00000#pname;call1;call2\n" \
+               "000000000#pname;call3;call4\n"
         outpt = self._get_output(inpt)
 
         # Check that we got the desired output
@@ -50,33 +52,36 @@ class TreemapTest(_BaseTest):
                    "000;pname;call1;call2;call3"
 
         # Generate a treemap csv from a collapsed stack
-        inpt = "00000,pname;call1;call2;call3;call4;call5\n" \
-               "000000000,pname;call1;call2\n" \
-               "000,pname;call1;call2;call3"
+        inpt = "[STACK]\n" \
+               "00000#pname;call1;call2;call3;call4;call5\n" \
+               "000000000#pname;call1;call2\n" \
+               "000#pname;call1;call2;call3"
         outpt = self._get_output(inpt)
 
         # Check that we got the desired output
         self.assertEqual(outpt, expected)
 
     def test_corrupted_file(self):
-        inpt = "2j35p235"
+        inpt = "[STACK]\n" \
+               "2j35p235"
         with self.assertRaises(ValueError):
             self._get_output(inpt)
 
     @patch("os.environ")
-    @patch("display.treemap.generate_csv", return_value=1000)
+    @patch("display.treemap.Treemap._generate_csv", return_value=1000)
     @patch("util.d3plus.d3IpyPlus.from_csv", return_value="")
     @patch("subprocess.Popen")
     @patch("util.d3plus.d3IpyPlus.TreeMap.dump_html", return_value="")
     def test_show_function(self, mock_dump, mock_popen, mock_from_csv,
                            mock_gen_csv, os_mock):
         inp = self._TEST_DIR + "in"
-        out = self._TEST_DIR + "out"
+        out = file.DisplayFileName(given_name=self._TEST_DIR + "out")
         with open(inp, "w") as c:
             c.write("")
-        with open(out, "w") as s:
+        with open(str(out), "w") as s:
             s.write("")
-        treemap.show(inp, out)
+        tm = Treemap(25, inp, out)
+        tm.show()
 
         # call_args: tuple where:
         #               - first field has all the ordered arguments;

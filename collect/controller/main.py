@@ -25,8 +25,9 @@ from common import (
 from collect.interface import (
     perf,
     iosnoop,
-    smem)
-from collect.writer import write
+    smem,
+    ebpf)
+from collect.IO import write
 from collect.controller import generic_controller
 
 logger = logging.getLogger(__name__)
@@ -67,16 +68,19 @@ def _collect_and_store(args, parser):
     if args.cpu:
         collecter = perf.SchedulingEvents(time)
         writer = write.WriterCPEL()
+        header = "[CPEL]"
     elif args.disk:
         collecter = iosnoop.DiskLatency(time)
         writer = write.Writer()
+        header = "[CSV]"
     elif args.ipc:
         raise NotImplementedError("IPC not implemented")  # TODO
     elif args.lib:
         raise NotImplementedError("IPC not implemented")  # TODO
     elif args.mem:
-        collecter = perf.MemoryEvents(time)
+        collecter = ebpf.MallocStacks(time)
         writer = write.Writer()
+        header = "[STACK]"
     elif args.memgraph:
         collecter = smem.MemoryGraph(time)
         writer = write.Writer()
@@ -85,13 +89,14 @@ def _collect_and_store(args, parser):
                                           parser.get_system_wide())
         collecter = perf.StackTrace(time, options)
         writer = write.Writer()
+        header = "[STACK]"
     else:
         raise argparse.ArgumentError(message="Arguments not recognised",
                                      argument=args)
 
     # Run collection
     controller = generic_controller.GenericController(collecter, writer,
-                                                      str(filename))
+                                                      str(filename), header)
     controller.run()
     output.print_("Done.")
 
@@ -167,7 +172,9 @@ def main(argv, parser):
 
     :param argv:
         a list of command line arguments from call in main module
-
+    :param parser:
+        the parser that reads the config; it is passed around to avoid creating
+        multiple parser objects
     """
 
     # Parse arguments

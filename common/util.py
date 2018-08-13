@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# util.py - various utilities
+# util_display.py - various utilities
 # July 2018 - Andrei Diaconu, Hrutvik Kanabar
 # -------------------------------------------------------------
 
