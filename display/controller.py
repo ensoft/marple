@@ -9,11 +9,6 @@ Controller script - user interface, parses and applies display commands
 Handles interaction between the output modules (flamegraph, g2, etc.)
 It calls the relevant functions for each command.
 
-To add a new display mode:
-    1)
-    2)
-    3)
-
 """
 __all__ = "main"
 
@@ -140,9 +135,9 @@ def _select_mode(file_type, args, possib_dict):
         if option in possib_dict and args[option]:
             flag_args = True
             display_class = possib_dict[option]
-    if flag_args:
-        display_class.show()
-    else:
+            display_class.show()
+            break
+    if not flag_args:
         default = config_parser.get_option_from_section("Display",
                                                         file_type[1:-1])
         if default in possib_dict:

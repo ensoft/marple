@@ -23,13 +23,14 @@ class TreemapTest(_BaseTest):
 
         Treemap._generate_csv(stack, csv)
 
-        outpt = ""
         with open(csv, "r") as file_:
-            for line in file_:
-                outpt += line
-        return outpt
+            return file_.read()
 
     def test_create_treemap_csv_multidigit(self):
+        """
+        Tests multidigit weight values
+
+        """
         # The expected output
         expected = "value;1;2;3\n" \
                    "00000;pname;call1;call2\n" \
@@ -45,6 +46,10 @@ class TreemapTest(_BaseTest):
         self.assertEqual(outpt, expected)
 
     def test_create_treemap_csv_different_stack_lengths(self):
+        """
+        Again, tests multidigit weights, now with bigger input
+
+        """
         # The expected output
         expected = "value;1;2;3;4;5;6\n" \
                    "00000;pname;call1;call2;call3;call4;call5\n" \
@@ -52,16 +57,21 @@ class TreemapTest(_BaseTest):
                    "000;pname;call1;call2;call3"
 
         # Generate a treemap csv from a collapsed stack
-        inpt = "[STACK]\n" \
+        inp = "[STACK]\n" \
                "00000#pname;call1;call2;call3;call4;call5\n" \
                "000000000#pname;call1;call2\n" \
                "000#pname;call1;call2;call3"
-        outpt = self._get_output(inpt)
+        out = self._get_output(inp)
 
         # Check that we got the desired output
-        self.assertEqual(outpt, expected)
+        self.assertEqual(out, expected)
 
     def test_corrupted_file(self):
+        """
+        Tests if corrupted files are handled correctly (the function should)
+        rise a ValueError
+
+        """
         inpt = "[STACK]\n" \
                "2j35p235"
         with self.assertRaises(ValueError):
@@ -74,6 +84,17 @@ class TreemapTest(_BaseTest):
     @patch("util.d3plus.d3IpyPlus.TreeMap.dump_html", return_value="")
     def test_show_function(self, mock_dump, mock_popen, mock_from_csv,
                            mock_gen_csv, os_mock):
+        """
+        Tests the right parameters for various functions used by the show
+        function
+
+        :param mock_dump: mock for dump_html
+        :param mock_popen: mock for popen
+        :param mock_from_csv: mock for csv
+        :param mock_gen_csv: mock for _generate_csv
+        :param os_mock: mock for onviron
+        :return:
+        """
         inp = self._TEST_DIR + "in"
         out = file.DisplayFileName(given_name=self._TEST_DIR + "out")
         with open(inp, "w") as c:
@@ -93,3 +114,5 @@ class TreemapTest(_BaseTest):
         self.assertEqual(mock_from_csv.call_args[1]['columns'],
                          ["value"] + [str(x) for x in
                                       range(1, mock_gen_csv.return_value + 1)])
+
+# @TODO: Test more

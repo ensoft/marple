@@ -32,10 +32,11 @@ class Treemap(GenericDisplay):
         Constructor for the Treemap.
 
         :param depth:
-            the depth of Treemap
+            The depth of Treemap. Should not be more than about 25, since the
+            loading times increase too much
         :param inp:
             Input [Stack] file as a string
-        :param out;
+        :param out:
             Output file as a file object
 
         """
@@ -65,8 +66,11 @@ class Treemap(GenericDisplay):
                         an absolute path
         :param out_file: a semicolon separated file generated from the in_file;
                          expects an absolute path
+        :raises ValueError: in case the file is not in an accepted format
+        :returns max_depth: the maximum depth of the stack
+
         """
-        max_num_proc = 0
+        max_depth = 0
         with open(in_file, "r") as read_file:
             # Skip first line, header
             read_file.readline()
@@ -75,17 +79,19 @@ class Treemap(GenericDisplay):
                 cnt = line.count(';')
                 # If we don't have any ';' characters raise error
                 if cnt == 0:
-                    print(line)
-                    raise ValueError("Invalid format of the file!")
-                if max_num_proc < cnt:
-                    max_num_proc = cnt
+                    raise ValueError("Invalid format of the file! Line that "
+                                     "causes the problem {}".format(line))
+                if max_depth < cnt:
+                    max_depth = cnt
+
             # Number of fields in a line is 1 plus the number of ';' characters
-            max_num_proc += 1
+            max_depth += 1
 
         with open(out_file, "w") as out_file:
-            # Header of the csv
+            # Header of the csv; example: value;1;2;3;4;5...
             out_file.write("value;" +
-                           ";".join([str(i) for i in range(1, max_num_proc + 1)]) +
+                           ";".join([str(i) for i in
+                                     range(1, max_depth + 1)]) +
                            "\n")
 
             with open(in_file, "r") as read_file:
@@ -93,33 +99,30 @@ class Treemap(GenericDisplay):
                 read_file.readline()
 
                 for line in read_file:
-                    call_stack = line.replace("#", ";")
+                    # We replace the only '#' character, that separates the
+                    # weight from the callstack
+                    call_stack = line.replace("#", ";", 1)
                     out_file.write(call_stack)
 
-            return max_num_proc
+        return max_depth
 
     @util.Override(GenericDisplay)
     @util.log(logger)
     def show(self):
         """
-        Displays the input stack as a treemap using the d3IpyPlus tool. Because
-        of the big loading times for big depths, we will use at most DEPTH
-        levels
+        Displays the input stack as a treemap using the d3IpyPlus tool.
 
-        :param in_file: a stack file
-        :param out_file: an html file containing the treemap representation
-
+        Creates the ids and the columns that are passed in the treemap object,
+        which is used to generate a html file that is to be displayed.
         """
 
         # Temp file for the csv file
         temp_file = str(file.TempFileName())
-        max_num_proc = self._generate_csv(self.input, temp_file)
+        max_depth = self._generate_csv(self.input, temp_file)
 
         # Generate the ids we use for the hierarchies and the columns of the
         # input file
-        ids = []
-        for i in range(1, max_num_proc + 1):
-            ids.append(str(i))
+        ids = [str(i) for i in range(1, max_depth + 1)]
         cols = ["value"] + ids
 
         data = d3.from_csv(temp_file, ';', columns=cols)
