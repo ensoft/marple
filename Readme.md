@@ -1,8 +1,8 @@
 # MARPLE - Multi-tool Analysis of Runtime Performance on Linux Environments
 
 [![Build Status](https://travis-ci.org/ensoft/marple.svg?branch=master)](https://travis-ci.org/ensoft/marple)
-
 [![Code Coverage](https://codecov.io/gh/ensoft/marple/branch/master/graph/badge.svg)](https://codecov.io/gh/ensoft/marple)
+[![Pylint](https://s3-us-west-1.amazonaws.com/marple.ci.logs/most_recent/pylint.svg)](https://www.pylint.org)
 
 ## Description
 MARPLE is a tool designed to provide an easy way to collect and display Linux performance data such as CPU events, memory allocations, efficiency of IPC, etc.<BR>
