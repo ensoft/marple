@@ -10,7 +10,6 @@ Adds colours and legend and fills in between the lines.
 """
 import logging
 
-import common
 from display.generic_display import GenericDisplay
 
 __all__ = ("StackPlot", )
@@ -45,32 +44,56 @@ class StackPlot(GenericDisplay):
         with open(filename, "r", encoding="utf-8") as file_:
             # Skip header line
             file_.readline()
-            # Read the data, naming the columns X, Y, and INFO
+            # Read the data into a DataFrame, naming the columns X, Y, and INFO
             self.df = pd.read_csv(file_, names=["X", "Y", "INFO"],
                                   header=None)
 
         # Extract unique info fields and convert array to list
         i = pd.unique(self.df.INFO)
         self.labels = ['{}'.format(_i) for _i in i]
+        # self.labels.add("other")
 
         # Extract list of mem_sizes for labels
         self.mem_size = [self.df[self.df.INFO == _i].Y for _i in i]
+
+    @staticmethod
+    def _add_missing_datapoints(dataframe):
+        """
+        Adds datapoints to the CSV to make it plottable.
+
+        :param dataframe:
+
+        :return:
+        """
+        pass
+
+    @staticmethod
+    def _collapse_other():
+        """
+
+        :return:
+        """
+        pass
 
     @util.log(logger)
     @util.Override(GenericDisplay)
     def show(self):
         try:
             # Create the plot, ordering by time coordinates
-            plt.stackplot(np.unique(self.df.X), self.mem_size, labels=self.labels)
+            plt.stackplot(np.unique(self.df.X), self.mem_size[::-1],
+                          labels=self.labels[::-1])
         except TypeError as te:
-            raise TypeError("CSV has missing or duplicate entries. {}"
+            raise TypeError("CSV seems to have missing or duplicate entries. {}"
                             .format(te.args))
+
         # Set labels
         plt.xlabel('time/s')
         plt.ylabel('memory')
 
         # Set legend
-        plt.legend(loc='upper left')
+        ax = plt.subplot(1, 1, 1)
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles[::-1], labels[::-1])
 
         plt.show()
 
@@ -80,10 +103,12 @@ if __name__ == "__main__":
     with open(filename, "w") as file_:
         file_.writelines(io.StringIO("""
         [CSV]
-        0,0,a
-        0,0,b
-        1,0.5,b
-        1,1,a
+        0,0,x
+        0,0,y
+        1,0.5,x
+        1,1,y
+        0,0,other
+        1,2,other
         """.strip()))
 
     sp = StackPlot(filename)
