@@ -10,6 +10,7 @@ Adds colours and legend and fills in between the lines.
 """
 import logging
 
+import common
 from display.generic_display import GenericDisplay
 
 __all__ = ("StackPlot", )
@@ -38,7 +39,7 @@ class StackPlot(GenericDisplay):
         Constructor, initialises the stackplot.
 
         :param filename:
-            The name of the file containing the csv data.
+            The name of the file containing csv data in three columns.
 
         """
         with open(filename, "r", encoding="utf-8") as file_:
@@ -49,7 +50,7 @@ class StackPlot(GenericDisplay):
                                   header=None)
 
         # Extract unique info fields and convert array to list
-        i = np.unique(self.df.INFO)
+        i = pd.unique(self.df.INFO)
         self.labels = ['{}'.format(_i) for _i in i]
 
         # Extract list of mem_sizes for labels
@@ -58,9 +59,12 @@ class StackPlot(GenericDisplay):
     @util.log(logger)
     @util.Override(GenericDisplay)
     def show(self):
-        # Create the plot
-        plt.stackplot(np.unique(self.df.X), self.mem_size, labels=self.labels)
-
+        try:
+            # Create the plot, ordering by time coordinates
+            plt.stackplot(np.unique(self.df.X), self.mem_size, labels=self.labels)
+        except TypeError as te:
+            raise TypeError("CSV has missing or duplicate entries. {}"
+                            .format(te.args))
         # Set labels
         plt.xlabel('time/s')
         plt.ylabel('memory')
@@ -78,8 +82,8 @@ if __name__ == "__main__":
         [CSV]
         0,0,a
         0,0,b
+        1,0.5,b
         1,1,a
-        1,1,b
         """.strip()))
 
     sp = StackPlot(filename)
