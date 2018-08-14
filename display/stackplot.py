@@ -85,6 +85,9 @@ class StackPlot(GenericDisplay):
         except TypeError as te:
             raise TypeError("CSV seems to have missing or duplicate entries. {}"
                             .format(te.args))
+        except KeyError as ke:
+            raise KeyError("Too little information to create a stackplot. "
+                           "Record for longer. {}".format(ke.args))
 
         # Set labels
         plt.xlabel('time/s')
