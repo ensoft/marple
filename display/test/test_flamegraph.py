@@ -15,6 +15,7 @@ from common import datatypes
 
 
 class _FlamegraphBaseTest(unittest.TestCase):
+    """ Base class for flamegraph tests """
     coloring = 'test_color'
     infilename = 'test_input'
     outfile = mock.MagicMock()
@@ -30,6 +31,7 @@ class _FlamegraphBaseTest(unittest.TestCase):
 
 
 class InitTest(_FlamegraphBaseTest):
+    """ Test the __init__ function for interface calls"""
     def test(self):
         fg = flamegraph.Flamegraph(self.infilename, self.outfile,
                                    self.coloring)
@@ -41,8 +43,10 @@ class InitTest(_FlamegraphBaseTest):
 
 
 class ReadTest(_FlamegraphBaseTest):
+    """ Test the _read function """
     @mock.patch("builtins.open")
     def test_empty_file(self, open_mock):
+        """ Ensure the module copes with an empty graph """
         # Create mocks
         file_mock = StringIO("")
         context_mock = open_mock.return_value
@@ -54,6 +58,7 @@ class ReadTest(_FlamegraphBaseTest):
 
     @mock.patch('builtins.open')
     def test_normal_file(self, open_mock):
+        """ Test opening of a normal file """
         file_mock = StringIO("header\n1#A1;A2;A3\n2#B1;B2;B3;B4\n")
         context_mock = open_mock.return_value
         context_mock.__enter__.return_value = file_mock
@@ -66,6 +71,9 @@ class ReadTest(_FlamegraphBaseTest):
 
 
 class MakeTest(_FlamegraphBaseTest):
+    """ Test the flamegraph creation """
+
+    # Set up test data and expected values
     test_stack_data = [
         datatypes.StackData(1, ('A1', 'A2', 'A3')),
         datatypes.StackData(2, ('B1', 'B2', 'B3', 'B4')),
@@ -75,7 +83,6 @@ class MakeTest(_FlamegraphBaseTest):
     expected = collections.Counter({('A1', 'A2', 'A3'): 4,
                                     ('B1', 'B2', 'B3', 'B4'): 2})
 
-
     expected_temp_file = "A1;A2;A3 4\n" \
                          "B1;B2;B3;B4 2\n"
 
@@ -83,6 +90,7 @@ class MakeTest(_FlamegraphBaseTest):
     @mock.patch('builtins.open')
     @mock.patch('display.flamegraph.subprocess')
     def test_no_coloring(self, subproc_mock, open_mock, temp_file_mock):
+        """ Test without a colouring option """
         temp_file_mock.TempFileName.return_value.__str__.return_value = \
             "test_temp_file"
         context_mock1, context_mock2 = mock.MagicMock(), mock.MagicMock()
@@ -110,6 +118,7 @@ class MakeTest(_FlamegraphBaseTest):
     @mock.patch('builtins.open')
     @mock.patch('display.flamegraph.subprocess')
     def test_with_coloring(self, subproc_mock, open_mock, temp_file_mock):
+        """ Test with a colouring option """
         temp_file_mock.TempFileName.return_value.__str__.return_value = \
             "test_temp_file"
         context_mock1, context_mock2 = mock.MagicMock(), mock.MagicMock()
@@ -136,6 +145,8 @@ class MakeTest(_FlamegraphBaseTest):
 
 
 class ShowTest(_FlamegraphBaseTest):
+    """ Test the showing of the flamegraph """
+
     @mock.patch('display.flamegraph.Flamegraph._read')
     @mock.patch('display.flamegraph.Flamegraph._make')
     @mock.patch('display.flamegraph.subprocess')
