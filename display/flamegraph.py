@@ -47,12 +47,13 @@ class Flamegraph(GenericDisplay):
             The colouring for the flamegraph as an argument string.
             As defined by Brendan Gregg's script, to go in the
             "--color=" option.
+
         """
         self.in_filename = inp
-        out.set_options("treemap", "html")
+        out.set_options("flamegraph", "svg")
 
         self.out_filename = str(out)
-        self.colouring = coloring
+        self.coloring = coloring
 
     @util.log(logger)
     def _read(self):
@@ -87,11 +88,14 @@ class Flamegraph(GenericDisplay):
                 out.write(";".join(stack) + " {}\n".format(count))
 
         with open(self.out_filename, "w") as out:
-            if self.colouring:
-                subprocess.Popen([FLAMEGRAPH_DIR, "--color=" + self.colouring,
+            if self.coloring:
+                subprocess.Popen([FLAMEGRAPH_DIR, "--color=" + self.coloring,
                                   temp_file], stdout=out)
             else:
                 subprocess.Popen([FLAMEGRAPH_DIR, temp_file], stdout=out)
+
+        # Return counts to aid debugging
+        return counts
 
     @util.log(logger)
     @util.Override(GenericDisplay)

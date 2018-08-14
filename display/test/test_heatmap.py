@@ -1,3 +1,10 @@
+# -------------------------------------------------------------
+# test_heatmap.py - test module for the heatmap module
+# August 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
+""" Tests the heat map functionality. """
+
 import unittest
 from unittest import mock
 from io import StringIO
