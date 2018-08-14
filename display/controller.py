@@ -14,6 +14,7 @@ __all__ = "main"
 
 import argparse
 import logging
+from enum import Enum
 
 from common import (
     file,
@@ -31,76 +32,32 @@ from display import (
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
+
+# Both enums should match the values from the config files
+class DisplayOptions(Enum):
+    HEATMAP = "heatmap"
+    STACKPLOT = "stackplot"
+    FLAMEGRAPH = "flamegraph"
+    TREEMAP = "treemap"
+    G2 = "g2"
+
+
+class FileTypes(Enum):
+    CSV = '[CSV]'
+    STACK = '[STACK]'
+    CPEL = '[CPEL]'
+
+
 # Display option for files
-display_options = {
-    '[CSV]': ['heatmap', 'stackplot'],
-    '[STACK]': ['flamegraph', 'treemap'],
-    '[CPEL]': ['g2']
+display_dictionary = {
+    FileTypes.CSV: [DisplayOptions.HEATMAP, DisplayOptions.STACKPLOT],
+    FileTypes.STACK: [DisplayOptions.FLAMEGRAPH, DisplayOptions.TREEMAP],
+    FileTypes.CPEL: [DisplayOptions.G2]
 }
 
 
 @util.log(logger)
-def _select_mode(file_type, args, possibilities_dict):
-    """
-    Captures the common pattern of selecting the right display.
-    The priority of selection: args have the highest priority, if any is
-                               specified then we select that option; if the
-                               arg option is specified, but unsupported, or no
-                               arg is specified we look at the config file
-                               preferences for the particular type of file; if
-                               the option doesn't exist there we trow an error
-
-    :param file_type: the type of the file; can be:
-                        - [STACK]
-                        - [CSV]
-                        - [CPEL]
-    :param args: terminal arguments as a dictionary
-    :param possibilities_dict: a dictionary containing (key, value), where:
-                            - key: name of the display option
-                            - value: pair containing the function associated
-                                     with the display option and the arguments
-                                     it should be called with
-
-    """
-    # We create a config parser to read user setting from the config file
-    config_parser = config.Parser()
-
-    # If the file type is not recognized, throw error
-    if file_type not in display_options:
-        raise KeyError("The file type {} is not supported".format(file_type))
-
-    # We retrieve the possible display options for the particular file type
-    options = display_options[file_type]
-    # Flag to see if we encountered a cmd line argument, AND IT WAS A VALID
-    # OPTION
-    flag_args = False
-    for option in options:
-        # If the current option is in the dictionary, and it was specified in
-        # the cmd line, we got a match
-        if option in possibilities_dict and args[option]:
-            flag_args = True
-            display_class = possibilities_dict[option]
-            display_class.show()
-            break
-
-    if not flag_args:
-        # No matches for the cmd line args, we try the config file
-        # We get the default option
-        default = config_parser.get_option_from_section("Display",
-                                                        file_type[1:-1])
-        # If it is valid, we use it, otherwise we raise an error
-        if default in possibilities_dict:
-            display_class = possibilities_dict[default]
-            display_class.show()
-        else:
-            raise Exception(
-                "No valid args or config values found for {}. Either "
-                "add an arg in the terminal command or modify the "
-                "config file".format(file_type))
-
-
-@util.log(logger)
-def _select_mode(file_type, args, possibilities_dict):
+def _select_mode(file_type, args):
     """
     Captures the common pattern of selecting the right display.
 
@@ -109,35 +66,46 @@ def _select_mode(file_type, args, possibilities_dict):
                         - [CSV]
                         - [CPEL]
     :param args: terminal arguments as a dictionary
-    :param possibilities_dict: a dictionary containing (key, value), where:
-                            - key: name of the display option
-                            - value: pair containing the function associated
-                                     with the display option and the arguments
-                                     it should be called with
-
+    :returns DisplayOptions(default_to_enum): an DisplayOptions specifing the
+                                              display mode
     """
     # We create a config parser to read user setting from the config file
     config_parser = config.Parser()
 
-    if file_type not in display_options:
-        raise KeyError("The file type {} is not supported".format(file_type))
+    # Create the dictionaries used in the selection step
+    try:
+        file_type_enum = FileTypes(file_type)
+    except ValueError:
+        raise ValueError("The file type {} is not supported".format(file_type))
 
-    options = display_options[file_type]
-    for option in options:
-        if option in possibilities_dict and args[option]:
-            display_class = possibilities_dict[option]
-            display_class.show()
-            print(type(display_class))
-            break
+    # File type exists, we look in display_dictionary for the various ways
+    # to display it
+    if file_type_enum == FileTypes.CPEL:
+        possibilities = display_dictionary[FileTypes.CPEL]
+    elif file_type_enum == FileTypes.CSV:
+        possibilities = display_dictionary[FileTypes.CSV]
+    elif file_type_enum == FileTypes.STACK:
+        possibilities = display_dictionary[FileTypes.STACK]
+
+    for option in possibilities:
+        if args[option.value]:
+            return option
     else:
         # loop fell through without finding a factor (see python 3.7 doc 4.4)
         default = config_parser.get_option_from_section("Display",
                                                         file_type[1:-1])
-        if default in possibilities_dict:
-            display_class = possibilities_dict[default]
-            display_class.show()
+        try:
+            default_to_enum = DisplayOptions(default)
+        except ValueError:
+            raise ValueError("The default value from the config could not be "
+                             "converted to a DisplayOptions enum. "
+                             "Check that the values in the config correspond "
+                             "with the enum values.")
+
+        if default_to_enum in possibilities:
+            return DisplayOptions(default_to_enum)
         else:
-            raise Exception(
+            raise ValueError(
                 "No valid args or config values found for {}. Either "
                 "add an arg in the terminal command or modify the "
                 "config file".format(file_type))
@@ -169,39 +137,36 @@ def _display(args):
     else:
         output_filename = file.DisplayFileName()
 
-    # We read the file header
+    # We read the file header @TODO: Maybe add more functionality to the header
     with open(input_filename, "rb") as source:
         # Strip ending newline
         header = source.readline()[:-1]
         header = header.decode()
 
-    # Create the dictionaries used in the selection step
-    if header == '[CPEL]':
-        possibilities_dict = {
-            'g2': g2.G2(input_filename)
-        }
-    elif header == '[CSV]':
-        # Set the axes (for heatmap)
+    # We select the display method based on args and the config file
+    mode = _select_mode(header, vars(args))
+    # Match the mode with the appropriate display object
+    if mode == DisplayOptions.G2:
+        display_object = g2.G2(input_filename)
+    elif mode == DisplayOptions.HEATMAP:
         hm_labels = heatmap.AxesLabels(x='Time', x_units='seconds',
                                        y='Latency', y_units='ms',
                                        colorbar='No. accesses')
-        possibilities_dict = {
-            'heatmap': heatmap.HeatMap(input_filename, output_filename,
-                                       hm_labels, heatmap.DEFAULT_PARAMETERS,
-                                       True),
-            'stackplot': stackplot.StackPlot(input_filename)
-        }
-    elif header == '[STACK]':
-        possibilities_dict = {
-            'treemap': treemap.Treemap(25, input_filename, output_filename),
-            'flamegraph': flamegraph.Flamegraph(input_filename,
-                                                output_filename, None)
-        }
+        display_object = heatmap.HeatMap(input_filename, output_filename,
+                                         hm_labels, heatmap.DEFAULT_PARAMETERS,
+                                         True)
+    elif mode == DisplayOptions.TREEMAP:
+        display_object = treemap.Treemap(25, input_filename, output_filename)
+    elif mode == DisplayOptions.STACKPLOT:
+        display_object = stackplot.StackPlot(input_filename)
+    elif mode == DisplayOptions.FLAMEGRAPH:
+        display_object = flamegraph.Flamegraph(input_filename,
+                                               output_filename, None)
     else:
-        raise Exception("File not supported!")
+        raise ValueError("Unexpected display mode {}!".format(mode))
 
-    # We select the display method based on args and the config file
-    _select_mode(header, vars(args), possibilities_dict)
+    # Display it
+    display_object.show()
 
 
 @util.log(logger)
