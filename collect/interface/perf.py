@@ -216,8 +216,6 @@ class SchedulingEvents(Collecter):
                                          track=track,
                                          time=time_int,
                                          type=match.group("event"))
-            print(event)
-
             yield event
 
 
