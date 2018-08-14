@@ -40,10 +40,11 @@ class DisplayTest(_BaseTest):
 
     @mock.patch("display.controller._select_mode", return_value="foobar")
     @mock.patch("builtins.open")
-    def test_display(self, open_mock, select_mock):
+    def test_display_filetype_unrecognized(self, open_mock, select_mock):
         """
         Testing if the display method throws an error if the filetype is
         unrecognized
+
         """
         file_mock = open_mock.return_value
         file_mock.__enter__.return_value = BytesIO(b"[CSV]\n")
@@ -180,9 +181,10 @@ class SelectModeTest(_BaseTest):
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="heatmap")
-    def test_invalid_default(self, mock_opt):
+    def test_invalid_match(self, mock_opt):
         """
-        If the default value from the config is invalid, throw error
+        If the default value from the config is valid but not supported by the
+        file
 
         """
         with self.assertRaises(ValueError) as ve:
