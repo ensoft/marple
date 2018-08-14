@@ -17,6 +17,7 @@ script:
   - pylint -E collect display common --rcfile=pylintrc.txt # Check for Pylint errors
 after_success:
   - python -m pylint collect display common --rcfile=pylintrc.txt |& tee pylint.txt # Check for Pylint warnings + errors
+  - python -m pytest --cov=common --cov=display --cov=collect --cov-report=annotate:coverage_annotate common collect display # Create annotated code coverage
   - python -m codecov # Export code coverage to codecov
   - PYLINT=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt) # Get Pylint score
   - anybadge -l pylint -v ${PYLINT} -o -f pylint.svg 8=red 9=orange 9.5=yellow 10=green # Generate badge from Pylint result
@@ -33,6 +34,7 @@ addons:
       - pytest.txt
       - pylint.txt
       - pylint.svg
+      - $(find ./coverage_annotate -type f ! -size 0 | tr "\n" ":")
     target_paths: # Select where to upload artifacts
       - /${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}
       - /most_recent
