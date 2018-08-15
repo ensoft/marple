@@ -6,8 +6,8 @@
 """
 Interacts with the perf tracing tool.
 
-Calls perf to collect data, format it, and has functions that create data
-    object generators.
+Specified several collecter (deriving from collecter.Collecter) that use perf
+to gather data and then return it using data object generators.
 
 """
 
@@ -31,19 +31,19 @@ from common import (
 )
 from collect.interface.collecter import Collecter
 
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: %s', __name__)
+
 # Constants for perf to stacks conversion
 INCLUDE_TID = False
 INCLUDE_PID = False
 
-logger = logging.getLogger(__name__)
-logger.debug('Entered module: %s', __name__)
-
-# @@@ TODO add blocking based on config file
-
 
 class MemoryEvents(Collecter):
+    """ Collect memory load/store events using perf. """
 
     class Options(NamedTuple):
+        """ No options for this collecter class. """
         pass
 
     _DEFAULT_OPTIONS = None
@@ -51,11 +51,13 @@ class MemoryEvents(Collecter):
     @util.check_kernel_version("2.6")
     @util.Override(Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass)."""
         super().__init__(time, options)
 
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
+        """ Collect data using perf, and return a data generator. """
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
@@ -74,8 +76,10 @@ class MemoryEvents(Collecter):
 
 
 class MemoryMalloc(Collecter):
+    """ Collect malloc data using perf. """
 
     class Options(NamedTuple):
+        """ No options for this collecter class. """
         pass
 
     _DEFAULT_OPTIONS = None
@@ -83,11 +87,13 @@ class MemoryMalloc(Collecter):
     @util.check_kernel_version("2.6")
     @util.Override(Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass). """
         super().__init__(time, options)
 
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
+        """ Collect data using perf and return a data generator. """
         # Delete old probes and create a new one tracking allocation size
         # @@@ TODO THIS IS ARCHITECTURE SPECIFIC CURRENTLY
         sub_process = subprocess.Popen(
@@ -121,20 +127,33 @@ class MemoryMalloc(Collecter):
 
 
 class StackTrace(Collecter):
+    """ Collect stack traces using perf. """
 
     class Options(NamedTuple):
+        """
+        Options to use in the collection.
+
+        .. attribute:: frequency:
+            The frequency with which perf will sample the stack.
+        .. attribute:: cpufilter:
+            A filter for which CPUs to collect information from.
+
+        """
         frequency: int
         cpufilter: str
 
+    # Default options - frequency 99 Hz, all CPUs
     _DEFAULT_OPTIONS = Options(frequency=99, cpufilter="-a")
 
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass). """
         super().__init__(time, options)
 
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
+        """ Collect data using perf and return a data generator. """
         sub_process = subprocess.Popen(["perf", "record", "-F",
                                         str(self.options.frequency),
                                         self.options.cpufilter,
@@ -157,19 +176,23 @@ class StackTrace(Collecter):
 
 
 class SchedulingEvents(Collecter):
+    """ Collect scheduling events using perf. """
 
     class Options(NamedTuple):
+        """ No options for this collecter class. """
         pass
 
     _DEFAULT_OPTIONS = None
 
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass). """
         super().__init__(time, options)
 
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
+        """ Collect data using perf and yield it. """
         sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
                                         str(self.time)], stderr=subprocess.PIPE)
         _, err = sub_process.communicate()
@@ -220,19 +243,23 @@ class SchedulingEvents(Collecter):
 
 
 class DiskBlockRequests(Collecter):
+    """ Collect requests for disk blocks using perf. """
 
     class Options(NamedTuple):
+        """ No options for this collecter class. """
         pass
 
     _DEFAULT_OPTIONS = None
 
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass). """
         super().__init__(time, options)
 
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
+        """ Collect data using perf and return a data generator. """
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "block:block_rq_insert",
              "sleep", str(self.time)], stderr=subprocess.PIPE)

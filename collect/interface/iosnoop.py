@@ -20,7 +20,7 @@ from typing import NamedTuple
 from io import StringIO
 
 from common.datatypes import Datapoint
-from collect.interface.collecter import Collecter
+from collect.interface import collecter
 from common import util
 
 
@@ -33,19 +33,24 @@ ROOT_DIR = str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(
 IOSNOOP_SCRIPT = ROOT_DIR + "util/perf-tools/iosnoop"
 
 
-class DiskLatency(Collecter):
+class DiskLatency(collecter.Collecter):
+    """ Collect disk latency data using iosnoop. """
+
     class Options(NamedTuple):
+        """ No options for this collecter class. """
         pass
 
     _DEFAULT_OPTIONS = None
 
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass). """
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
+    @util.Override(collecter.Collecter)
     def collect(self):
+        """ Collect data using iosnoop and yield it. """
         sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(self.time)],
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
