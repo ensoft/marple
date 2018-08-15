@@ -33,6 +33,17 @@ def check_kernel_version(required_kernel):
 
 
 def Override(superclass):
+    """
+    A decorator wrapping a method which overrides a method in a superclass.
+
+    Asserts that the method name is also present in the superclass.
+
+    :param superclass:
+        The superclass.
+    :raises AssertionError:
+        If the method does not override a method in the superclass.
+
+    """
     def overrider(method):
         assert(method.__name__ in dir(superclass))
         return method
