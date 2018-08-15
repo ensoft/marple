@@ -78,10 +78,13 @@ class StackPlot(GenericDisplay):
     @util.log(logger)
     @util.Override(GenericDisplay)
     def show(self):
+
+        ax = plt.subplot(1, 1, 1)
+
         try:
             # Create the plot, ordering by time coordinates
-            plt.stackplot(np.unique(self.df.X), self.mem_size[::-1],
-                          labels=self.labels[::-1])
+            ax.stackplot(np.unique(self.df.X), self.mem_size[::-1],
+                         labels=self.labels[::-1])
         except TypeError as te:
             raise TypeError("CSV seems to have missing or duplicate entries. {}"
                             .format(te.args))
@@ -89,14 +92,13 @@ class StackPlot(GenericDisplay):
             raise KeyError("Too little information to create a stackplot. "
                            "Record for longer. {}".format(ke.args))
 
-        # Set labels
-        plt.xlabel('time/s')
-        plt.ylabel('memory')
-
         # Set legend
-        ax = plt.subplot(1, 1, 1)
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles[::-1], labels[::-1])
+
+        # Set labels
+        ax.set_xlabel('time/s')
+        ax.set_ylabel('memory')
 
         plt.show()
 
