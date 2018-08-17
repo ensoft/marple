@@ -25,6 +25,7 @@ from time import sleep, strftime
 import argparse
 import errno
 import signal
+import os
 
 # arg validation
 def positive_int(val):
@@ -195,10 +196,11 @@ for k, v in sorted(bytemap.items(), key=lambda bytemap: bytemap[1].value):
     user_stack = list(stack_traces.walk(k.user_stack_id))
 
     if folded:
-        # print folded stack output
-        line = [k.name.decode()] + \
-            [b.sym(addr, k.tgid) for addr in reversed(user_stack)]
-        print("%s %d" % (";".join(line), v.value))
+        if k.pid != os.getpid():
+            # print folded stack output
+            line = [k.name.decode()] + \
+                [b.sym(addr, k.tgid) for addr in reversed(user_stack)]
+            print("%d#%s" % (v.value, "#".join(line)))
     else:
         # print default multi-line stack output
         for addr in user_stack:

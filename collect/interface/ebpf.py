@@ -25,6 +25,15 @@ logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
 
 
+def _to_kilo(num):
+    """
+    Helper function, transforms from bytes to kilobytes
+    :param num: number of bytes
+    :return: closest into to the actual number of kilobytes
+
+    """
+    return int(num / 1000)
+
 class MallocStacks(Collecter):
     """
     Class that interacts with Brendan Gregg's mallocstacks tools
@@ -36,7 +45,12 @@ class MallocStacks(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        mall_subp = subprocess.Popen(["sudo", "python2",
+        """
+        Collects memory stacks where the weight is the number of kilobytes
+        :return:
+
+        """
+        mall_subp = subprocess.Popen(["sudo", "python",
                                       BCC_TOOLS_PATH + "mallocstacks.py", "-f",
                                       str(self.time)], stderr=subprocess.PIPE,
                                      stdout=subprocess.PIPE)
@@ -46,21 +60,21 @@ class MallocStacks(Collecter):
 
         for line in StringIO(out.decode()):
             line = line.strip('\n')
-            # We search for the first position where the pattern 'space
-            # followed by digit' appears (we assume no process will have a
-            # similar naming)
-            space_pos = re.search(r' \d', line).start()
+            # We find the first #, marking the ending of the weight
+            hash_pos = line.find('#')
 
             # The weight starts right after the space and continues up to the
-            # end of the line
+            # first occurence of #
             try:
-                weight = int(line[space_pos + 1:])
-                # The stack starts at the beginning of the line and ends just before
-                # the space
-                stack_list = tuple(line[:space_pos].split(';'))
-
-                # Generator that yields StackData objects, constructed from the
-                # current line
-                yield datatypes.StackData(stack=stack_list, weight=weight)
+                weight = int(line[0:hash_pos])
             except ValueError:
-                print(line)
+                raise ValueError("The weight {} is not a number!",
+                                 line[0:hash_pos])
+
+            # The stack starts after the first hash
+            stack_list = tuple(line[hash_pos + 1:].split('#'))
+
+            # Generator that yields StackData objects, constructed from the
+            # current line
+            yield datatypes.StackData(stack=stack_list,
+                                      weight=_to_kilo(weight))
