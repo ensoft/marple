@@ -179,10 +179,9 @@ class SchedulingEvents(Collecter):
     """ Collect scheduling events using perf. """
 
     class Options(NamedTuple):
-        """ No options for this collecter class. """
-        pass
+        track: str
 
-    _DEFAULT_OPTIONS = None
+    _DEFAULT_OPTIONS = Options(track="cpu")
 
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
@@ -228,12 +227,27 @@ class SchedulingEvents(Collecter):
             time_str = match.group("time").split(".")
             time_int = int(time_str[0]) * 1000000 + int(time_str[1])
 
-            # Create datum from name and pid:
-            datum = "{} (pid: {})".format(match.group("name"),
-                                          match.group("pid"))
+            if self.options.track == "cpu":
 
-            # Create track name from cpu:
-            track = "cpu " + str(int(match.group("cpu")))
+                # Create datum from name and pid:
+                datum = "{} (pid: {})".format(match.group("name"),
+                                              match.group("pid"))
+
+                # Create track name from cpu:
+                track = "cpu " + str(int(match.group("cpu")))
+
+            elif self.options.track == "pid":
+                # Create track from name and pid:
+                track = "{} (pid: {})".format(match.group("name"),
+                                              match.group("pid"))
+
+                # Create datum from cpu:
+                datum = "cpu " + str(int(match.group("cpu")))
+
+            else:
+                raise ValueError("Unknown option for SchedulingEvents: {}. "
+                                 "Expected name or pid.".format(
+                                    self.options.track))
 
             event = datatypes.SchedEvent(datum=datum,
                                          track=track,

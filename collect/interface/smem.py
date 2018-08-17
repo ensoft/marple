@@ -30,14 +30,11 @@ class MemoryGraph(Collecter):
         """
         .. attribute:: mode:
             "name" or "pid" or "command", to decide the labelling
-        .. attribute:: self.options.number:
-            The maximum self.options.number of processes to include at any one time.
 
         """
         mode: str
-        number: int
 
-    _DEFAULT_OPTIONS = Options(mode="name", number=5)
+    _DEFAULT_OPTIONS = Options(mode="name")
 
     @util.Override(Collecter)
     def __init__(self, time_, options=_DEFAULT_OPTIONS):
@@ -54,9 +51,6 @@ class MemoryGraph(Collecter):
         """
         # Dict for the datapoints to be collected
         datapoints = {}
-
-        # Set to collect all labels that have been encountered
-        labels = set()
 
         # Set the start time
         start_time = time.monotonic()
@@ -92,30 +86,15 @@ class MemoryGraph(Collecter):
                 else:
                     index += 1
 
-                    if index >= self.options.number:
-                        if "other" not in datapoints[current_time]:
-                            datapoints[current_time]["other"] = 0
-
-                        datapoints[current_time]["other"] = \
-                            float(int(datapoints[current_time]["other"] +
-                                      memory / 1024))
-                        continue
-
-                    labels.add(label)
-
                 datapoints[current_time][label] = float(int(memory / 1024))
 
             # Update the clock
             current_time = time.monotonic() - start_time
 
         for key in datapoints:
-            labels_at_key = set(list(datapoints[key].keys()))
-            if labels_at_key != labels:
-                for _label in labels - labels_at_key:
-                    datapoints[key][_label] = 0
-                for lab in datapoints[key]:
-                    mem = datapoints[key][lab]
-                    yield datatypes.Datapoint(key, mem, lab)
+            for lab in datapoints[key]:
+                mem = datapoints[key][lab]
+                yield datatypes.Datapoint(key, mem, lab)
 
     @staticmethod
     def _insert_datapoint(memory):
@@ -128,3 +107,10 @@ class MemoryGraph(Collecter):
             A float value to the nearest integer with the memory in megabytes.
         """
         return float(int(memory / 1024))
+
+
+if __name__ == "__main__":
+    mg=MemoryGraph(15)
+    it=mg.collect()
+    for i in it:
+        print(i)
