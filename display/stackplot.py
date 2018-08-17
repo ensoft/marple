@@ -8,9 +8,7 @@
 Adds colours and legend and fills in between the lines.
 
 """
-import collections
 import logging
-from collections import Counter
 
 from display.generic_display import GenericDisplay
 
@@ -152,7 +150,7 @@ class StackPlot(GenericDisplay):
         Adds datapoints to the graph to make it plottable.
 
         Stackplot can only be plotted if there are the same number of (y,
-        label) for each x, so add (0, label) where necessary, so that all
+        label) for each x, so add (0.0, label) where necessary, so that all
         seen labels exist at each x. MODIFIES THE DICT PASSED AS AN ARGUMENT.
 
         :param datapoints:
