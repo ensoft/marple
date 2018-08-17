@@ -66,7 +66,8 @@ def _collect_and_store(args, parser):
 
     # Select appropriate interfaces based on user input
     if args.cpu:
-        collecter = perf.SchedulingEvents(time)
+        options = perf.SchedulingEvents.Options(track="pid")
+        collecter = perf.SchedulingEvents(time, options)
         writer = write.WriterCPEL()
         header = "[CPEL]"
     elif args.disk:
