@@ -91,6 +91,11 @@ def _collect_and_store(args, parser):
         collecter = perf.StackTrace(time, options)
         writer = write.Writer()
         header = "[STACK]"
+    elif args.memleak:
+        options = ebpf.Memleak.Options(10)
+        collecter = ebpf.Memleak(time, options)
+        writer = write.Writer()
+        header = "[STACK]"
     else:
         raise argparse.ArgumentError(message="Arguments not recognised",
                                      argument=args)
@@ -150,6 +155,8 @@ def _args_parse(argv):
                                      "process by time")
     module_collect.add_argument("-s", "--stack", action="store_true",
                                 help="gather general call stack tracing data")
+    module_collect.add_argument("-x", "--memleak", action="store_true",
+                                help="trace userspace allocations")
 
     # Add flag and parameter for filename
     filename = parser.add_argument_group()

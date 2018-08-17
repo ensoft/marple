@@ -118,7 +118,8 @@ struct alloc_info_t {
 BPF_HASH(sizes, u64);
 BPF_TABLE("hash", u64, struct alloc_info_t, allocs, 1000000);
 BPF_HASH(memptrs, u64, u64);
-BPF_STACK_TRACE(stack_traces, 100240);
+//BPF_STACK_TRACE(stack_traces, 10240);
+BPF_STACK_TRACE(stack_traces, 500000);
 
 static inline int gen_alloc_enter(struct pt_regs *ctx, size_t size) {
         u64 pid = bpf_get_current_pid_tgid();
@@ -258,7 +259,6 @@ stack_flags += "|BPF_F_USER_STACK"
 bpf_source = bpf_source.replace("STACK_FLAGS", stack_flags)
 
 bpf = BPF(text=bpf_source)
-print("Attaching to alloc functions, Ctrl+C to quit.")
 
 
 def attach_probes(sym, fn_prefix=None, can_fail=False):
@@ -289,8 +289,6 @@ bpf.attach_uprobe(name=obj, sym="free", fn_name="free_enter")
 
 
 def print_outstanding():
-    print("[%s] Top %d stacks with outstanding allocations:" %
-          (datetime.now().strftime("%H:%M:%S"), top_stacks))
     alloc_info = {}
     allocs = bpf["allocs"]
     stack_traces = bpf["stack_traces"]
@@ -307,7 +305,7 @@ def print_outstanding():
             combined = []
             for addr in stack:
                 combined.append(bpf.sym(addr, info.pid,
-                                        show_module=True, show_offset=True))
+                                        show_module=False, show_offset=False))
 
             alloc_info[info.stack_id] = Allocation(combined,
                                                    info.size,
@@ -316,21 +314,14 @@ def print_outstanding():
                      key=lambda a: a.size)[-top_stacks:]
     for alloc in to_show:
         if alloc.pid != os.getpid():
-            print(
-                "\t%d bytes in %d allocations from stack of process %s with pid %d\n\t\t%s" %
-                (alloc.size, alloc.count, alloc.name, alloc.pid,
-                 b"\n\t\t".join(alloc.stack)))
+            #@TODO: We lose info here because of how files are stored
+            #print("%s#%d#%d#%d#%s" %
+            #      (alloc.name, alloc.pid, alloc.size, alloc.count,
+            #       b"#".join(alloc.stack)))
+            print("%d#%s#%s" % (alloc.size, alloc.name,
+                                b"#".join(alloc.stack)))
 
 
-count_so_far = 0
-while True:
-    try:
-        sleep(interval)
-    except KeyboardInterrupt:
-        exit()
-
-    print_outstanding()
-    sys.stdout.flush()
-    count_so_far += 1
-    if num_prints is not None and count_so_far >= num_prints:
-        exit()
+sleep(interval)
+print_outstanding()
+sys.stdout.flush()

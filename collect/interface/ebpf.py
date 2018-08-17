@@ -8,14 +8,18 @@ Interacts with the eBPF tracing tool
 
 """
 
+__all__ = (
+    "MallocStacks",
+    "Memleak"
+)
+
 from collect.interface.collecter import Collecter
 import subprocess
-import os
 import logging
 from common import util
 from common import datatypes
 from io import StringIO
-import re
+from typing import NamedTuple
 
 # TODO: no abs paths + move them to the paths module
 MARPLE_DIR = "/home/andreid/PycharmProjects/marple/"
@@ -34,13 +38,25 @@ def _to_kilo(num):
     """
     return int(num / 1000)
 
+
 class MallocStacks(Collecter):
     """
     Class that interacts with Brendan Gregg's mallocstacks tools
 
     """
-    def __init__(self, time):
-        super().__init__(time)
+
+    class Options(NamedTuple):
+        """ No options for this collecter class. """
+        pass
+
+    _DEFAULT_OPTIONS = None
+
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """
+        Initialize the collecter
+
+        """
+        super().__init__(time, options)
 
     @util.log(logger)
     @util.Override(Collecter)
@@ -58,6 +74,77 @@ class MallocStacks(Collecter):
 
         logger.debug(err.decode())
 
+        for line in StringIO(out.decode()):
+            line = line.strip('\n')
+            # We find the first #, marking the ending of the weight
+            hash_pos = line.find('#')
+
+            # The weight starts right after the space and continues up to the
+            # first occurence of #
+            try:
+                weight = int(line[0:hash_pos])
+            except ValueError:
+                raise ValueError("The weight {} is not a number!",
+                                 line[0:hash_pos])
+
+            # The stack starts after the first hash
+            stack_list = tuple(line[hash_pos + 1:].split('#'))
+
+            # Generator that yields StackData objects, constructed from the
+            # current line
+            yield datatypes.StackData(stack=stack_list,
+                                      weight=_to_kilo(weight))
+
+
+class Memleak(Collecter):
+    """
+    Class that interacts with the memleak tool.
+
+    """
+
+    class Options(NamedTuple):
+        """
+        Options to use in the collection.
+            - top_stacks: how many stacks to be displayed
+
+        """
+        top_stacks: int
+
+    _DEFAULT_OPTIONS = Options(top_stacks=10)
+
+    def __init__(self, time, options = _DEFAULT_OPTIONS):
+        super().__init__(time, options)
+
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        """
+        Collects all the top 'top_stacks' stacks with outstanding allocations
+
+        The memleak.py script places an ebpf program in kernel memory that
+        places UProbes in all the userspace allocation and deallocation
+        functions in the kernel. This program keeps track, using hashtables,
+        of every stack's current allocated memory. If, by the end of a sleep
+        period of 'time' seconds, there are stacks that haven't freed all the
+        memory, the script prints them in a StackLine format
+        (weight#name1;name2;name3;...) that is retrieved via stdout and
+        processed here.
+
+        :return: a generator of 'StackData' objects
+
+        """
+        mall_subp = subprocess.Popen(["sudo", "python",
+                                      BCC_TOOLS_PATH + "memleak.py",
+                                      "-t", str(self.time),
+                                      "-T", str(self.options.top_stacks)],
+                                     stderr=subprocess.PIPE,
+                                     stdout=subprocess.PIPE)
+        out, err = mall_subp.communicate()
+
+        logger.debug(err.decode())
+
+        # TODO: Currently same as mallocstacks' collect, will probably change
+        # TODO: If not put them in one function
         for line in StringIO(out.decode()):
             line = line.strip('\n')
             # We find the first #, marking the ending of the weight
