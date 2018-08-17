@@ -147,7 +147,7 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
             "test_event"
         ]
 
-        collecter = perf.SchedulingEvents(self.time, None)
+        collecter = perf.SchedulingEvents(self.time)
         sched_events = list(collecter.collect())
 
         expected_calls = [
