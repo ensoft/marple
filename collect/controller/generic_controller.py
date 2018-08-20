@@ -22,7 +22,7 @@ class GenericController:
                           which must inherit the generic interface; it collects
                           data
         :param writer: one of the writing modules, which must inherit the
-                       generic writer interface; it writes the data in some
+                       generic IO interface; it writes the data in some
                        format
         :param filename: the filename we use to write the data
         :param header: the header of the file; used to recognize the file type

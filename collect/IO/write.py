@@ -460,5 +460,5 @@ if __name__ == "__main__":
                                                      track="cpu 1",
                                                      time=11112222,
                                                      type="event_type")],
-                               "../test/writer/example_scheddata.cpel",
+                               "../test/IO/example_scheddata.cpel",
                      "[CPEL]")

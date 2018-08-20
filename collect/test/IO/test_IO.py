@@ -99,7 +99,7 @@ class CPELTest(SchedTest):
     """Class for testing conversion from event objects to CPEL"""
 
     # Well known output file
-    example_file = "collect/test/writer/example_scheddata.cpel"
+    example_file = "collect/test/IO/example_scheddata.cpel"
 
     @mock.patch("collect.IO.write.CpelWriter._insert_object_symbols")
     @mock.patch("collect.IO.write.CpelWriter._write_symbols")
