@@ -23,8 +23,7 @@ import sys
 
 
 class Allocation(object):
-    def __init__(self, stack, size, name, pid):
-        self.stack = stack
+    def __init__(self, size, name, pid):
         self.count = 1
         self.size = size
         self.name = name
@@ -115,7 +114,8 @@ struct alloc_info_t {
 };
 
 BPF_HASH(sizes, u64);
-BPF_TABLE("hash", u64, struct alloc_info_t, allocs, 1000000);
+//BPF_TABLE("hash", u64, struct alloc_info_t, allocs, 1);
+BPF_HASH(allocs, u64, struct alloc_info_t);
 BPF_HASH(memptrs, u64, u64);
 
 static inline int gen_alloc_enter(struct pt_regs *ctx, size_t size) {
@@ -135,12 +135,11 @@ static inline int gen_alloc_exit2(struct pt_regs *ctx, u64 address) {
 
         info.size = *size64;
         info.pid = pid;
+        info.timestamp_ns = bpf_ktime_get_ns();
         sizes.delete(&pid);
         bpf_get_current_comm(&info.name, sizeof(info.name));
 
-        info.timestamp_ns = bpf_ktime_get_ns();
-        info.stack_id = stack_traces.get_stackid(ctx, STACK_FLAGS);
-        allocs.update(&pid, &info);
+        allocs.update(&address, &info);
 
         return 0;
 }
@@ -150,12 +149,12 @@ static inline int gen_alloc_exit(struct pt_regs *ctx) {
 }
 
 static inline int gen_free_enter(struct pt_regs *ctx, void *address) {
-        u64 pid = bpf_get_current_pid_tgid();
-        struct alloc_info_t *info = allocs.lookup(&pid);
+        u64 addr = (u64)address;
+        struct alloc_info_t *info = allocs.lookup(&addr);
         if (info == 0)
                 return 0;
 
-        allocs.delete(&pid);
+        allocs.delete(&addr);
 
         return 0;
 }
@@ -288,35 +287,24 @@ bpf.attach_uprobe(name=obj, sym="free", fn_name="free_enter")
 def print_outstanding():
     alloc_info = {}
     allocs = bpf["allocs"]
-    stack_traces = bpf["stack_traces"]
     for address, info in sorted(allocs.items(), key=lambda a: a[1].size):
         if BPF.monotonic_time() - min_age_ns < info.timestamp_ns:
             continue
-        if info.stack_id < 0:
-            continue
 
-        if info.stack_id in alloc_info:
-            alloc_info[info.stack_id].update(info.size)
+        if info.pid in alloc_info:
+            alloc_info[info.pid].update(info.size)
         else:
-            stack = list(stack_traces.walk(info.stack_id))
-            combined = []
-            for addr in stack:
-                combined.append(bpf.sym(addr, info.pid,
-                                        show_module=False, show_offset=False))
-
-            alloc_info[info.stack_id] = Allocation(combined,
-                                                   info.size,
-                                                   info.name.decode(), info.pid)
+            alloc_info[info.pid] = Allocation(info.size,
+                                              info.name.decode(),
+                                              info.pid)
     to_show = sorted(alloc_info.values(),
-                     key=lambda a: a.size)[-top_stacks:]
+                     key=lambda a: a.size)[-top_stacks:]  # top_stacks
     for alloc in to_show:
         if alloc.pid != os.getpid():
-            #@TODO: We lose info here because of how files are stored
-            #print("%s#%d#%d#%d#%s" %
-            #      (alloc.name, alloc.pid, alloc.size, alloc.count,
-            #       b"#".join(alloc.stack)))
-            print("%d#%s#%s" % (alloc.size, alloc.name,
-                                b"#".join(alloc.stack)))
+            # @TODO: Better way to deal with pid and count so that the tooltip
+            # @TODO: of the treemap will know
+            print("%d#%s" % (alloc.size,
+                             alloc.name + "(" + str(alloc.pid) + ")"))
 
 
 sleep(interval)

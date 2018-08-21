@@ -75,10 +75,6 @@ class Treemap(GenericDisplay):
         with read.Reader(str(in_file)) as (header, data):
             for line in data:
                 cnt = line.count(';')
-                # If we don't have any ';' characters raise error
-                if cnt == 0:
-                    raise ValueError("Invalid format of the file! Line that "
-                                     "causes the problem {}".format(line))
                 if max_depth < cnt:
                     max_depth = cnt
 
@@ -94,6 +90,13 @@ class Treemap(GenericDisplay):
 
             with read.Reader(in_file) as (header, data):
                 for line in data:
+                    # If we don't have any ';' characters raise error
+                    if line.count('#') != 1:
+                        raise ValueError(
+                            "Invalid format of the file! Each line should "
+                            "have the format weight#... Line that "
+                            "causes the problem {}".format(line))
+
                     # We replace the only '#' character, that separates the
                     # weight from the callstack
                     call_stack = line.replace("#", ";", 1)
