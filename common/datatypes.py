@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # datatypes.py - intermediate form of data between collect and display
-# June-July 2018 - Franz Nowak, Hrutvik Kanabar
+# June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
 """
@@ -16,7 +16,7 @@ object to be converted to standard representation using casting.
 __all__ = (
     'Datapoint',
     'StackData',
-    'SchedEvent',
+    'EventData',
 )
 
 
@@ -29,40 +29,40 @@ logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
 
-class SchedEvent(typing.NamedTuple):  # @@@ TODO make this more general
+class EventData(typing.NamedTuple):
     """
     Represents a single scheduler event.
 
     .. attribute:: time:
-        The timestamp of the event in Cpu ticks.
+        The timestamp of the event in CPU ticks.
     .. attribute:: type:
         The type of the event.
-    .. attribute:: track:
-        The track that the event belongs to (e.g. cpu core, process, ...)
-    .. attribute:: datum:
-        The data belonging to this event, (e.g. process id etc, cpu ... )
+    .. attribute:: event_specific_datum:
+        A tuple representing the data belonging to this particular event;
+        The order of the arguments matters
 
     """
     time: int
     type: str
-    track: str
-    datum: str
+    specific_datum: tuple
 
     def __str__(self):
         """
-        Converts an event to standard comma-separated value string format.
+        Converts an event to standard hashtag-separated value string format.
 
         The string does not have a line break at the end.
-            Format: <time>,<type>,<track>,<datum>
-            Note that the fields cannot contain commas.
+            Format: <time>#<type>#<datum>, where datum is a tuple
+            Note that the fields cannot contain hashtags (and should not
+            since they are events).
 
         """
-        return ",".join((str(self.time), self.type, self.track, self.datum))
+        return "#".join((str(self.time), self.type,
+                         str(self.specific_datum)))
 
     @classmethod
     def from_string(cls, string):
         """
-        Converts a standard representation to a :class:`SchedEvent` object.
+        Converts a standard representation to a :class:`EventData` object.
 
         Tolerant to whitespace/trailing linebreaks.
 
@@ -72,20 +72,20 @@ class SchedEvent(typing.NamedTuple):  # @@@ TODO make this more general
         :raises:
             exceptions.DatatypeException
         :return:
-            The resulting :class:`SchedEvent` object.
+            The resulting :class:`EventData` object.
 
         """
         try:
-            time, type_, track, datum = string.strip().split(",")
-            return SchedEvent(time=int(time), type=type_,
-                              track=track, datum=datum)
+            time, type_, datum = string.strip().split("#")
+            return EventData(time=int(time), type=type_,
+                             specific_datum=eval(datum))
         except IndexError as ie:
             raise exceptions.DatatypeException(
-                "SchedEvent - not enough values in datatype string "
+                "EventData - not enough values in datatype string "
                 "('{}')".format(string)) from ie
         except ValueError as ve:
             raise exceptions.DatatypeException(
-                "SchedEvent - could not convert datatype string "
+                "EventData - could not convert datatype string "
                 "('{}')".format(string)) from ve
 
 

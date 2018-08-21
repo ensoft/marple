@@ -230,7 +230,7 @@ class SchedulingEvents(Collecter):
             if self.options.track == "cpu":
 
                 # Create datum from name and pid:
-                datum = "{} (pid: {})".format(match.group("name"),
+                label = "{} (pid: {})".format(match.group("name"),
                                               match.group("pid"))
 
                 # Create track name from cpu:
@@ -242,17 +242,19 @@ class SchedulingEvents(Collecter):
                                               match.group("pid"))
 
                 # Create datum from cpu:
-                datum = "cpu " + str(int(match.group("cpu")))
+                label = "cpu " + str(int(match.group("cpu")))
 
             else:
                 raise ValueError("Unknown option for SchedulingEvents: {}. "
                                  "Expected name or pid.".format(
                                     self.options.track))
 
-            event = datatypes.SchedEvent(datum=datum,
-                                         track=track,
-                                         time=time_int,
-                                         type=match.group("event"))
+            # The event specific data for this class is "track" and "label",
+            # both used to display the marple file using g2
+            specific_datum = (track, label)
+            event = datatypes.EventData(specific_datum=specific_datum,
+                                        time=time_int,
+                                        type=match.group("event"))
             yield event
 
 

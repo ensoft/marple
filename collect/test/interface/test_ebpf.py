@@ -7,13 +7,13 @@
 
 import unittest
 from unittest import mock
-from collect.test import util
+from collect.test import util_collect
 
 from collect.interface import ebpf
 from common import datatypes
 
 
-class _BaseTest(util.BaseTest):
+class _BaseTest(util_collect.BaseTest):
     """Base test class"""
 
 

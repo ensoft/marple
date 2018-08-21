@@ -11,6 +11,10 @@ system_wide: -a
 #                               * 'treemap'
 #                               * 'g2'
 #                               * 'heatmap'
-STACK: flamegraph
-CSV: heatmap
-CPEL: g2
+#                               * 'stackplot'
+Scheduling Events:g2
+Disk Latency/Time:heatmap
+Malloc Stacks:flamegraph
+Memory leaks:treemap
+Memory/Time:stackplot
+Call Stacks:flamegraph

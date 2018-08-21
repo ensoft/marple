@@ -1,7 +1,8 @@
-from display.treemap import Treemap
 import display.test.util_display as util
-from unittest.mock import patch
+from display.treemap import Treemap
+from unittest import mock
 from common import file
+from io import StringIO
 
 
 class _BaseTest(util.BaseTest):
@@ -36,8 +37,9 @@ class TreemapTest(_BaseTest):
                    "00000;pname;call1;call2\n" \
                    "000000000;pname;call3;call4\n"
 
-        # Get the output from a collapsed stack
-        inpt = "[STACK]\n" \
+        # Get the output from a collapsed stack (first line in inpt is the
+        # empty header
+        inpt = "{}\n" \
                "00000#pname;call1;call2\n" \
                "000000000#pname;call3;call4\n"
         outpt = self._get_output(inpt)
@@ -56,12 +58,13 @@ class TreemapTest(_BaseTest):
                    "000000000;pname;call1;call2\n" \
                    "000;pname;call1;call2;call3"
 
-        # Generate a treemap csv from a collapsed stack
-        inp = "[STACK]\n" \
+        # Generate a treemap csv from a collapsed stack (first line in inpt
+        # is the empty header
+        inpt = "{}\n" \
                "00000#pname;call1;call2;call3;call4;call5\n" \
                "000000000#pname;call1;call2\n" \
                "000#pname;call1;call2;call3"
-        out = self._get_output(inp)
+        out = self._get_output(inpt)
 
         # Check that we got the desired output
         self.assertEqual(out, expected)
@@ -72,16 +75,17 @@ class TreemapTest(_BaseTest):
         rise a ValueError
 
         """
-        inpt = "[STACK]\n" \
+        # First line is the empty header
+        inpt = "{}\n" \
                "2j35p235"
         with self.assertRaises(ValueError):
             self._get_output(inpt)
 
-    @patch("os.environ")
-    @patch("display.treemap.Treemap._generate_csv", return_value=1000)
-    @patch("util.d3plus.d3IpyPlus.from_csv", return_value="")
-    @patch("subprocess.Popen")
-    @patch("util.d3plus.d3IpyPlus.TreeMap.dump_html", return_value="")
+    @mock.patch("os.environ")
+    @mock.patch("display.treemap.Treemap._generate_csv", return_value=1000)
+    @mock.patch("util.d3plus.d3IpyPlus.from_csv", return_value="")
+    @mock.patch("subprocess.Popen")
+    @mock.patch("util.d3plus.d3IpyPlus.TreeMap.dump_html", return_value="")
     def test_show_function(self, mock_dump, mock_popen, mock_from_csv,
                            mock_gen_csv, os_mock):
         """
@@ -92,7 +96,7 @@ class TreemapTest(_BaseTest):
         :param mock_popen: mock for popen
         :param mock_from_csv: mock for csv
         :param mock_gen_csv: mock for _generate_csv
-        :param os_mock: mock for onviron
+        :param os_mock: mock for environ
         :return:
         """
         inp = self._TEST_DIR + "in"
@@ -114,5 +118,3 @@ class TreemapTest(_BaseTest):
         self.assertEqual(mock_from_csv.call_args[1]['columns'],
                          ["value"] + [str(x) for x in
                                       range(1, mock_gen_csv.return_value + 1)])
-
-# @TODO: Test more

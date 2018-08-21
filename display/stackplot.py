@@ -19,6 +19,7 @@ import io
 import matplotlib.pyplot as plt
 
 from common import util
+from collect.IO import read
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +44,11 @@ class StackPlot(GenericDisplay):
 
         """
 
-        with open(filename, "r", encoding="utf-8") as file_:
-            # Skip header line
-            file_.readline()
+        # Had open(file, "r", encoding="utf-8")
+        with read.Reader(str(filename)) as (header, data):
             # read the data into a dict
             datapoints = {}
-            for line in file_:
+            for line in data:
                 (x, y, label) = line.strip().split(",")
                 x, y = float(x), float(y)
                 if x not in datapoints:

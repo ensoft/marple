@@ -9,6 +9,7 @@ import unittest
 from unittest import mock
 from io import StringIO
 import collections
+import json
 
 from display import flamegraph
 from common import datatypes
@@ -30,6 +31,23 @@ class _FlamegraphBaseTest(unittest.TestCase):
     fg.out_filename = outfilename
 
 
+class MockedReader:
+    """
+    Class used to mock the context manager Reader
+    """
+    def __init__(self, file):
+        pass
+
+    def __enter__(self):
+        js = "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
+             "\"2018-08-20 18:46:39.403129\", \"datatype\": \"Event" \
+             " Data\", \"interface\": \"Memory/Time\"}"
+        return json.loads(js), ""
+
+    def __exit__(self, *args):
+        pass
+
+
 class InitTest(_FlamegraphBaseTest):
     """ Test the __init__ function for interface calls"""
     def test(self):
@@ -44,27 +62,27 @@ class InitTest(_FlamegraphBaseTest):
 
 class ReadTest(_FlamegraphBaseTest):
     """ Test the _read function """
-    @mock.patch("builtins.open")
-    def test_empty_file(self, open_mock):
+    @mock.patch("collect.IO.read.Reader")
+    def test_empty_file(self, reader_mock):
         """ Ensure the module copes with an empty graph """
-        # Create mocks
-        file_mock = StringIO("")
-        context_mock = open_mock.return_value
-        context_mock.__enter__.return_value = file_mock
+        # Set up mock
+        reader_mock.return_value.__enter__.return_value = ("", StringIO(""))
 
         result = list(self.fg._read())
-        open_mock.assert_called_once_with(self.fg.in_filename, "r")
+        reader_mock.assert_called_once_with(self.fg.in_filename)
         self.assertEqual([], result)
 
-    @mock.patch('builtins.open')
-    def test_normal_file(self, open_mock):
+    @mock.patch("collect.IO.read.Reader")
+    def test_normal_file(self, reader_mock):
         """ Test opening of a normal file """
-        file_mock = StringIO("header\n1#A1;A2;A3\n2#B1;B2;B3;B4\n")
-        context_mock = open_mock.return_value
-        context_mock.__enter__.return_value = file_mock
+        reader_mock.return_value.__enter__.return_value = ("",
+                                                           StringIO("1#"
+                                                                    "A1;A2;A3\n"
+                                                                    "2#B1;B2;"
+                                                                    "B3;B4\n"))
 
         result = list(self.fg._read())
-        open_mock.assert_called_once_with(self.fg.in_filename, "r")
+        reader_mock.assert_called_once_with(self.fg.in_filename)
         expected = [datatypes.StackData(1, ('A1', 'A2', 'A3')),
                     datatypes.StackData(2, ('B1', 'B2', 'B3', 'B4'))]
         self.assertEqual(expected, result)

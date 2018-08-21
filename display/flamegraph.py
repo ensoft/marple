@@ -22,6 +22,7 @@ from common import (
     file,
     util
 )
+from collect.IO import read
 from common.datatypes import StackData
 from display.generic_display import GenericDisplay
 
@@ -49,7 +50,7 @@ class Flamegraph(GenericDisplay):
             "--color=" option.
 
         """
-        self.in_filename = inp
+        self.in_filename = str(inp)
         out.set_options("flamegraph", "svg")
 
         self.out_filename = str(out)
@@ -61,11 +62,8 @@ class Flamegraph(GenericDisplay):
         Read stack events from a file in standard format.
 
         """
-        with open(self.in_filename, "r") as inp:
-            # Skip first line, header
-            inp.readline()
-
-            for line in inp.readlines():
+        with read.Reader(self.in_filename) as (header, data):
+            for line in data.readlines():
                 yield StackData.from_string(line)
 
     @util.log(logger)

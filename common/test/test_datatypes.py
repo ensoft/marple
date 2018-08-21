@@ -134,63 +134,63 @@ class SchedEventTest(_DatatypeBaseTest):
     def test_empty_string(self):
         """Ensure empty strings raise a DatatypeException"""
         with self.assertRaises(exceptions.DatatypeException):
-            datatypes.SchedEvent.from_string("")
+            datatypes.EventData.from_string("")
 
     def test_malformed_ints(self):
         """Ensure invalid string ints raise a DatatypeException"""
         with self.assertRaises(exceptions.DatatypeException):
-            datatypes.SchedEvent.from_string("test,A,B,C")
+            datatypes.EventData.from_string("test#A#(\'B\', \'C\')")
 
     def test_too_few_fields(self):
         """Ensure strings with too few fields raise a DatatypeException"""
         with self.assertRaises(exceptions.DatatypeException):
-            datatypes.SchedEvent.from_string("test")
+            datatypes.EventData.from_string("test")
 
     def test_empty_type_field(self):
         """Ensure empty type field is OK"""
-        result = datatypes.SchedEvent.from_string("1,,track,datum")
+        result = datatypes.EventData.from_string("1##(\'track\', \'datum\')")
         self.assertEqual(result.type, "",
                          msg="Expected type field '', was actually {}"
                          .format(result.type))
 
     def test_empty_track_field(self):
         """Ensure empty track field is OK"""
-        result = datatypes.SchedEvent.from_string("1,type,,datum")
-        self.assertEqual(result.track, "",
+        result = datatypes.EventData.from_string("1#type#(\'\', \'datum\')")
+        self.assertEqual(result.specific_datum[0], "",
                          msg="Expected type field '', was actually {}"
-                         .format(result.track))
+                         .format(result.specific_datum[0]))
 
     def test_empty_datum_field(self):
         """Ensure empty datum field is OK"""
-        result = datatypes.SchedEvent.from_string("1,type,track,")
-        self.assertEqual(result.datum, "",
+        result = datatypes.EventData.from_string("1#type#(\'track\',\'\')")
+        self.assertEqual(result.specific_datum[1], "",
                          msg="Expected type field '', was actually {}"
-                         .format(result.datum))
+                         .format(result.specific_datum[1]))
 
     def test_with_newline_n(self):
         """Ensure from_string copes with newlines"""
-        expected = datatypes.SchedEvent(0, 'type', 'track', 'datum')
-        self.check_from_str('0,type,track,datum\n', expected)
+        expected = datatypes.EventData(0, 'type', ('track', 'datum'))
+        self.check_from_str('0#type#(\'track\', \'datum\')\n', expected)
 
     def test_with_newline_r(self):
         """Ensure from_string copes with newlines"""
-        expected = datatypes.SchedEvent(0, 'type', 'track', 'datum')
-        self.check_from_str('0,type,track,datum\r', expected)
+        expected = datatypes.EventData(0, 'type', ('track', 'datum'))
+        self.check_from_str('0#type#(\'track\', \'datum\')\r', expected)
 
     def test_with_newline_rn(self):
         """Ensure from_string copes with newlines"""
-        expected = datatypes.SchedEvent(0, 'type', 'track', 'datum')
-        self.check_from_str('0,type,track,datum\r\n', expected)
+        expected = datatypes.EventData(0, 'type', ('track', 'datum'))
+        self.check_from_str('0#type#(\'track\', \'datum\')\r\n', expected)
 
     def test_without_newline(self):
         """Ensure from_string works without newlines"""
-        expected = datatypes.SchedEvent(0, 'type', 'track', 'datum')
-        self.check_from_str('0,type,track,datum', expected)
+        expected = datatypes.EventData(0, 'type', ('track', 'datum'))
+        self.check_from_str('0#type#(\'track\', \'datum\')', expected)
 
     def test_to_string(self):
         """Test datapoints are correctly converted to strings."""
-        se = datatypes.SchedEvent(0, 'type', 'track', 'datum')
-        expected = '0,type,track,datum'
+        se = datatypes.EventData(0, 'type', ('track', 'datum'))
+        expected = '0#type#(\'track\', \'datum\')'
         actual = str(se)
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))

@@ -4,8 +4,9 @@ from unittest import mock
 from io import StringIO
 
 from collect.IO import write
-from common.datatypes import StackData, SchedEvent, Datapoint
-from collect.test import util
+from common.datatypes import StackData, EventData, Datapoint
+from collect.test import util_collect
+import util.g2.cpel_writer as cpel_writer
 
 
 @mock.patch('builtins.open')
@@ -19,8 +20,8 @@ class WriterTest(unittest.TestCase):
 
         # Run test
         writer = write.Writer()
-        writer.write([], "test", "[DUMMY]")
-        self.assertEqual("[DUMMY]\n", file_mock.getvalue())
+        writer.write([], "test", {})
+        self.assertEqual("{}\n", file_mock.getvalue())
 
     def test_stack_data(self, open_mock):
         # Create mocks
@@ -34,11 +35,11 @@ class WriterTest(unittest.TestCase):
             StackData(2, ("D", "E")),
             StackData(3, ("F", "G"))
         ]
-        expected = "[STACK]\n1#A;B;C\n2#D;E\n3#F;G\n"
+        expected = "{}\n1#A;B;C\n2#D;E\n3#F;G\n"
 
         # Run test
         writer = write.Writer()
-        writer.write(stack_data, "test", "[STACK]")
+        writer.write(stack_data, "test", {})
         self.assertEqual(expected, file_mock.getvalue())
 
     def test_datapoint_data(self, open_mock):
@@ -53,11 +54,11 @@ class WriterTest(unittest.TestCase):
             Datapoint(3.0, 4.51, 'info2'),
             Datapoint(0.0, 1.3, 'info3')
         ]
-        expected = "[CSV]\n1.0,2.0,info1\n3.0,4.51,info2\n0.0,1.3,info3\n"
+        expected = "{}\n1.0,2.0,info1\n3.0,4.51,info2\n0.0,1.3,info3\n"
 
         # Run test
         writer = write.Writer()
-        writer.write(dp_data, "test", "[CSV]")
+        writer.write(dp_data, "test", {})
         self.assertEqual(expected, file_mock.getvalue())
 
     def test_sched_data(self, open_mock):
@@ -68,41 +69,43 @@ class WriterTest(unittest.TestCase):
 
         # Set up test values
         sched_data = [
-            SchedEvent(1, "type1", "track1", "datum1"),
-            SchedEvent(2, "type2", "track2", "datum2"),
-            SchedEvent(3, "type3", "track3", "datum3")
+            EventData(time=1, type="type1",
+                      specific_datum=("track1", "datum1")),
+            EventData(time=2, type="type2",
+                      specific_datum=("track2", "datum2")),
+            EventData(time=3, type="type3",
+                      specific_datum=("track3", "datum3")),
         ]
-        expected = "[CPEL]\n1,type1,track1,datum1\n2,type2,track2,datum2\n" \
-                   "3,type3,track3,datum3\n"
+        # First line is an empty header
+        expected = "{}\n1#type1#('track1', 'datum1')\n2#type2#('track2'," \
+                   " 'datum2')\n3#type3#('track3', 'datum3')\n"
 
         # Run test
         writer = write.Writer()
-        writer.write(sched_data, "test", "[CPEL]")
+        writer.write(sched_data, "test", {})
         self.assertEqual(expected, file_mock.getvalue())
 
 
-class SchedTest(util.BaseTest):
+class SchedTest(util_collect.BaseTest):
     """Class for testing creation and conversion of event object data"""
 
     # Create Event iterators for testing
-    testEvents = [SchedEvent(datum="test_name (pid: 1234)",
-                             track="cpu 2",
-                             time=11112221,
-                             type="event_type"),
-                  SchedEvent(datum="test_name2 (pid: 1234)",
-                             track="cpu 1",
-                             time=11112222,
-                             type="event_type")]
+    testEvents = [EventData(specific_datum=("cpu 2", "test_name (pid: 1234)"),
+                            time=11112221,
+                            type="event_type"),
+                  EventData(specific_datum=("cpu 1", "test_name2 (pid: 1234)"),
+                            time=11112222,
+                            type="event_type")]
 
 
 class CPELTest(SchedTest):
     """Class for testing conversion from event objects to CPEL"""
 
     # Well known output file
-    example_file = "collect/test/writer/example_scheddata.cpel"
+    example_file = "collect/test/IO/example_scheddata.cpel"
 
-    @mock.patch("collect.IO.write.CpelWriter._insert_object_symbols")
-    @mock.patch("collect.IO.write.CpelWriter._write_symbols")
+    @mock.patch("util.g2.cpel_writer.CpelWriter._insert_object_symbols")
+    @mock.patch("util.g2.cpel_writer.CpelWriter._write_symbols")
     def test_symbol_table_added_consistently(self, write_mock, insert_mock):
         """
         Checks that either symbol table is not used, or used consistently.
@@ -113,7 +116,7 @@ class CPELTest(SchedTest):
 
         """
         filename = self._TEST_DIR + "symbol_test.cpel"
-        writer = write.CpelWriter(self.testEvents)
+        writer = cpel_writer.CpelWriter(self.testEvents)
         writer.write(filename)
 
         # Check whether symbol write gets called in write method. Split
@@ -146,11 +149,10 @@ class CPELTest(SchedTest):
     def test_basic_file(self):
         """Creates a test file in test directory and compares it with example"""
         filename = self._TEST_DIR + "create_scheddata_test.cpel"
-        writer = write.CpelWriter(self.testEvents)
+        writer = cpel_writer.CpelWriter(self.testEvents)
         writer.write(filename)
         with open(filename, "rb") as test_file, \
                 open(self.example_file, "rb") as correct_file:
-            test_file.readline()
             self._compare_headers(test_file, correct_file)
             self._compare_files(test_file, correct_file)
 
@@ -169,9 +171,6 @@ class CPELTest(SchedTest):
         """
 
         with open(filename, "rb") as file_:
-            # Skip header
-            file_.readline()
-
             # Get number of sections
             _, nr_of_sections = struct.unpack(">hh", file_.read(4))
 
@@ -217,10 +216,9 @@ class CPELTest(SchedTest):
         filename = self._TEST_DIR + "create_scheddata_test_variations.cpel"
 
         # Two different events with different data, track and event:
-        writer = write.CpelWriter([SchedEvent(datum="d1", track="t1", time=1,
-                                              type="e1"),
-                                   SchedEvent(datum="d2", track="t2", time=2,
-                                              type="e2")])
+        writer = cpel_writer.CpelWriter([
+            EventData(specific_datum=("t1", "d1"), time=1, type="e1"),
+            EventData(specific_datum=("t2", "d2"), time=2, type="e2")])
         writer.write(filename)
 
         # Number of strings should be 8, 6 plus name of section plus format str
@@ -237,10 +235,9 @@ class CPELTest(SchedTest):
         filename = self._TEST_DIR + "create_scheddata_test_variations.cpel"
 
         # Two different events with same data, track, and event:
-        writer = write.CpelWriter([SchedEvent(datum="d", track="1", time=1,
-                                              type="e"),
-                                   SchedEvent(datum="d", track="1", time=1,
-                                              type="e")])
+        writer = cpel_writer.CpelWriter([
+            EventData(specific_datum=("1", "d"), time=1, type="e"),
+            EventData(specific_datum=("1", "d"), time=1, type="e")])
         writer.write(filename)
 
         # There should be 5 strings in the string table, 3 plus table name + %s

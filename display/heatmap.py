@@ -35,6 +35,7 @@ from matplotlib import widgets
 
 from common import util
 from common import datatypes
+from collect.IO import read
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -223,13 +224,10 @@ class HeatMap:
             A pair of sequences: x values, y values.
 
         """
-        with open(datafile, "r") as file:
-            # Skip first line, header
-            file.readline()
-
+        with read.Reader(str(datafile)) as (header, data):
             # Get data
             datapoints = [datatypes.Datapoint.from_string(line)
-                          for line in file]
+                          for line in data]
 
         x_values = [dp.x for dp in datapoints]
         y_values = [dp.y for dp in datapoints]

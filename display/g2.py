@@ -20,6 +20,9 @@ import subprocess
 from common import util
 from common import file
 from display.generic_display import GenericDisplay
+from util.g2.cpel_writer import CpelWriter
+from common.datatypes import EventData
+from collect.IO import read
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -30,15 +33,22 @@ DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
 
 
 class G2(GenericDisplay):
-    def __init__(self, cpel_file):
+    def __init__(self, inp):
         """
         Constructor for the g2.
 
-        :param cpel_filename:
+        :param inp:
             The name of the [CPEL] file to read data from
 
         """
-        self.cpel_file = cpel_file
+        self.inp = inp
+
+    @staticmethod
+    def _generate_events_from_file(file_descriptor):
+        line = file_descriptor.readline()
+        while line != "":
+            yield EventData.from_string(line)
+            line = file_descriptor.readline()
 
     @util.Override(GenericDisplay)
     @util.log(logger)
@@ -46,20 +56,17 @@ class G2(GenericDisplay):
         """
         Calls g2 to show a track separated graph
 
-        The reading and writing to and from a temporaty file is a workaround
-        to manage the file header
-
-        :param cpel_data:
-            The name of the CPEL file containing the data to be displayed.
+        First we write the actual CPEL data (binary) in a temporary file using
+        the [CPEL] format (CSV)
+        after which we pass it to the g2 tool
 
         """
-        tmp = file.TempFileName()
-        with open(self.cpel_file, "rb") as read:
-            read.readline()
-            data = read.read()
+        tmp_cpel = file.TempFileName()
+        with read.Reader(str(self.inp)) as (header, data):
+            event_generator = self._generate_events_from_file(data)
+            writer = CpelWriter(event_generator)
 
-        with open(str(tmp), "wb") as write:
-            write.write(data)
+        writer.write(str(tmp_cpel))
 
-        subprocess.call(["vpp/build-root/install-native/g2/bin/g2", "--cpel-input",
-                         str(tmp)])
+        subprocess.call(["vpp/build-root/install-native/g2/bin/g2",
+                         "--cpel-input", str(tmp_cpel)])

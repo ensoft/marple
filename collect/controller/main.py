@@ -15,6 +15,8 @@ __all__ = "main"
 import argparse
 import logging
 import os
+import datetime
+from typing import NamedTuple
 
 from common import (
     exceptions,
@@ -63,17 +65,25 @@ def _collect_and_store(args, parser):
     # TODO: get all options from either args or config
     # Use user specified time for data collection, otherwise standard value
     time = args.time if args.time is not None else parser.get_default_time()
+    start = datetime.datetime.now()
+    end = start + datetime.timedelta(0, time)
+
+    header = {}
+    header["start"] = str(start)
+    header["end"] = str(end)
 
     # Select appropriate interfaces based on user input
     if args.cpu:
-        options = perf.SchedulingEvents.Options(track="pid")
-        collecter = perf.SchedulingEvents(time, options)
-        writer = write.WriterCPEL()
-        header = "[CPEL]"
+        collecter = perf.SchedulingEvents(time)
+        writer = write.Writer()
+        header["datatype"] = "Event Data"
+        header["interface"] = "Scheduling Events"
+        #header["event_specific_datum_order"] = ["track", "label"]
     elif args.disk:
         collecter = iosnoop.DiskLatency(time)
         writer = write.Writer()
-        header = "[CSV]"
+        header["datatype"] = "Datapoint"
+        header["interface"] = "Disk Latency/Time"
     elif args.ipc:
         raise NotImplementedError("IPC not implemented")  # TODO
     elif args.lib:
@@ -81,22 +91,26 @@ def _collect_and_store(args, parser):
     elif args.mem:
         collecter = ebpf.MallocStacks(time)
         writer = write.Writer()
-        header = "[STACK]"
+        header["datatype"] = "Stack Data"
+        header["interface"] = "Malloc Stacks"
     elif args.memgraph:
         collecter = smem.MemoryGraph(time)
         writer = write.Writer()
-        header = "[CSV]"
+        header["datatype"] = "Datapoint"
+        header["interface"] = "Memory/Time"
     elif args.stack:
         options = perf.StackTrace.Options(parser.get_default_frequency(),
                                           parser.get_system_wide())
         collecter = perf.StackTrace(time, options)
         writer = write.Writer()
-        header = "[STACK]"
+        header["datatype"] = "Stack Data"
+        header["interface"] = "Call Stacks"
     elif args.memleak:
         options = ebpf.Memleak.Options(10)
         collecter = ebpf.Memleak(time, options)
         writer = write.Writer()
-        header = "[STACK]"
+        header["datatype"] = "Stack Data"
+        header["interface"] = "Memory leaks"
     else:
         raise argparse.ArgumentError(message="Arguments not recognised",
                                      argument=args)

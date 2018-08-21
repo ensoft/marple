@@ -110,7 +110,6 @@ bpf_source = """
 struct alloc_info_t {
         u64 size;
         u64 timestamp_ns;
-        int stack_id;
         int pid;
         char name[TASK_COMM_LEN];
 };
@@ -118,8 +117,6 @@ struct alloc_info_t {
 BPF_HASH(sizes, u64);
 BPF_TABLE("hash", u64, struct alloc_info_t, allocs, 1000000);
 BPF_HASH(memptrs, u64, u64);
-//BPF_STACK_TRACE(stack_traces, 10240);
-BPF_STACK_TRACE(stack_traces, 500000);
 
 static inline int gen_alloc_enter(struct pt_regs *ctx, size_t size) {
         u64 pid = bpf_get_current_pid_tgid();
@@ -143,7 +140,7 @@ static inline int gen_alloc_exit2(struct pt_regs *ctx, u64 address) {
 
         info.timestamp_ns = bpf_ktime_get_ns();
         info.stack_id = stack_traces.get_stackid(ctx, STACK_FLAGS);
-        allocs.update(&address, &info);
+        allocs.update(&pid, &info);
 
         return 0;
 }
@@ -153,12 +150,12 @@ static inline int gen_alloc_exit(struct pt_regs *ctx) {
 }
 
 static inline int gen_free_enter(struct pt_regs *ctx, void *address) {
-        u64 addr = (u64)address;
-        struct alloc_info_t *info = allocs.lookup(&addr);
+        u64 pid = bpf_get_current_pid_tgid();
+        struct alloc_info_t *info = allocs.lookup(&pid);
         if (info == 0)
                 return 0;
 
-        allocs.delete(&addr);
+        allocs.delete(&pid);
 
         return 0;
 }

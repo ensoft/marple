@@ -28,21 +28,20 @@ class _BaseHeatMapTest(unittest.TestCase):
                                                 x_delta=4, y_delta=40)
         self.test_x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
         self.test_y_data = [6.0, 7.0, 8.0, 9.0, 10.0]
-        self.test_string = "[CSV]\n" \
-                           "1.0,6.0,info1\n2.0,7.0,info2\n3.0,8.0,info3\n" \
+        self.test_string = "1.0,6.0,info1\n2.0,7.0,info2\n3.0,8.0,info3\n" \
                            "4.0,9.0,info4\n5.0,10.0,info5"
 
 
 class GetDataTest(_BaseHeatMapTest):
-    @mock.patch("builtins.open")
-    def test_empty_data(self, open_mock):
+    @mock.patch("collect.IO.read.Reader")
+    def test_empty_data(self, read_mock):
         """
         Ensure HeatMap._get_data() method copes with an empty input file.
 
         """
-        # Create mocks
-        file_mock = open_mock.return_value
-        file_mock.__enter__.return_value = StringIO("")
+        # Set up mock
+        file_mock = read_mock.return_value.__enter__
+        file_mock.return_value = ("", StringIO(""))
 
         # Create blank heatmap object to access methods
         hm = object.__new__(heatmap.HeatMap)
@@ -55,18 +54,17 @@ class GetDataTest(_BaseHeatMapTest):
                          "Error in display.heatmap: No data in input file.")
 
         # Test that correct file methods were called
-        open_mock.assert_called_once_with("empty_data", "r")
+        read_mock.assert_called_once_with("empty_data")
 
-    @mock.patch("builtins.open")
-    def test_simple_data(self, open_mock):
+    @mock.patch("collect.IO.read.Reader")
+    def test_simple_data(self, read_mock):
         """
         Ensure HeatMap._get_data() method correctly converts input file.
 
         """
-        # Create mocks
-        file_mock = open_mock.return_value
-        file_mock.__enter__.return_value = \
-            StringIO("[CSV]\n1.0,2.0,info1\n3.0,4.0,info2")
+        # Set up mock
+        file_mock = read_mock.return_value.__enter__
+        file_mock.return_value = ("", StringIO("1.0,2.0, info1\n3.0,4.0,info2"))
 
         # Create blank heatmap object to access methods
         hm = object.__new__(heatmap.HeatMap)
@@ -77,19 +75,18 @@ class GetDataTest(_BaseHeatMapTest):
         self.assertEqual(y, [2.0, 4.0])
 
         # Test that correct file methods were called
-        open_mock.assert_called_once_with("simple_data", "r")
+        read_mock.assert_called_once_with("simple_data")
 
-    @mock.patch("builtins.open")
-    def test_simple_time_data(self, open_mock):
+    @mock.patch("collect.IO.read.Reader")
+    def test_simple_time_data(self, read_mock):
         """
         Ensure HeatMap._get_data() method correctly converts input file,
         with x-axis data normalisation.
 
         """
-        # Create mocks
-        file_mock = open_mock.return_value
-        file_mock.__enter__.return_value = \
-            StringIO("[CSV]\n1.0,2.0,info1\n3.0,4.0,info2")
+        # Set up mock
+        file_mock = read_mock.return_value.__enter__
+        file_mock.return_value = ("", StringIO("1.0,2.0, info1\n3.0,4.0,info2"))
 
         # Create blank heatmap object to access methods
         hm = object.__new__(heatmap.HeatMap)
@@ -100,7 +97,7 @@ class GetDataTest(_BaseHeatMapTest):
         self.assertEqual(y, [2.0, 4.0])
 
         # Test that correct file methods were called
-        open_mock.assert_called_once_with("simple_data", "r")
+        read_mock.assert_called_once_with("simple_data")
 
 
 class GetDataStatsTest(_BaseHeatMapTest):
@@ -180,16 +177,16 @@ class InitTest(_BaseHeatMapTest):
     @mock.patch('display.heatmap.np')
     @mock.patch('display.heatmap.plt')
     @mock.patch('display.heatmap.widgets.Slider')
-    @mock.patch('builtins.open')
-    def test_init(self, open_mock, slider_mock, pyplot_mock, numpy_mock):
+    @mock.patch("collect.IO.read.Reader")
+    def test_init(self, read_mock, slider_mock, pyplot_mock, numpy_mock):
         """
         Test the __init__ method of the HeatMap class - stub out all external
         methods, and ensure correct API calls are made.
         Effectively runs through the method once, ensuring all correct values
         set and all correct calls made.
 
-        :param open_mock:
-            Mock function for the builtin open function, to stub out
+        :param read_mock:
+            Mock function for the Reader class, to stub out
             filesystem interaction.
         :param slider_mock:
             Mock class for the matplotlib.widgets.Slider class.
@@ -200,8 +197,8 @@ class InitTest(_BaseHeatMapTest):
 
         """
         # Create file mock
-        file_mock = open_mock.return_value
-        file_mock.__enter__.return_value = StringIO(self.test_string)
+        file_mock = read_mock.return_value.__enter__
+        file_mock.return_value = ("", StringIO(self.test_string))
 
         # Create pyplot mocks
         axes_mock = pyplot_mock.gca.return_value

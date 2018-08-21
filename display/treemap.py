@@ -11,7 +11,6 @@ __all__ = (
     'Treemap'
 )
 
-from util.d3plus import d3IpyPlus as d3
 import subprocess
 import os
 import logging
@@ -21,6 +20,8 @@ from common import (
     util
 )
 from display.generic_display import GenericDisplay
+from util.d3plus import d3IpyPlus as d3
+from collect.IO import read
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -71,11 +72,8 @@ class Treemap(GenericDisplay):
 
         """
         max_depth = 0
-        with open(in_file, "r") as read_file:
-            # Skip first line, header
-            read_file.readline()
-
-            for line in read_file:
+        with read.Reader(str(in_file)) as (header, data):
+            for line in data:
                 cnt = line.count(';')
                 # If we don't have any ';' characters raise error
                 if cnt == 0:
@@ -94,11 +92,8 @@ class Treemap(GenericDisplay):
                                      range(1, max_depth + 1)]) +
                            "\n")
 
-            with open(in_file, "r") as read_file:
-                # Skip first line, header
-                read_file.readline()
-
-                for line in read_file:
+            with read.Reader(in_file) as (header, data):
+                for line in data:
                     # We replace the only '#' character, that separates the
                     # weight from the callstack
                     call_stack = line.replace("#", ";", 1)

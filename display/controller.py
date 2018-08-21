@@ -14,8 +14,9 @@ __all__ = "main"
 
 import argparse
 import logging
-from enum import Enum
+import json
 
+from enum import Enum
 from common import (
     file,
     util,
@@ -27,7 +28,7 @@ from display import (
     treemap,
     g2,
     stackplot)
-
+from collect.IO import read
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -42,22 +43,30 @@ class DisplayOptions(Enum):
     G2 = "g2"
 
 
-class FileTypes(Enum):
-    CSV = '[CSV]'
-    STACK = '[STACK]'
-    CPEL = '[CPEL]'
+class InterfaceTypes(Enum):
+    SCHEDEVENTS = 'Scheduling Events'
+    DISKLATENCY = 'Disk Latency/Time'
+    MALLOCSTACKS = 'Malloc Stacks'
+    MEMLEAK = 'Memory leaks'
+    MEMTIME = 'Memory/Time'
+    CALLSTACK = 'Call Stacks'
 
 
 # Display option for files
 display_dictionary = {
-    FileTypes.CSV: [DisplayOptions.HEATMAP, DisplayOptions.STACKPLOT],
-    FileTypes.STACK: [DisplayOptions.FLAMEGRAPH, DisplayOptions.TREEMAP],
-    FileTypes.CPEL: [DisplayOptions.G2]
+    InterfaceTypes.SCHEDEVENTS: [DisplayOptions.G2],
+    InterfaceTypes.DISKLATENCY: [DisplayOptions.HEATMAP],
+    InterfaceTypes.MALLOCSTACKS: [DisplayOptions.TREEMAP,
+                                  DisplayOptions.FLAMEGRAPH],
+    InterfaceTypes.MEMLEAK: [DisplayOptions.TREEMAP],
+    InterfaceTypes.MEMTIME: [DisplayOptions.STACKPLOT],
+    InterfaceTypes.CALLSTACK: [DisplayOptions.TREEMAP,
+                               DisplayOptions.FLAMEGRAPH]
 }
 
 
 @util.log(logger)
-def _select_mode(file_type, args):
+def _select_mode(interface_type, args):
     """
     Captures the common pattern of selecting the right display.
 
@@ -74,18 +83,14 @@ def _select_mode(file_type, args):
 
     # Create the dictionaries used in the selection step
     try:
-        file_type_enum = FileTypes(file_type)
+        interface_type_enum = InterfaceTypes(interface_type)
     except ValueError:
-        raise ValueError("The file type {} is not supported".format(file_type))
+        raise ValueError("The file type {} is not supported".format(
+            interface_type))
 
     # File type exists, we look in display_dictionary for the various ways
     # to display it
-    if file_type_enum == FileTypes.CPEL:
-        possibilities = display_dictionary[FileTypes.CPEL]
-    elif file_type_enum == FileTypes.CSV:
-        possibilities = display_dictionary[FileTypes.CSV]
-    elif file_type_enum == FileTypes.STACK:
-        possibilities = display_dictionary[FileTypes.STACK]
+    possibilities = display_dictionary[interface_type_enum]
 
     for option in possibilities:
         if args[option.value]:
@@ -93,7 +98,7 @@ def _select_mode(file_type, args):
     else:
         # loop fell through without finding a factor (see python 3.7 doc 4.4)
         default = config_parser.get_option_from_section("Display",
-                                                        file_type[1:-1])
+                                                        interface_type)
         try:
             default_to_enum = DisplayOptions(default)
         except ValueError:
@@ -108,7 +113,7 @@ def _select_mode(file_type, args):
             raise ValueError(
                 "No valid args or config values found for {}. Either "
                 "add an arg in the terminal command or modify the "
-                "config file".format(file_type))
+                "config file".format(interface_type))
 
 
 @util.log(logger)
@@ -126,9 +131,9 @@ def _display(args):
     """
     # Try to use the specified input file, otherwise use last one created
     if args.infile is not None:
-        input_filename = str(file.DataFileName(args.infile))
+        input_filename = file.DataFileName(given_name=args.infile)
     else:
-        input_filename = str(file.DataFileName.import_filename())
+        input_filename = file.DataFileName.import_filename()
 
     # Use user output filename specified, otherwise create a unique one
     # DO NOT let the user decide because they might overwrite the input!
@@ -137,14 +142,12 @@ def _display(args):
     else:
         output_filename = file.DisplayFileName()
 
-    # We read the file header @TODO: Maybe add more functionality to the header
-    with open(input_filename, "rb") as source:
-        # Strip ending newline
-        header = source.readline()[:-1]
-        header = header.decode()
+    # We read the file header
+    with read.Reader(str(input_filename)) as (file_header, _):
+        header = file_header
 
     # We select the display method based on args and the config file
-    mode = _select_mode(header, vars(args))
+    mode = _select_mode(header['interface'], vars(args))
     # Match the mode with the appropriate display object
     if mode == DisplayOptions.G2:
         display_object = g2.G2(input_filename)
@@ -158,7 +161,7 @@ def _display(args):
     elif mode == DisplayOptions.TREEMAP:
         display_object = treemap.Treemap(25, input_filename, output_filename)
     elif mode == DisplayOptions.STACKPLOT:
-        display_object = stackplot.StackPlot(input_filename)
+        display_object = stackplot.StackPlot(input_filename, 5)
     elif mode == DisplayOptions.FLAMEGRAPH:
         display_object = flamegraph.Flamegraph(input_filename,
                                                output_filename, None)
