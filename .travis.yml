@@ -13,6 +13,7 @@ before_script:
   - python -m pip install -q numpy matplotlib ipython pandas # numpy and so on for display
   - export PYTHONPATH=${PWD} # Set PYTHONPATH
 script:
+  - set -o pipefail # ensure single failure causes whole pipe to fail
   - python -m pytest --cov=collect --cov=display --cov=common collect/ display/ common/ |& tee pytest.txt # Run tests - build fails if any test fails
   - pylint -E collect display common --rcfile=pylintrc.txt # Check for Pylint errors
 after_success:

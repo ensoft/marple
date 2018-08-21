@@ -33,7 +33,7 @@ class StackPlot(GenericDisplay):
 
     """
     @util.log(logger)
-    def __init__(self, filename, number):
+    def __init__(self, filename, number=6):
         """
         Constructor, initialises the stackplot.
 

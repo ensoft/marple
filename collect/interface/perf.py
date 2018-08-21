@@ -228,7 +228,6 @@ class SchedulingEvents(Collecter):
             time_int = int(time_str[0]) * 1000000 + int(time_str[1])
 
             if self.options.track == "cpu":
-
                 # Create datum from name and pid:
                 label = "{} (pid: {})".format(match.group("name"),
                                               match.group("pid"))
@@ -241,7 +240,7 @@ class SchedulingEvents(Collecter):
                 track = "{} (pid: {})".format(match.group("name"),
                                               match.group("pid"))
 
-                # Create datum from cpu:
+                # Create label from cpu:
                 label = "cpu " + str(int(match.group("cpu")))
 
             else:

@@ -44,22 +44,3 @@ class Writer:
 
             for datum in data:
                 out.write(str(datum) + "\n")
-
-
-# class WriterCPEL(Writer):
-#     @staticmethod
-#     @util.log(logger)
-#     @util.Override(Writer)
-#     def write(sched_events, filename, header):
-#         """
-#         Saves the event data from the generator in a file in CPEL format.
-#
-#         :param sched_events:
-#             An iterator of :class:`SchedEvent` objects.
-#         :param filename:
-#             The name of the file into which to store the output.
-#         :param header: the header for the CPEL file; should be "CPEL"
-#         """
-#
-#         cpel_writer = CpelWriter(sched_events)b
-#         cpel_writer.write(filename)
