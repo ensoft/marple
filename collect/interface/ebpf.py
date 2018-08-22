@@ -10,23 +10,25 @@ Interacts with the eBPF tracing tool
 
 __all__ = (
     "MallocStacks",
-    "Memleak"
+    "Memleak",
+    "TCPTracer"
 )
 
-from collect.interface.collecter import Collecter
-import subprocess
 import logging
-from common import util
-from common import datatypes
+import os
+import re
+import signal
+import subprocess
+import typing
 from io import StringIO
-from typing import NamedTuple
 
-# TODO: no abs paths + move them to the paths module
-MARPLE_DIR = "/home/andreid/PycharmProjects/marple/"
-BCC_TOOLS_PATH = MARPLE_DIR + "util/bcc-tools/"
+from collect.interface.collecter import Collecter
+from common import util, datatypes, paths, output
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
+
+BCC_TOOLS_PATH = paths.MARPLE_DIR + "util/bcc-tools/"
 
 
 def _to_kilo(num):
@@ -45,7 +47,7 @@ class MallocStacks(Collecter):
 
     """
 
-    class Options(NamedTuple):
+    class Options(typing.NamedTuple):
         """ No options for this collecter class. """
         pass
 
@@ -102,7 +104,7 @@ class Memleak(Collecter):
 
     """
 
-    class Options(NamedTuple):
+    class Options(typing.NamedTuple):
         """
         Options to use in the collection.
             - top_stacks: how many stacks to be displayed
@@ -154,9 +156,9 @@ class Memleak(Collecter):
             # first occurence of #
             try:
                 weight = int(line[0:hash_pos])
-            except ValueError:
+            except ValueError as ve:
                 raise ValueError("The weight {} is not a number!",
-                                 line[0:hash_pos])
+                                 line[0:hash_pos]) from ve
 
             # The stack starts after the first hash
             stack_list = tuple(line[hash_pos + 1:].split('#'))
@@ -165,3 +167,153 @@ class Memleak(Collecter):
             # current line
             yield datatypes.StackData(stack=stack_list,
                                       weight=_to_kilo(weight))
+
+
+class TCPTracer(Collecter):
+    class Options(typing.NamedTuple):
+        """
+        Options to use in the collection.
+
+        .. attribute:: net_ns:
+            The net namespace for which to collect data - all others will be
+            filtered out.
+
+        """
+        net_ns: int
+
+    _DEFAULT_OPTIONS = None
+
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """
+        :param options:
+            If options is None, then all namepsaces will be considered.
+
+        """
+        super().__init__(time, options)
+
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        cmd = [BCC_TOOLS_PATH + 'tcptracer', '-tv']
+
+        with subprocess.Popen(
+                cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                preexec_fn=os.setsid) as sub_proc:
+            try:
+                out, err = sub_proc.communicate(timeout=self.time)
+            except subprocess.TimeoutExpired:
+                # Send signal to the process group
+                os.killpg(sub_proc.pid, signal.SIGINT)
+                out, err = sub_proc.communicate()
+
+        # Check for unexpected errors
+        # We expect tcptracer to print a stack trace on termination - anything
+        # more than that must be logged
+        pattern = r"Traceback \(most recent call last\): (.*\s)*" \
+                  r"KeyboardInterrupt"
+        if not re.match(pattern, err.decode()):
+            logger.error(err.decode())
+
+        data = StringIO(out.decode())
+
+        # Skip two lines of header
+        data.readline()
+        data.readline()
+
+        # Use a Python dictionary to match up ports and PIDS/command names
+        port_lookup = {}
+
+        # Process rest of file
+        for line in data:
+            values = line.split()
+            pid = int(values[2])
+            comm = values[3]
+            source_addr = values[5]
+            dest_addr = values[6]
+            source_port = int(values[7])
+            net_ns = int(values[9])
+
+            # Discard external TCP / not in net namespace
+            if not source_addr.startswith("127."):
+                continue
+            elif not dest_addr.startswith("127."):
+                continue
+            elif self.options and self.options.net_ns != net_ns:
+                continue
+
+            # Add the port data to port_lookup dictionary
+            if source_port in port_lookup:
+                # Already in dictionary, union sets
+                port_lookup[source_port] = \
+                    {(pid, comm)}.union(port_lookup[source_port])
+            else:
+                port_lookup[source_port] = {(pid, comm)}
+
+        # Go back to beginning to generate datapoints
+        data.seek(0)
+        # Skip header again
+        data.readline()
+        data.readline()
+
+        for line in data:
+            values = line.split()
+            time = int(values[0])
+            type = values[1]  # connect, accept, or close
+            source_pid = int(values[2])
+            source_comm = values[3]
+            source_addr = values[5]
+            dest_addr = values[6]
+            source_port = int(values[7])
+            dest_port = int(values[8])
+            net_ns = int(values[9])
+
+            # Discard external TCP
+            if not source_addr.startswith("127."):
+                continue
+            elif not dest_addr.startswith("127."):
+                continue
+            elif self.options and self.options.net_ns != net_ns:
+                continue
+
+            # Get destination PIDs from port_lookup dictionary
+            if dest_port not in port_lookup:
+                output.error_(
+                    text="Could not find destination port PID/comm. "
+                         "Check log for details.",
+                    description="Could not find destination port PID/comm: "
+                                "Time: {}  Type: {}  Source PID: {}  "
+                                "Source comm: {}  Source port : {}  "
+                                "Dest port: {}  Net namespace: {}"
+                                .format(time, type, source_pid, source_comm,
+                                        source_port, dest_port, net_ns)
+                )
+                continue
+
+            dest_pids = port_lookup[dest_port]
+
+            # Drop if there are multiple possible PIDs
+            if len(dest_pids) != 1:
+                output.error_(
+                    text="Too many destination port PIDs/comms found. "
+                         "Check log for details.",
+                    description="Too many destination port PIDs/comms found: "
+                                "Time: {}  Type: {}  Source PID: {}  "
+                                "Source comm: {}  Source port : {}  "
+                                "Dest (port, comm) pairs: {}  Net namespace: {}"
+                                .format(time, type, source_pid, source_comm,
+                                        source_port, str(dest_pids), net_ns)
+                )
+                continue
+
+            dest_pid, dest_comm = dest_pids.pop()
+
+            # Otherwise output event
+            event = datatypes.EventData(time=time, type=type,
+                                        specific_datum=(
+                                            source_pid, source_comm,
+                                            source_port,
+                                            dest_pid, dest_comm, dest_port,
+                                            net_ns)
+                                        )
+
+            yield event

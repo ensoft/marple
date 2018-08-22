@@ -84,7 +84,10 @@ def _collect_and_store(args, parser):
         header["datatype"] = "Datapoint"
         header["interface"] = "Disk Latency/Time"
     elif args.ipc:
-        raise NotImplementedError("IPC not implemented")  # TODO
+        collecter = ebpf.TCPTracer(time)
+        writer = write.Writer()
+        header["datatype"] = "Event Data"
+        header["interface"] = "IPC Events"
     elif args.lib:
         raise NotImplementedError("IPC not implemented")  # TODO
     elif args.mem:
