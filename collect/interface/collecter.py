@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# generic_controller.py - a superclass for all data-collecting interfaces
+# collecter.py - a superclass for all data-collecting interfaces
 # August 2018 - Hrutvik Kanabar
 # -------------------------------------------------------------
 

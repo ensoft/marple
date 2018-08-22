@@ -19,7 +19,7 @@ import os
 import logging
 from datetime import datetime
 
-from collect.controller import main as collect_controller
+from collect import main as collect_controller
 from common import (
     exceptions,
     output,

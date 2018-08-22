@@ -30,7 +30,6 @@ from collect.interface import (
     smem,
     ebpf)
 from collect.IO import write
-from collect.controller import generic_controller
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -116,9 +115,9 @@ def _collect_and_store(args, parser):
                                      argument=args)
 
     # Run collection
-    controller = generic_controller.GenericController(collecter, writer,
-                                                      str(filename), header)
-    controller.run()
+    data = collecter.collect()
+    writer.write(data, str(filename), header)
+
     output.print_("Done.")
 
 
