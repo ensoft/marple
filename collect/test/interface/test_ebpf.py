@@ -7,17 +7,11 @@
 
 import unittest
 from unittest import mock
-from collect.test import util_collect
 
 from collect.interface import ebpf
 from common import datatypes
 
-
-class _BaseTest(util_collect.BaseTest):
-    """Base test class"""
-
-
-class Mallocstacks(_BaseTest):
+class Mallocstacks(unittest.TestCase):
     """
     Class that tests the mallocstacks interface
 

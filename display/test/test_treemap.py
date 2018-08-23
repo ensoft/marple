@@ -1,19 +1,23 @@
-import display.test.util_display as util
-from display.treemap import Treemap
+import os
+import shutil
+import unittest
 from unittest import mock
+
 from common import file
-from io import StringIO
+from display.treemap import Treemap
 
 
-class _BaseTest(util.BaseTest):
-    """Base test class"""
-
-# -----------------------------------------------------------------------------
-# Tests
-
-
-class TreemapTest(_BaseTest):
+class TreemapTest(unittest.TestCase):
     """Class for testing the treemap module and its helper functions"""
+    _TEST_DIR = "/tmp/marple-test/"
+
+    def setUp(self):
+        """Per-test set-up"""
+        os.makedirs(self._TEST_DIR, exist_ok=True)
+
+    def tearDown(self):
+        """Per-test tear-down"""
+        shutil.rmtree(self._TEST_DIR)
 
     def _get_output(self, inpt):
         csv = self._TEST_DIR + "csv"

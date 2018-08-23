@@ -1,17 +1,12 @@
-import display.test.util_display as util
 import json
 
+import unittest
 from unittest.mock import patch, ANY
 from common import file
 from unittest import mock
 from display import controller
 
-
-class _BaseTest(util.BaseTest):
-    """Base test class"""
-
-
-class DisplayTest(_BaseTest):
+class DisplayTest(unittest.TestCase):
     """
     Tests the display function from the controller
 
@@ -64,7 +59,7 @@ class DisplayTest(_BaseTest):
             controller._display(args)
 
 
-class ArgsParseTest(_BaseTest):
+class ArgsParseTest(unittest.TestCase):
     """
     Tests the args parse function from the controller
 
@@ -77,7 +72,7 @@ class ArgsParseTest(_BaseTest):
         self.assertEqual(args.outfile, 'test.out')
 
 
-class SelectModeTest(_BaseTest):
+class SelectModeTest(unittest.TestCase):
     """
     Tests the _select_mode function from the controller
     Will have a test for each possibility

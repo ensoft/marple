@@ -2,10 +2,11 @@ import struct
 import unittest
 from unittest import mock
 from io import StringIO
+import os
+import shutil
 
 from collect.IO import write
 from common.datatypes import StackData, EventData, Datapoint
-from collect.test import util_collect
 import util.g2.cpel_writer as cpel_writer
 
 
@@ -86,8 +87,17 @@ class WriterTest(unittest.TestCase):
         self.assertEqual(expected, file_mock.getvalue())
 
 
-class SchedTest(util_collect.BaseTest):
+class SchedTest(unittest.TestCase):
     """Class for testing creation and conversion of event object data"""
+    _TEST_DIR = "/tmp/marple-test/"
+
+    def setUp(self):
+        """Per-test set-up"""
+        os.makedirs(self._TEST_DIR, exist_ok=True)
+
+    def tearDown(self):
+        """Per-test tear-down"""
+        shutil.rmtree(self._TEST_DIR)
 
     # Create Event iterators for testing
     testEvents = [EventData(specific_datum=("cpu 2", "test_name (pid: 1234)"),
