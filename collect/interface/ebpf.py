@@ -170,6 +170,17 @@ class Memleak(Collecter):
 
 
 class TCPTracer(Collecter):
+    """
+    Trace local TCP system calls to connect(), accept(), and close().
+
+    Uses the tcptracer script from BCC.
+    Intended to trace IPC, so ignore all calls that involve non-local
+    addresses (i.e. ones that do not start with '127.').
+    Can be set to monitor only a single net namespace using the Options class.
+    Collects data, then traverses it once to build up a dictionary mapping
+    ports to PIDs/comms, then traverses again to yield event data.
+
+    """
     class Options(typing.NamedTuple):
         """
         Options to use in the collection.
@@ -194,29 +205,57 @@ class TCPTracer(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
+        """
+        Collect TCP tracing data.
+
+        Call tcptracer, and discard the KeyboardInterrupt error message.
+        Traverse the data once to build up a dictionary mapping ports to
+        PIDs/comms.
+        Traverse the data again using that dictionary to output events with
+        well-resolved PIDs/comms for ports (hopefully).
+        Print and log error messages when ports cannot be resolved.
+
+        :return:
+            A generator of :clase:`EventDatum` objects.
+
+        """
         cmd = [BCC_TOOLS_PATH + 'tcptracer ' + '-tv']
 
-        with subprocess.Popen(
+        sub_proc = subprocess.Popen(
                 cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                preexec_fn=os.setsid) as sub_proc:
-            try:
-                out, err = sub_proc.communicate(timeout=self.time)
-            except subprocess.TimeoutExpired:
-                # Send signal to the process group
-                os.killpg(sub_proc.pid, signal.SIGINT)
-                out, err = sub_proc.communicate()
+                preexec_fn=os.setsid)
+        try:
+            out, err = sub_proc.communicate(timeout=self.time)
+        except subprocess.TimeoutExpired:
+            # Send signal to the process group
+            os.killpg(sub_proc.pid, signal.SIGINT)
+            out, err = sub_proc.communicate()
 
         # Check for unexpected errors
         # We expect tcptracer to print a stack trace on termination - anything
         # more than that must be logged
-        pattern = r"Traceback \(most recent call last\): (.*\s)*" \
-                  r"KeyboardInterrupt"
-        if not re.match(pattern, err.decode()):
+        pattern = r"^Traceback \(most recent call last\):" \
+                  r"(\S*\s)*KeyboardInterrupt\s$"
+        if not re.fullmatch(pattern, err.decode()):
             logger.error(err.decode())
 
         data = StringIO(out.decode())
+        port_lookup = self._generate_dict(data)
+        return self._generate_events(data, port_lookup)
 
+    @util.log(logger)
+    def _generate_dict(self, data):
+        """
+        Generate a dictionary mapping ports to sets of (PID, comm) pairs.
+
+        :param data:
+            The input tcptracer data
+        :return:
+            The port-mapping dictionary.
+
+        """
         # Skip two lines of header
+        data.seek(0)
         data.readline()
         data.readline()
 
@@ -249,9 +288,25 @@ class TCPTracer(Collecter):
             else:
                 port_lookup[source_port] = {(pid, comm)}
 
-        # Go back to beginning to generate datapoints
+        return port_lookup
+
+    @util.log(logger)
+    def _generate_events(self, data, port_lookup):
+        """
+        Generate EventDatum objects using tcptracer data and the port-mapping
+        generated from that data by _generate_dict
+
+        :param data:
+            The tcptracer data.
+        :param port_lookup:
+            The port-mapping dictionary generated from that data by
+            _generate_dict
+        :return:
+            A generatory of :class:`EventDatum` objects.
+
+        """
+        # Skip header
         data.seek(0)
-        # Skip header again
         data.readline()
         data.readline()
 
@@ -278,7 +333,7 @@ class TCPTracer(Collecter):
             # Get destination PIDs from port_lookup dictionary
             if dest_port not in port_lookup:
                 output.error_(
-                    text="Could not find destination port PID/comm. "
+                    text="IPC: Could not find destination port PID/comm. "
                          "Check log for details.",
                     description="Could not find destination port PID/comm: "
                                 "Time: {}  Type: {}  Source PID: {}  "
@@ -294,14 +349,15 @@ class TCPTracer(Collecter):
             # Drop if there are multiple possible PIDs
             if len(dest_pids) != 1:
                 output.error_(
-                    text="Too many destination port PIDs/comms found. "
+                    text="IPC: Too many destination port PIDs/comms found. "
                          "Check log for details.",
                     description="Too many destination port PIDs/comms found: "
                                 "Time: {}  Type: {}  Source PID: {}  "
                                 "Source comm: {}  Source port : {}  "
                                 "Dest (port, comm) pairs: {}  Net namespace: {}"
                                 .format(time, type, source_pid, source_comm,
-                                        source_port, str(dest_pids), net_ns)
+                                        source_port, str(sorted(dest_pids)),
+                                        net_ns)
                 )
                 continue
 
