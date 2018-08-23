@@ -28,7 +28,7 @@ from common import util, datatypes, paths, output
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
 
-BCC_TOOLS_PATH = paths.MARPLE_DIR + "util/bcc-tools/"
+BCC_TOOLS_PATH = paths.MARPLE_DIR + "/util/bcc-tools/"
 
 
 def _to_kilo(num):
@@ -194,7 +194,7 @@ class TCPTracer(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        cmd = [BCC_TOOLS_PATH + 'tcptracer', '-tv']
+        cmd = [BCC_TOOLS_PATH + 'tcptracer ' + '-tv']
 
         with subprocess.Popen(
                 cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -225,7 +225,7 @@ class TCPTracer(Collecter):
 
         # Process rest of file
         for line in data:
-            values = line.split()
+            values = line.strip().split()
             pid = int(values[2])
             comm = values[3]
             source_addr = values[5]
@@ -306,6 +306,7 @@ class TCPTracer(Collecter):
                 continue
 
             dest_pid, dest_comm = dest_pids.pop()
+            dest_pids.add((dest_pid, dest_comm))  # Ensure set isn't altered
 
             # Otherwise output event
             event = datatypes.EventData(time=time, type=type,
