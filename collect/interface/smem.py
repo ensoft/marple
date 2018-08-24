@@ -24,6 +24,7 @@ from typing import NamedTuple
 
 from collect.interface.collecter import Collecter
 from common import datatypes, util
+from common.consts import InterfaceTypes
 
 
 class MemoryGraph(Collecter):
@@ -56,6 +57,7 @@ class MemoryGraph(Collecter):
         # Set the start time
         start_time = time.monotonic()
         current_time = 0.0
+        self.start_time = datetime.datetime.now()
 
         while current_time < self.time:
             if self.options.mode == "name":
@@ -92,6 +94,8 @@ class MemoryGraph(Collecter):
             # Update the clock
             current_time = time.monotonic() - start_time
 
+        self.end_time = datetime.datetime.now()
+
         for key in datapoints:
             for lab in datapoints[key]:
                 mem = datapoints[key][lab]
@@ -99,14 +103,9 @@ class MemoryGraph(Collecter):
 
     @util.Override(Collecter)
     def collect(self):
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.PointData(self.get_generator, start, end,
-                                   'Memory/Time', 'Time', 'Memory',
+        data = self.get_generator()
+        return datatypes.PointData(data, self.start_time, self.end_time,
+                                   InterfaceTypes.MEMTIME, 'Time', 'Memory',
                                    'seconds', 'megabytes')
 
     @staticmethod

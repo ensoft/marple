@@ -212,7 +212,7 @@ class StackData:
         weight_units: str
 
     def __init__(self, datum_generator, start, end, interface, weight_units):
-        self.datum_generator = datum_generator()
+        self.datum_generator = datum_generator
         self.start = start
         self.end = end
         self.interface = interface
@@ -223,8 +223,8 @@ class StackData:
 
     def header_to_dict(self):
         header_dict = {
-            "start": self.start,
-            "end": self.end,
+            "start": str(self.start),
+            "end": str(self.end),
             "interface": self.interface,
             "datatype": self.datatype,
             "data_options": self.data_options,
@@ -234,7 +234,7 @@ class StackData:
 
 class EventData:
     def __init__(self, datum_generator, start, end, interface):
-        self.datum_generator = datum_generator()
+        self.datum_generator = datum_generator
         self.start = start
         self.end = end
         self.interface = interface
@@ -242,8 +242,8 @@ class EventData:
 
     def header_to_dict(self):
         header_dict = {
-            "start": self.start,
-            "end": self.end,
+            "start": str(self.start),
+            "end": str(self.end),
             "interface": self.interface,
             "datatype": self.datatype,
         }
@@ -265,7 +265,7 @@ class PointData:
 
     def __init__(self, datum_generator, start, end, interface, x_label,
                  x_units, y_label, y_units):
-        self.datum_generator = datum_generator()
+        self.datum_generator = datum_generator
         self.start = start
         self.end = end
         self.interface = interface
@@ -279,8 +279,8 @@ class PointData:
 
     def header_to_dict(self):
         header_dict = {
-            "start": self.start,
-            "end": self.end,
+            "start": str(self.start),
+            "end": str(self.end),
             "interface": self.interface,
             "datatype": self.datatype,
             "data_options": self.data_options

@@ -4,6 +4,7 @@
 # -------------------------------------------------------------
 
 from typing import NamedTuple
+import datetime
 
 
 class Collecter:
@@ -20,6 +21,10 @@ class Collecter:
 
     """
     _DEFAULT_OPTIONS = None
+
+    # Start and end times of data recording
+    start_time: datetime.datetime
+    end_time: datetime.datetime
 
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         """

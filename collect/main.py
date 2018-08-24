@@ -66,6 +66,12 @@ def _get_collecter_instance(interface_name, time, parser):
     elif interface_name == "memleak":
         options = ebpf.Memleak.Options(10)
         collecter = ebpf.Memleak(time, options)
+    elif interface_name == "memevents":
+        collecter = perf.MemoryEvents(time)
+    elif interface_name == "diskblockrq":
+        collecter = perf.DiskBlockRequests(time)
+    elif interface_name == "perf_malloc":
+        collecter = perf.MemoryMalloc(time)
 
     return collecter
 
@@ -82,54 +88,48 @@ def _collect_and_store(args, parser):
     """
 
     # Use user output filename specified, otherwise create a unique one
-    if args.outfile is not None:
+    if args.outfile:
         if os.path.isfile(args.outfile):
-            print("A file named {} already exists! Overwrite? ".format(
-                args.outfile), end="")
-            answer = input()
-            if answer not in ("y", "yes"):
+            output.print_("A file named {} already exists! Overwrite [y/n]? "
+                          .format(args.outfile))
+            if input() not in ("y", "yes"):
                 raise exceptions.AbortedException
-        filename = file.DataFileName(args.outfile)
+        filename = file.DataFileName(given_name=args.outfile)
     else:
         filename = file.DataFileName()
+
     # Save latest filename to temporary file for display module
     filename.export_filename()
 
     # Use user specified time for data collection, otherwise config value
-    time = args.time if args.time is not None else parser.get_default_time()
+    time = args.time if args.time else parser.get_default_time()
 
-    all_interface_instances = []
-    interfaces_seen = set()
+    # Determine all arguments specifying collecter interfaces
+    args_seen = set()
     config_parser = config.Parser()
-    for interface in args.interfaces:
-        if interface in consts.interfaces_argnames:
-            if interface in interfaces_seen:
-                continue
-            interfaces_seen.union({interface})
-
-            collecter = _get_collecter_instance(interface, time, parser)
-            all_interface_instances.append(collecter.collect())
+    for arg in args.interfaces:
+        if arg in consts.interfaces_argnames:
+            args_seen.add(arg)
         else:
-            # The interface is not a valid one, might be an alias
-            if not config_parser.has_option("Aliases", interface):
+            # The arg was not found, might be an alias
+            if not config_parser.has_option("Aliases", arg):
                 raise argparse.ArgumentError(message="Arguments not recognised",
                                              argument=args)
+            alias_args = config_parser.get_option_from_section(
+                "Aliases", arg).split(',')
+            for alias_arg in alias_args:
+                args_seen.add(alias_arg)
 
-            alias_interfaces = config_parser.get_option_from_section(
-                "Aliases", interface).split(',')
-            for alias_interface in alias_interfaces:
-                if alias_interface in interfaces_seen:
-                    continue
-                interfaces_seen.union({interface})
-
-                collecter = _get_collecter_instance(alias_interface, time,
-                                                    parser)
-                all_interface_instances.append(collecter.collect())
-
-    # For each pair (collecter, data) in all_data, we need to pass the
-    # datum generator collecter provides to the data
-    writer = write.Writer()
-    writer.write(all_interface_instances, str(filename))
+    # collecter = _get_collecter_instance(interface, time, parser)
+    # all_interface_instances.append(collecter.collect())
+    # collecter = _get_collecter_instance(alias_interface, time,
+    #                                     parser)
+    # all_interface_instances.append(collecter.collect())
+    #
+    # # For each pair (collecter, data) in all_data, we need to pass the
+    # # datum generator collecter provides to the data
+    # writer = write.Writer()
+    # writer.write(all_interface_instances, str(filename))
 
     output.print_("Done.")
 
@@ -170,7 +170,8 @@ def _args_parse(argv):
     options.add_argument("interfaces", nargs='+',
                          help="Modules to be used when tracking. Options "
                               "include: cpusched, disklat, ipc, lib,"
-                              "mallocstacks, memtime, memleak. The user can "
+                              "mallocstacks, memtime, memleak, memevents,"
+                              " diskblockrq, perf_malloc. The user can "
                               "specify aliases for multiple such options in "
                               "the config file and use them here just like "
                               "with normal options")
