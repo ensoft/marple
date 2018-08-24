@@ -11,18 +11,18 @@ __all__ = (
     'Treemap'
 )
 
-import subprocess
-import os
 import logging
+import os
+import subprocess
+from typing import NamedTuple
 
 from common import (
     file,
-    util
+    util,
+    consts
 )
 from display.generic_display import GenericDisplay
 from util.d3plus import d3IpyPlus as d3
-from collect.IO import read
-from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -39,14 +39,14 @@ class Treemap(GenericDisplay):
         depth: int
     _DEFAULT_OPTIONS = DisplayOptions(depth=25)
 
-    def __init__(self, inp, out, data_options,
+    def __init__(self, data, out, data_options,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the Treemap.
 
-        :param inp:
-            The input file that holds the data as an instance of the
-            :class:`DataFileName`.
+        :param data:
+            A generator that returns the data for the section we want to
+            display as a treemap
         :param out:
             The output file where the image will be saved as an instance
             of the :class:`DisplayFileName`.
@@ -60,12 +60,12 @@ class Treemap(GenericDisplay):
         # in_filename and out_filename File objects (see common.files)
         # We need to get their string representations (paths) and set the
         # right extension for the out file
-        self.input = inp
+        self.data = data
         out.set_options("treemap", "html")
         self.output = str(out)
 
     @util.log(logger)
-    def _generate_csv(self, in_file, out_file):
+    def _generate_csv(self, data, out_file):
         """
         Creates a semicolon separated file from a stack parser output.
         The output format will be:
@@ -80,46 +80,38 @@ class Treemap(GenericDisplay):
                           example: bytes;1;2;3 -- first row
                                    5;firefox;[unknown];libxul.so -- second row
 
-        :param in_file: a collapsed stack produced by the stack parser; expects
-                        an absolute path
+        :param data:
+            A generator that returns the lines for the section we want to
+            display as a stackplot
         :param out_file: a semicolon separated file generated from the in_file;
                          expects an absolute path
         :raises ValueError: in case the file is not in an accepted format
         :returns max_depth: the maximum depth of the stack
 
         """
-        max_depth = 0
-        with read.Reader(str(in_file)) as (header, data):
-            for line in data:
-                cnt = line.count(';')
-                if max_depth < cnt:
-                    max_depth = cnt
-
-            # Number of fields in a line is 1 plus the number of ';' characters
-            max_depth += 1
 
         with open(out_file, "w") as out_file:
             # Header of the csv; example: value;1;2;3;4;5...
             out_file.write(self.data_options.weight_units + ";" +
                            ";".join([str(i) for i in
-                                     range(1, max_depth + 1)]) +
+                                     range(1,
+                                           self.display_options.depth + 1)]) +
                            "\n")
 
-            with read.Reader(in_file) as (header, data):
-                for line in data:
-                    # If we don't have any ';' characters raise error
-                    if line.count('#') != 1:
-                        raise ValueError(
-                            "Invalid format of the file! Each line should "
-                            "have the format weight#... Line that "
-                            "causes the problem {}".format(line))
+            for line in data:
+                # If we don't have any ';' characters raise error
+                if line.count(consts.separator) != 1:
+                    raise ValueError(
+                        "Invalid format of the file! Each line should "
+                        "have the format weight#... Line that "
+                        "causes the problem {}".format(line))
 
-                    # We replace the only '#' character, that separates the
-                    # weight from the callstack
-                    call_stack = line.replace("#", ";", 1)
-                    out_file.write(call_stack)
-
-        return max_depth
+                # We replace the only '#' character, that separates the
+                # weight from the callstack
+                call_stack = line.strip().replace(consts.separator, ";", 1)
+                sep = call_stack.split(';')
+                out_file.write(';'.join(
+                    sep[0:self.display_options.depth + 1]) + '\n')
 
     @util.Override(GenericDisplay)
     @util.log(logger)
@@ -133,11 +125,10 @@ class Treemap(GenericDisplay):
 
         # Temp file for the csv file
         temp_file = str(file.TempFileName())
-        max_depth = self._generate_csv(self.input, temp_file)
-
+        self._generate_csv(self.data, temp_file)
         # Generate the ids we use for the hierarchies and the columns of the
         # input file
-        ids = [str(i) for i in range(1, max_depth + 1)]
+        ids = [str(i) for i in range(1, self.display_options.depth + 1)]
         cols = [self.data_options.weight_units] + ids
 
         data = d3.from_csv(temp_file, ';', columns=cols)

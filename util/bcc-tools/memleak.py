@@ -303,8 +303,8 @@ def print_outstanding():
         if alloc.pid != os.getpid():
             # @TODO: Better way to deal with pid and count so that the tooltip
             # @TODO: of the treemap will know
-            print("%d#%s" % (alloc.size,
-                             alloc.name + "(" + str(alloc.pid) + ")"))
+            print("%d$$$%s" % (alloc.size,
+                               alloc.name + "(" + str(alloc.pid) + ")"))
 
 
 sleep(interval)

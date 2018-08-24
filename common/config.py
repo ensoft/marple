@@ -64,7 +64,7 @@ class Parser:
         :param opt: The option to be verified
         :return: a boolean indicating the presence or absence of an option
         """
-        self.config.has_option(sec, opt)
+        return self.config.has_option(sec, opt)
 
     def get_default_blocking(self):
         """

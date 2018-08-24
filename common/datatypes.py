@@ -20,10 +20,10 @@ __all__ = (
 )
 
 
-import typing
 import logging
+import typing
 
-from common import exceptions
+from common import exceptions, consts
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -51,13 +51,14 @@ class EventDatum(typing.NamedTuple):
         Converts an event to standard hashtag-separated value string format.
 
         The string does not have a line break at the end.
-            Format: <time>#<type>#<datum>, where datum is a tuple
+            Format: <time>consts.separator<type>consts.separator<datum>,
+            where datum is a tuple
             Note that the fields cannot contain hashtags (and should not
             since they are events).
 
         """
-        return "#".join((str(self.time), self.type,
-                         str(self.specific_datum)))
+        return consts.separator.join((str(self.time), self.type,
+                                     str(self.specific_datum)))
 
     @classmethod
     def from_string(cls, string):
@@ -76,7 +77,7 @@ class EventDatum(typing.NamedTuple):
 
         """
         try:
-            time, type_, datum = string.strip().split("#")
+            time, type_, datum = string.strip().split(consts.separator)
             return EventDatum(time=int(time), type=type_,
                               specific_datum=eval(datum))
         except IndexError as ie:
@@ -170,7 +171,8 @@ class StackDatum(typing.NamedTuple):
         commas or semicolons.
 
         """
-        return "{}#{}".format(self.weight, ";".join(self.stack))
+        return ("{}" + consts.separator + "{}").\
+            format(self.weight, ";".join(self.stack))
 
     def __repr__(self):
         return self.__str__()
@@ -192,7 +194,7 @@ class StackDatum(typing.NamedTuple):
 
         """
         try:
-            weight, stack = string.strip().split("#")
+            weight, stack = string.strip().split(consts.separator)
             stack_tuple = tuple(stack.split(';'))
             return StackDatum(weight=int(weight), stack=stack_tuple)
         except ValueError as ve:

@@ -15,11 +15,9 @@ from display.generic_display import GenericDisplay
 __all__ = ("StackPlot", )
 
 import numpy as np
-import io
 import matplotlib.pyplot as plt
 
 from common import util
-from collect.IO import read
 from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
@@ -44,34 +42,31 @@ class StackPlot(GenericDisplay):
     _DEFAULT_DISPLAY_OPTIONS = DisplayOptions(top_processes=5)
 
     @util.log(logger)
-    def __init__(self, inp, data_options,
+    def __init__(self, data, data_options,
                  display_options=_DEFAULT_DISPLAY_OPTIONS):
         """
         Constructor, initialises the stackplot.
 
         There is no out file since currently we do not save an image of the
         output
-        :param inp:
-            The input file that holds the data as an instance of the
-            :class:`DataFileName`.
+        :param data:
+            A generator that returns the lines for the section we want to
+            display as a stackplot
         :param data_options:
         :param display_options:
 
         """
         # Initialise the base class
-        super().__init__(display_options, data_options)
+        super().__init__(data_options, display_options)
 
-        # Was open(file, "r", encoding="utf-8") in case the encoding is
-        # for some reason important
-        with read.Reader(str(inp)) as (header, data):
-            # read the data into a dict
-            datapoints = {}
-            for line in data:
-                (x, y, label) = line.strip().split(",")
-                x, y = float(x), float(y)
-                if x not in datapoints:
-                    datapoints[x] = []
-                datapoints[x].append((y, label))
+        # Read the data into a dict
+        datapoints = {}
+        for line in data:
+            (x, y, label) = line.strip().split(",")
+            x, y = float(x), float(y)
+            if x not in datapoints:
+                datapoints[x] = []
+            datapoints[x].append((y, label))
 
         # Collapse same labels at same x
         self._collapse_labels(datapoints)
@@ -206,7 +201,9 @@ class StackPlot(GenericDisplay):
         ax.legend(handles[::-1], labels[::-1])
 
         # @@@ Set labels passed as arguments (options)
-        ax.set_xlabel(self.data_options.x + ' / ' + self.data_options.x_units)
-        ax.set_ylabel(self.data_options.y + ' / ' + self.data_options.y_units)
+        ax.set_xlabel(self.data_options.x_label + ' / ' +
+                      self.data_options.x_units)
+        ax.set_ylabel(self.data_options.y_label + ' / ' +
+                      self.data_options.y_units)
 
         plt.show()

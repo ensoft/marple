@@ -46,14 +46,14 @@ class Flamegraph(GenericDisplay):
 
     _DEFAULT_OPTIONS = DisplayOptions(coloring="hot")
 
-    def __init__(self, inp, out, data_options,
+    def __init__(self, data, out, data_options,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the flamegraph.
 
-        :param inp:
-            The input file that holds the data as an instance of the
-            :class:`DataFileName`.
+        :param data:
+            A generator that returns the lines for the section we want to
+            display as a flamegraph
         :param out:
             The output file where the image will be saved as an instance
             of the :class:`DisplayFileName`.
@@ -68,7 +68,7 @@ class Flamegraph(GenericDisplay):
         # in_filename and out_filename File objects (see common.files)
         # We need to get their string representations (paths) and set the
         # right extension for the out file
-        self.in_filename = str(inp)
+        self.data = data
         out.set_options("flamegraph", "svg")
         self.out_filename = str(out)
 
@@ -78,9 +78,9 @@ class Flamegraph(GenericDisplay):
         Read stack events from a file in standard format.
 
         """
-        with read.Reader(self.in_filename) as (header, data):
-            for line in data.readlines():
-                yield StackDatum.from_string(line)
+
+        for line in self.data:
+            yield StackDatum.from_string(line)
 
     @util.log(logger)
     def _make(self, stack_data):

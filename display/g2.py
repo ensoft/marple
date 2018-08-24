@@ -42,26 +42,25 @@ class G2(GenericDisplay):
         track: str
     _DEFAULT_OPTIONS = DisplayOptions(track="pid")
 
-    def __init__(self, inp, data_options, display_options=_DEFAULT_OPTIONS):
+    def __init__(self, data, data_options, display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the g2.
 
         This display mode does not currently support an out file the g2 result
         cannot be saved
 
-        :param inp:
-            The input file that holds the data as an instance of the
-            :class:`DataFileName`.
+        :param data:
+            A generator that returns the lines for the section we want to
+            display using g2
         :param data_options:
         :param display_options:
         """
         # Initialise the base class
         super().__init__(data_options, display_options)
 
-        self.inp = inp
+        self.data = data
 
-    @staticmethod
-    def _generate_events_from_file(file_descriptor):
+    def _generate_events_from_file(self, file_descriptor):
         """
         Helper static method that yields EventDatum as we read the file
         :param file_descriptor: a file descriptor so we can extract the current
@@ -69,10 +68,8 @@ class G2(GenericDisplay):
         :returns: an EventDatum object parsed form the current line of the file
 
         """
-        line = file_descriptor.readline()
-        while line != "":
+        for line in self.data:
             yield EventDatum.from_string(line)
-            line = file_descriptor.readline()
 
     @util.Override(GenericDisplay)
     @util.log(logger)
@@ -85,10 +82,10 @@ class G2(GenericDisplay):
 
         """
         tmp_cpel = file.TempFileName()
-        with read.Reader(str(self.inp)) as (header, data):
-            event_generator = self._generate_events_from_file(data)
-            writer = CpelWriter(event_generator, self.display_options.track)
 
+        event_generator = self._generate_events_from_file(self.data)
+
+        writer = CpelWriter(event_generator, self.display_options.track)
         writer.write(str(tmp_cpel))
 
         subprocess.call(["vpp/build-root/install-native/g2/bin/g2",

@@ -39,27 +39,25 @@ def _select_mode(interface, datatype, args):
     """
     Captures the common pattern of selecting the right display.
 
-    :param interface_type: the type of the interface that produce the file;
-                           can be:
-                               - Scheduling Events
-                               - Disk Latency/Time
-                               - Malloc Stacks
-                               - Memory leaks
-                               - Memory/Time
-                               - Call Stacks
+    :param interface: the type of the interface that produce the file;
+                      can be:
+                        - Scheduling Events
+                        - Disk Latency/Time
+                        - Malloc Stacks
+                        - Memory leaks
+                        - Memory/Time
+                        - Call Stacks
     :param args: terminal arguments as a dictionary
     :returns display mode: an enums.DisplayOptions
                            specifing the display mode
     """
     # We create a config parser to read user setting from the config file
     config_parser = config.Parser()
-
     # Create the dictionaries used in the selection step
     try:
         datatype_enum = consts.Datatypes(datatype)
     except ValueError:
-        raise ValueError("The file type {} is not supported".format(
-            interface))
+        raise ValueError("The file type {} is not supported".format(interface))
 
     # File type exists, we look in display_dictionary for the various ways
     # to display it
@@ -73,13 +71,12 @@ def _select_mode(interface, datatype, args):
         default = config_parser.get_option_from_section("DisplayInterfaces",
                                                         interface)
         try:
-            default_to_enum = consts.InterfaceTypes(default)
+            default_to_enum = consts.DisplayOptions(default)
         except ValueError:
             raise ValueError("The default value from the config could not be "
                              "converted to a enums.DisplayOptions enum. "
                              "Check that the values in the config correspond "
                              "with the enum values.")
-
         if default_to_enum in possibilities:
             return consts.DisplayOptions(default_to_enum)
         else:
@@ -125,7 +122,8 @@ def _get_display_options(display_type):
         parameters = heatmap.GraphParameters(figure_size=figure_size,
                                              scale=scale,
                                              y_res=y_res)
-        normalise = config_parser.get_option_from_section("heatmap", "y_res",
+        normalise = config_parser.get_option_from_section("heatmap",
+                                                          "normalised",
                                                           typ="bool")
         colorbar = "No. Accesses"
         return heatmap.HeatMap.DisplayOptions(colorbar, parameters, normalise)
@@ -177,39 +175,50 @@ def _display(args):
     else:
         output_filename = file.DisplayFileName()
 
-    # We read the file header
-    with read.Reader(str(input_filename)) as (file_header, _):
-        header = file_header
+    with open(str(input_filename)) as file_object:
+        eof = False
+        while not eof:
+            header = read.Reader.read_header(file_object)
+            if header == {}:
+                # EOF, we skip and break
+                eof = True
+                continue
 
-    # We select the display method based on args and the config file, and get
-    # the associated options with that mode (the options retrieved here
-    # do not care about the interface type)
-    display_for_interface = _select_mode(header['datatype'], vars(args))
-    display_options = _get_display_options(display_for_interface)
-    data_options = _get_data_options(header)
+            data = read.Reader.read_until_line(file_object, "\n")
 
-    # Match the mode with the appropriate display object, and alter some
-    # interface specific options (the ones that are not in the config)
-    if display_for_interface == consts.DisplayOptions.G2:
-        display_object = g2.G2(input_filename, data_options, display_options)
-    elif display_for_interface == consts.DisplayOptions.HEATMAP:
-        display_object = heatmap.HeatMap(input_filename, output_filename,
-                                         data_options, display_options)
-    elif display_for_interface == consts.DisplayOptions.TREEMAP:
-        display_object = treemap.Treemap(input_filename, output_filename,
-                                         data_options, display_options)
-    elif display_for_interface == consts.DisplayOptions.STACKPLOT:
-        display_object = stackplot.StackPlot(input_filename, data_options,
-                                             display_options)
-    elif display_for_interface == consts.DisplayOptions.FLAMEGRAPH:
-        display_object = flamegraph.Flamegraph(input_filename, output_filename,
-                                               data_options, display_options)
-    else:
-        raise ValueError("Unexpected display mode {}!".
-                         format(display_for_interface))
+            # We select the display method based on args and the config file,
+            # and get the associated options with that mode (the options
+            # retrieved here do not care about the interface type)
+            display_for_interface = _select_mode(header['interface'],
+                                                 header['datatype'], vars(args))
+            display_options = _get_display_options(display_for_interface)
+            data_options = _get_data_options(header)
 
-    # Display it
-    display_object.show()
+            # Match the mode with the appropriate display object, and alter some
+            # interface specific options (the ones that are not in the config)
+            if display_for_interface == consts.DisplayOptions.G2:
+                display_object = g2.G2(data, data_options,
+                                       display_options)
+            elif display_for_interface == consts.DisplayOptions.HEATMAP:
+                display_object = heatmap.HeatMap(data, output_filename,
+                                                 data_options, display_options)
+            elif display_for_interface == consts.DisplayOptions.TREEMAP:
+                display_object = treemap.Treemap(data, output_filename,
+                                                 data_options, display_options)
+            elif display_for_interface == consts.DisplayOptions.STACKPLOT:
+                display_object = stackplot.StackPlot(data, data_options,
+                                                     display_options)
+            elif display_for_interface == consts.DisplayOptions.FLAMEGRAPH:
+                display_object = flamegraph.Flamegraph(data,
+                                                       output_filename,
+                                                       data_options,
+                                                       display_options)
+            else:
+                raise ValueError("Unexpected display mode {}!".
+                                 format(display_for_interface))
+
+            # Display it
+            display_object.show()
 
 
 @util.log(logger)

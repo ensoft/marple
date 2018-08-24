@@ -21,43 +21,49 @@ logger.debug('Entered module: %s', __name__)
 
 class Reader:
     """
-    Class that is used to read from marple files in a consistent way
+    Class that facilitates the reading of multi section MARPLE files
 
     The format of a .marple file is:
-    - Header (first line, json formatted)
-    - Data (subsequent lines)
+    - Header1 (first line, json formatted)
+    - Data1 (subsequent lines, ending with a new line)
+    - Header2 (the line after the previous new line)
+    - Data2
+    - ...
 
     """
-    def __init__(self, file_name):
-        """
-        Initialising the reader object
 
-        :param file_name: Name of the marple file to be used
-
+    @classmethod
+    def read_header(cls, file_object):
         """
-        self.file_name = file_name
-
-    def __enter__(self):
-        """
-        Method that returns the resource to be managed
-        :return: header as a dictioanry, data as a file descriptor (with the
-                 header not included because we read it first)
+        Class method that parses the header in the file_object (its first line)
+        :param file_object: the file object whose header we want to parse
+        :return: a dict representation of the header
 
         """
-        self.open_file = open(self.file_name, "r")
-        header_str = self.open_file.readline().strip()
+        header_str = file_object.readline().strip()
+        if header_str == "":
+            # End of a file
+            return {}
+
         try:
             header_dict = json.loads(header_str)
         except json.JSONDecodeError as jse:
             jse.msg = "Invalid JSON header!"
             raise jse
+        return header_dict
 
-        data = self.open_file
-        return header_dict, data
-
-    def __exit__(self, *args):
+    @classmethod
+    def read_until_line(cls, file_object, stop_line):
         """
-        Cleanup method that closes the file
+        Class method that lazily reads sections from file_object; sections are
+        separated by `line` is encountered (the line is skipped in the process)
+
+        :param file_object: the file object pointing to the start of the section
+        :param stop_line: the line that signals the ending of a section
+        :return: a line from file_object
 
         """
-        self.open_file.close()
+        line = file_object.readline()
+        while line != stop_line:
+            yield line
+            line = file_object.readline()

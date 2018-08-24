@@ -118,7 +118,7 @@ def _collect_and_store(args, parser):
             alias_interfaces = config_parser.get_option_from_section(
                 "Aliases", interface).split(',')
             for alias_interface in alias_interfaces:
-                if alias_interface in alias_interfaces:
+                if alias_interface in interfaces_seen:
                     continue
                 interfaces_seen.union({interface})
 

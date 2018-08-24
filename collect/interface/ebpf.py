@@ -32,16 +32,6 @@ logger.debug('Entered module: {}'.format(__name__))
 BCC_TOOLS_PATH = paths.MARPLE_DIR + "/util/bcc-tools/"
 
 
-def _to_kilo(num):
-    """
-    Helper function, transforms from bytes to kilobytes
-    :param num: number of bytes
-    :return: closest into to the actual number of kilobytes
-
-    """
-    return int(num / 1000)
-
-
 class MallocStacks(Collecter):
     """
     Class that interacts with Brendan Gregg's mallocstacks tools
@@ -79,24 +69,7 @@ class MallocStacks(Collecter):
 
         for line in StringIO(out.decode()):
             line = line.strip('\n')
-            # We find the first #, marking the ending of the weight
-            hash_pos = line.find('#')
-
-            # The weight starts right after the space and continues up to the
-            # first occurence of #
-            try:
-                weight = int(line[0:hash_pos])
-            except ValueError:
-                raise ValueError("The weight {} is not a number!",
-                                 line[0:hash_pos])
-
-            # The stack starts after the first hash
-            stack_list = tuple(line[hash_pos + 1:].split('#'))
-
-            # Generator that yields StackDatum objects, constructed from the
-            # current line
-            yield datatypes.StackDatum(stack=stack_list,
-                                       weight=_to_kilo(weight))
+            yield datatypes.StackDatum.from_string(line)
 
     @util.log(logger)
     @util.Override(Collecter)
@@ -107,8 +80,8 @@ class MallocStacks(Collecter):
         start = str(start)
         end = str(end)
 
-        return datatypes.StackData(self.get_generator, start, end, "kilobytes",
-                                   "Malloc Stacks")
+        return datatypes.StackData(self.get_generator, start, end,
+                                   "Malloc Stacks", "bytes")
 
 
 class Memleak(Collecter):
@@ -127,7 +100,7 @@ class Memleak(Collecter):
 
     _DEFAULT_OPTIONS = Options(top_stacks=10)
 
-    def __init__(self, time, options = _DEFAULT_OPTIONS):
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
         super().__init__(time, options)
 
     @util.log(logger)
@@ -158,28 +131,9 @@ class Memleak(Collecter):
 
         logger.debug(err.decode())
 
-        # TODO: Currently same as mallocstacks' collect, will probably change
-        # TODO: If not put them in one function
         for line in StringIO(out.decode()):
             line = line.strip('\n')
-            # We find the first #, marking the ending of the weight
-            hash_pos = line.find('#')
-
-            # The weight starts right after the space and continues up to the
-            # first occurence of #
-            try:
-                weight = int(line[0:hash_pos])
-            except ValueError as ve:
-                raise ValueError("The weight {} is not a number!",
-                                 line[0:hash_pos]) from ve
-
-            # The stack starts after the first hash
-            stack_list = tuple(line[hash_pos + 1:].split('#'))
-
-            # Generator that yields StackDatum objects, constructed from the
-            # current line
-            yield datatypes.StackDatum(stack=stack_list,
-                                       weight=_to_kilo(weight))
+            yield datatypes.StackDatum.from_string(line)
 
     @util.log(logger)
     @util.Override(Collecter)
@@ -190,8 +144,8 @@ class Memleak(Collecter):
         start = str(start)
         end = str(end)
 
-        return datatypes.StackData(self.get_generator, start, end, "kilobytes",
-                                   "Memory Leaks")
+        return datatypes.StackData(self.get_generator, start, end,
+                                   "Memory Leaks", "bytes")
 
 
 class TCPTracer(Collecter):

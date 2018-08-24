@@ -200,7 +200,7 @@ for k, v in sorted(bytemap.items(), key=lambda bytemap: bytemap[1].value):
             # print folded stack output
             line = [k.name.decode()] + \
                 [b.sym(addr, k.tgid) for addr in reversed(user_stack)]
-            print("%d#%s" % (v.value, "#".join(line)))
+            print("%d$$$%s" % (v.value, ";".join(line)))
     else:
         # print default multi-line stack output
         for addr in user_stack:

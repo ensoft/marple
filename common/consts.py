@@ -45,10 +45,12 @@ class Datatypes(Enum):
 # Display modes for the interfaces
 display_dictionary = {
     Datatypes.EVENT: [DisplayOptions.G2],
-    Datatypes.STACK: [DisplayOptions.HEATMAP, DisplayOptions.STACKPLOT],
-    Datatypes.POINT: [DisplayOptions.TREEMAP,
+    Datatypes.STACK: [DisplayOptions.TREEMAP,
                       DisplayOptions.FLAMEGRAPH],
+    Datatypes.POINT: [DisplayOptions.HEATMAP, DisplayOptions.STACKPLOT],
 }
 
 interfaces_argnames = ["cpusched", "disklat", "ipc", "lib", "mallocstacks",
                        "memtime", "callstack", "memleak"]
+
+separator = "$$$"

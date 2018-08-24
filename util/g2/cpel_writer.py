@@ -178,7 +178,7 @@ class CpelWriter:
         # track_id track_format_offset (4 bytes each)
 
         track, _ = self._decide_track_label(event_object)
-        if event_object.track not in self.track_definitions_dict:
+        if track not in self.track_definitions_dict:
             self.track_definitions_dict[track] = \
                 self.track_def_index
             self.track_def_index += 1

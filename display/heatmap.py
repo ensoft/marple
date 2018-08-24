@@ -35,7 +35,6 @@ from matplotlib import widgets
 
 from common import util
 from common import datatypes
-from collect.IO import read
 from display.generic_display import GenericDisplay
 
 logger = logging.getLogger(__name__)
@@ -127,14 +126,14 @@ class HeatMap(GenericDisplay):
                                       normalise=True,
                                       colorbar="No. Accesses")
 
-    def __init__(self, inp, out, data_options,
+    def __init__(self, data, out, data_options,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the heat map - initialises the heatmap.
 
-        :param inp:
-            The input file that holds the data as an instance of the
-            :class:`DataFileName`.
+        :param data:
+            A generator that returns the lines for the section we want to
+            display as a heatmap
         :param out:
             The output file where the image will be saved as an instance
             of the :class:`DisplayFileName`.
@@ -154,7 +153,7 @@ class HeatMap(GenericDisplay):
                                  data_options.y_units)
 
         self.params = display_options.parameters
-        self.x_data, self.y_data = self._get_data(inp,
+        self.x_data, self.y_data = self._get_data(data,
                                                   display_options.normalise)
 
         # Get values calculated from data
@@ -228,15 +227,16 @@ class HeatMap(GenericDisplay):
         y: float
 
     @util.log(logger)
-    def _get_data(self, datafile, normalised=True):
+    def _get_data(self, data, normalised=True):
         """
         Gets heatmap data from a data file.
 
         File is generated from writing :class:`PointDatum` objects to strings,
         one on each line.
 
-        :param datafile:
-            The input data file.
+        :param data:
+            A generator that returns the lines for the section we want to
+            display as a heatmap
         :param normalised:
             True if x values should be normalised to start from zero.
 
@@ -244,10 +244,9 @@ class HeatMap(GenericDisplay):
             A pair of sequences: x values, y values.
 
         """
-        with read.Reader(str(datafile)) as (header, data):
-            # Get data
-            datapoints = [datatypes.PointDatum.from_string(line)
-                          for line in data]
+
+        datapoints = [datatypes.PointDatum.from_string(line)
+                      for line in data]
 
         x_values = [dp.x for dp in datapoints]
         y_values = [dp.y for dp in datapoints]
