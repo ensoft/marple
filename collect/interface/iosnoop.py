@@ -23,6 +23,7 @@ from io import StringIO
 from common import datatypes
 from collect.interface import collecter
 from common import util
+from common.consts import InterfaceTypes
 
 
 logger = logging.getLogger(__name__)
@@ -52,11 +53,14 @@ class DiskLatency(collecter.Collecter):
     @util.Override(collecter.Collecter)
     def get_generator(self):
         """ Collect data using iosnoop and yield it. """
+        self.start_time = datetime.datetime.now()
+
         sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(self.time)],
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
-        out, err = sub_process.communicate()
 
+        self.end_time = datetime.datetime.now()
+        out, err = sub_process.communicate()
         logger.error(err.decode())
 
         lines = StringIO(out.decode())
@@ -76,12 +80,7 @@ class DiskLatency(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     def collect(self):
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.PointData(self.get_generator, start, end,
-                                   'Disk Latency/Time', 'Time', 'Latency',
-                                   'seconds', 'ms')
+        data = self.get_generator()
+        return datatypes.PointData(data, self.start_time, self.end_time,
+                                   InterfaceTypes.DISKLATENCY,
+                                   'Time', 'Latency', 'seconds', 'ms')

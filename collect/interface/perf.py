@@ -19,19 +19,16 @@ __all__ = (
     'DiskBlockRequests'
 )
 
+import datetime
 import logging
 import re
 import subprocess
-import datetime
-
 from io import StringIO
-from common import util
 from typing import NamedTuple
 
-from common import (
-    datatypes
-)
 from collect.interface.collecter import Collecter
+from common import datatypes, util
+from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -60,9 +57,13 @@ class MemoryEvents(Collecter):
     @util.Override(Collecter)
     def get_generator(self):
         """ Collect data using perf, and return a data generator. """
+        self.start_time = datetime.datetime.now()
+
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
+
+        self.end_time = datetime.datetime.now()
         _, err = sub_process.communicate()
         logger.error(err.decode())
 
@@ -79,14 +80,9 @@ class MemoryEvents(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.StackData(self.get_generator, start, end, "samples",
-                                   "Memory Events")
+        data = self.get_generator()
+        return datatypes.StackData(data, self.start_time, self.end_time,
+                                   "samples", InterfaceTypes.MEMEVENTS)
 
 
 class MemoryMalloc(Collecter):
@@ -123,9 +119,13 @@ class MemoryMalloc(Collecter):
         logger.error(err.decode())
 
         # Record perf data
+        self.start_time = datetime.datetime.now()
+
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "probe_libc:malloc:",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
+
+        self.end_time = datetime.datetime.now()
         _, err = sub_process.communicate()
         logger.error(err.decode())
 
@@ -142,14 +142,9 @@ class MemoryMalloc(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.StackData(self.get_generator, start, end, "kilobytes",
-                                   "Malloc Stacks - perf")
+        data = self.get_generator()
+        return datatypes.StackData(data, self.start_time, self.end_time,
+                                   "kilobytes", InterfaceTypes.PERF_MALLOC)
 
 
 class StackTrace(Collecter):
@@ -180,12 +175,16 @@ class StackTrace(Collecter):
     @util.Override(Collecter)
     def get_generator(self):
         """ Collect data using perf and return a data generator. """
+        self.start_time = datetime.datetime.now()
+
         sub_process = subprocess.Popen(["perf", "record", "-F",
                                         str(self.options.frequency),
                                         self.options.cpufilter,
                                         "-g", "--", "sleep",
                                         str(self.time)],
                                        stderr=subprocess.PIPE)
+
+        self.end_time = datetime.datetime.now()
         _, err = sub_process.communicate()
         logger.error(err.decode())
 
@@ -203,14 +202,9 @@ class StackTrace(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.StackData(self.get_generator, start, end, "samples",
-                                   "Call Stacks")
+        data = self.get_generator()
+        return datatypes.StackData(data, self.start_time, self.end_time,
+                                   "samples", InterfaceTypes.CALLSTACK)
 
 
 class SchedulingEvents(Collecter):
@@ -230,8 +224,12 @@ class SchedulingEvents(Collecter):
     @util.Override(Collecter)
     def get_generator(self):
         """ Collect data using perf and yield it. """
+        self.start_time = datetime.datetime.now()
+
         sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
                                         str(self.time)], stderr=subprocess.PIPE)
+
+        self.end_time = datetime.datetime.now()
         _, err = sub_process.communicate()
         logger.error(err.decode())
 
@@ -284,18 +282,9 @@ class SchedulingEvents(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        """
-
-        :return: An EventData
-        """
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.EventData(self.get_generator, start, end, "Scheduling "
-                                                                   "Events")
+        data = self.get_generator()
+        return datatypes.EventData(data, self.start_time, self.end_time,
+                                   InterfaceTypes.SCHEDEVENTS)
 
 
 class DiskBlockRequests(Collecter):
@@ -316,9 +305,13 @@ class DiskBlockRequests(Collecter):
     @util.Override(Collecter)
     def get_generator(self):
         """ Collect data using perf and return a data generator. """
+        self.start_time = datetime.datetime.now()
+
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "block:block_rq_insert",
              "sleep", str(self.time)], stderr=subprocess.PIPE)
+
+        self.end_time = datetime.datetime.now()
         _, err = sub_process.communicate()
         logger.error(err.decode())
 
@@ -334,18 +327,9 @@ class DiskBlockRequests(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        """
-
-        :return: An EventData
-        """
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.StackData(self.get_generator, start, end, "samples",
-                                   "Disk Block Requests")
+        data = self.get_generator()
+        return datatypes.StackData(data, self.start_time, self.end_time,
+                                   "samples", InterfaceTypes.DISKBLOCK)
 
 
 class StackParser:

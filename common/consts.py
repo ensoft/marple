@@ -31,9 +31,13 @@ class InterfaceTypes(Enum):
     SCHEDEVENTS = 'Scheduling Events'
     DISKLATENCY = 'Disk Latency/Time'
     MALLOCSTACKS = 'Malloc Stacks'
-    MEMLEAK = 'Memory leaks'
+    MEMLEAK = 'Memory Leaks'
     MEMTIME = 'Memory/Time'
     CALLSTACK = 'Call Stacks'
+    TCPTRACE = 'TCP Trace'
+    MEMEVENTS = 'Memory Events'
+    DISKBLOCK = 'Disk Block Requests'
+    PERF_MALLOC = 'Perf Malloc Stacks'
 
 
 class Datatypes(Enum):
@@ -51,4 +55,5 @@ display_dictionary = {
 }
 
 interfaces_argnames = ["cpusched", "disklat", "ipc", "lib", "mallocstacks",
-                       "memtime", "callstack", "memleak"]
+                       "memtime", "callstack", "memleak", "memevents",
+                       "diskblockrq", "perf_malloc"]

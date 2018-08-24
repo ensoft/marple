@@ -25,6 +25,7 @@ from io import StringIO
 
 from collect.interface.collecter import Collecter
 from common import util, datatypes, paths, output
+from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
@@ -69,10 +70,12 @@ class MallocStacks(Collecter):
         :return:
 
         """
+        self.start_time = datetime.datetime.now()
         mall_subp = subprocess.Popen(["sudo", "python",
                                       BCC_TOOLS_PATH + "mallocstacks.py", "-f",
                                       str(self.time)], stderr=subprocess.PIPE,
                                      stdout=subprocess.PIPE)
+        self.end_time = datetime.datetime.now()
         out, err = mall_subp.communicate()
 
         logger.debug(err.decode())
@@ -101,14 +104,9 @@ class MallocStacks(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.StackData(self.get_generator, start, end, "kilobytes",
-                                   "Malloc Stacks")
+        data = self.get_generator()
+        return datatypes.StackData(data, self.start_time, self.end_time,
+                                   "kilobytes", InterfaceTypes.MALLOCSTACKS)
 
 
 class Memleak(Collecter):
@@ -148,12 +146,15 @@ class Memleak(Collecter):
         :return: a generator of 'StackDatum' objects
 
         """
+
+        self.start_time = datetime.datetime.now()
         mall_subp = subprocess.Popen(["sudo", "python",
                                       BCC_TOOLS_PATH + "memleak.py",
                                       "-t", str(self.time),
                                       "-T", str(self.options.top_stacks)],
                                      stderr=subprocess.PIPE,
                                      stdout=subprocess.PIPE)
+        self.end_time = datetime.datetime.now()
         out, err = mall_subp.communicate()
 
         logger.debug(err.decode())
@@ -184,14 +185,9 @@ class Memleak(Collecter):
     @util.log(logger)
     @util.Override(Collecter)
     def collect(self):
-        # Start and end times for the collection
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(0, self.time)
-        start = str(start)
-        end = str(end)
-
-        return datatypes.StackData(self.get_generator, start, end, "kilobytes",
-                                   "Memory Leaks")
+        data = self.get_generator()
+        return datatypes.StackData(data, self.start_time, self.end_time,
+                                   "kilobytes", InterfaceTypes.MEMLEAK)
 
 
 class TCPTracer(Collecter):
@@ -229,7 +225,7 @@ class TCPTracer(Collecter):
 
     @util.log(logger)
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """
         Collect TCP tracing data.
 
@@ -246,13 +242,16 @@ class TCPTracer(Collecter):
         """
         cmd = [BCC_TOOLS_PATH + 'tcptracer ' + '-tv']
 
+        self.start_time = datetime.datetime.now()
         sub_proc = subprocess.Popen(
                 cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 preexec_fn=os.setsid)
         try:
+            self.end_time = datetime.datetime.now()
             out, err = sub_proc.communicate(timeout=self.time)
         except subprocess.TimeoutExpired:
             # Send signal to the process group
+            self.end_time = datetime.datetime.now()
             os.killpg(sub_proc.pid, signal.SIGINT)
             out, err = sub_proc.communicate()
 
@@ -267,6 +266,13 @@ class TCPTracer(Collecter):
         data = StringIO(out.decode())
         port_lookup = self._generate_dict(data)
         return self._generate_events(data, port_lookup)
+
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        data = self.get_generator()
+        return datatypes.EventData(data, self.start_time, self.end_time,
+                                   InterfaceTypes.TCPTRACE)
 
     @util.log(logger)
     def _generate_dict(self, data):
@@ -391,11 +397,11 @@ class TCPTracer(Collecter):
 
             # Otherwise output event
             event = datatypes.EventDatum(time=time, type=type,
-                                        specific_datum=(
-                                            source_pid, source_comm,
-                                            source_port,
-                                            dest_pid, dest_comm, dest_port,
-                                            net_ns)
-                                        )
+                                         specific_datum=(
+                                             source_pid, source_comm,
+                                             source_port,
+                                             dest_pid, dest_comm, dest_port,
+                                             net_ns)
+                                         )
 
             yield event
