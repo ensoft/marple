@@ -22,6 +22,8 @@ __all__ = (
 import logging
 import re
 import subprocess
+import datetime
+
 from io import StringIO
 from common import util
 from typing import NamedTuple
@@ -56,7 +58,7 @@ class MemoryEvents(Collecter):
 
     @util.log(logger)
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """ Collect data using perf, and return a data generator. """
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
@@ -73,6 +75,18 @@ class MemoryEvents(Collecter):
 
         stack_parser = StackParser(out.decode())
         return stack_parser.stack_collapse()
+
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.StackData(self.get_generator, start, end, "samples",
+                                   "Memory Events")
 
 
 class MemoryMalloc(Collecter):
@@ -92,7 +106,7 @@ class MemoryMalloc(Collecter):
 
     @util.log(logger)
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """ Collect data using perf and return a data generator. """
         # Delete old probes and create a new one tracking allocation size
         # @@@ TODO THIS IS ARCHITECTURE SPECIFIC CURRENTLY
@@ -125,6 +139,18 @@ class MemoryMalloc(Collecter):
         stack_parser = StackParser(out.decode())
         return stack_parser.stack_collapse()
 
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.StackData(self.get_generator, start, end, "kilobytes",
+                                   "Malloc Stacks - perf")
+
 
 class StackTrace(Collecter):
     """ Collect stack traces using perf. """
@@ -152,7 +178,7 @@ class StackTrace(Collecter):
 
     @util.log(logger)
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """ Collect data using perf and return a data generator. """
         sub_process = subprocess.Popen(["perf", "record", "-F",
                                         str(self.options.frequency),
@@ -174,6 +200,18 @@ class StackTrace(Collecter):
         stack_parser = StackParser(out.decode())
         return stack_parser.stack_collapse()
 
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.StackData(self.get_generator, start, end, "samples",
+                                   "Call Stacks")
+
 
 class SchedulingEvents(Collecter):
     """ Collect scheduling events using perf. """
@@ -190,7 +228,7 @@ class SchedulingEvents(Collecter):
 
     @util.log(logger)
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """ Collect data using perf and yield it. """
         sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
                                         str(self.time)], stderr=subprocess.PIPE)
@@ -227,34 +265,37 @@ class SchedulingEvents(Collecter):
             time_str = match.group("time").split(".")
             time_int = int(time_str[0]) * 1000000 + int(time_str[1])
 
-            if self.options.track == "cpu":
-                # Create datum from name and pid:
-                label = "{} (pid: {})".format(match.group("name"),
-                                              match.group("pid"))
-
-                # Create track name from cpu:
-                track = "cpu " + str(int(match.group("cpu")))
-
-            elif self.options.track == "pid":
-                # Create track from name and pid:
-                track = "{} (pid: {})".format(match.group("name"),
-                                              match.group("pid"))
-
-                # Create label from cpu:
-                label = "cpu " + str(int(match.group("cpu")))
-
-            else:
-                raise ValueError("Unknown option for SchedulingEvents: {}. "
-                                 "Expected name or pid.".format(
-                                    self.options.track))
+            # Specific data for the scheduling events; fields are named in a
+            # general manner so that they could be used, knowing their order,
+            # to display them in a specific way (if g2 is used this info
+            # can be used to decide the tracks and labels)
+            specific_datum_first = "{} (pid: {})".format(match.group("name"),
+                                                         match.group("pid"))
+            specific_datum_second = "cpu " + str(int(match.group("cpu")))
 
             # The event specific data for this class is "track" and "label",
             # both used to display the marple file using g2
-            specific_datum = (track, label)
-            event = datatypes.EventData(specific_datum=specific_datum,
-                                        time=time_int,
-                                        type=match.group("event"))
+            specific_datum = (specific_datum_first, specific_datum_second)
+            event = datatypes.EventDatum(specific_datum=specific_datum,
+                                         time=time_int,
+                                         type=match.group("event"))
             yield event
+
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        """
+
+        :return: An EventData
+        """
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.EventData(self.get_generator, start, end, "Scheduling "
+                                                                   "Events")
 
 
 class DiskBlockRequests(Collecter):
@@ -273,7 +314,7 @@ class DiskBlockRequests(Collecter):
 
     @util.log(logger)
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """ Collect data using perf and return a data generator. """
         sub_process = subprocess.Popen(
             ["perf", "record", "-ag", "-e", "block:block_rq_insert",
@@ -289,6 +330,22 @@ class DiskBlockRequests(Collecter):
 
         stack_parser = StackParser(out.decode())
         return stack_parser.stack_collapse()
+
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        """
+
+        :return: An EventData
+        """
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.StackData(self.get_generator, start, end, "samples",
+                                   "Disk Block Requests")
 
 
 class StackParser:
@@ -489,7 +546,7 @@ class StackParser:
                 # Matches empty line
                 stack_folded = self._make_stack()
                 if stack_folded:
-                    yield datatypes.StackData(weight=1, stack=stack_folded)
+                    yield datatypes.StackDatum(weight=1, stack=stack_folded)
                     # @@@ TODO: generalise to allow different weights
             # event record start
             elif self._line_is_baseline(line):

@@ -83,8 +83,8 @@ class ReadTest(_FlamegraphBaseTest):
 
         result = list(self.fg._read())
         reader_mock.assert_called_once_with(self.fg.in_filename)
-        expected = [datatypes.StackData(1, ('A1', 'A2', 'A3')),
-                    datatypes.StackData(2, ('B1', 'B2', 'B3', 'B4'))]
+        expected = [datatypes.StackDatum(1, ('A1', 'A2', 'A3')),
+                    datatypes.StackDatum(2, ('B1', 'B2', 'B3', 'B4'))]
         self.assertEqual(expected, result)
 
 
@@ -93,9 +93,9 @@ class MakeTest(_FlamegraphBaseTest):
 
     # Set up test data and expected values
     test_stack_data = [
-        datatypes.StackData(1, ('A1', 'A2', 'A3')),
-        datatypes.StackData(2, ('B1', 'B2', 'B3', 'B4')),
-        datatypes.StackData(3, ('A1', 'A2', 'A3'))
+        datatypes.StackDatum(1, ('A1', 'A2', 'A3')),
+        datatypes.StackDatum(2, ('B1', 'B2', 'B3', 'B4')),
+        datatypes.StackDatum(3, ('A1', 'A2', 'A3'))
     ]
 
     expected = collections.Counter({('A1', 'A2', 'A3'): 4,

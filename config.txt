@@ -1,20 +1,52 @@
+# TODO: Verifier + create config from file at startup if it doesn not exist or
+# TODO: it is corrupted
 [General]
-blocking:false
-time:10
-frequency:99
-system_wide: -a
+    blocking:false
+    time:10
+    frequency:99
+    system_wide: -a
 
-[Display]
-# Respect the following conventions:
-#   - possible file type: 'STACK', 'CSV', 'CPEL'
-#   - possible display options: * 'flamegraph'
-#                               * 'treemap'
-#                               * 'g2'
-#                               * 'heatmap'
-#                               * 'stackplot'
-Scheduling Events:g2
-Disk Latency/Time:heatmap
-Malloc Stacks:flamegraph
-Memory leaks:treemap
-Memory/Time:stackplot
-Call Stacks:flamegraph
+[DisplayInterfaces]
+    # Used to set the default display mode for the interfaces
+    # Respect the following conventions:
+    #   - Interface types:
+    #       * 'Scheduling Events';
+    #       * 'Malloc Stacks';
+    #       * 'Memory leaks';
+    #       * 'Memory/Time';
+    #       * 'Call Stacks';
+    #       * 'Disk Latency/Time';
+    #   - Display modes: * 'flamegraph'
+    #                    * 'treemap'
+    #                    * 'g2'
+    #                    * 'heatmap'
+    #                    * 'stackplot'
+    Scheduling Events:g2
+    Disk Latency/Time:heatmap
+    Malloc Stacks:flamegraph
+    Memory leaks:treemap
+    Memory/Time:stackplot
+
+
+# The following sections will set some options for the various dislpay modes
+[heatmap]
+    figure_size: 10.0
+    scale: 5.0
+    y_res: 10.0
+    normalised: true
+
+[g2]
+    # pid or cpu
+    track: pid
+
+[stackplot]
+    top: 5
+
+[treemap]
+    depth: 25
+
+[flamegraph]
+    coloring: hot
+
+[Aliases]
+    boot: memleak,cpusched,disklat

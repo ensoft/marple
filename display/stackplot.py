@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 from common import util
 from collect.IO import read
+from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 
@@ -32,20 +33,37 @@ class StackPlot(GenericDisplay):
         To show the stack plot, use :func:`StackPlot.show`.
 
     """
+
+    class DisplayOptions(NamedTuple):
+        """
+        - top_processes: the number of processes to be displayed in the
+                         stackplot
+        """
+        top_processes: int
+
+    _DEFAULT_DISPLAY_OPTIONS = DisplayOptions(top_processes=5)
+
     @util.log(logger)
-    def __init__(self, filename, number=6):
+    def __init__(self, inp, data_options,
+                 display_options=_DEFAULT_DISPLAY_OPTIONS):
         """
         Constructor, initialises the stackplot.
 
-        :param filename:
-            The name of the file containing csv data in three columns.
-        :param number:
-            The number of elements per time step to display
+        There is no out file since currently we do not save an image of the
+        output
+        :param inp:
+            The input file that holds the data as an instance of the
+            :class:`DataFileName`.
+        :param data_options:
+        :param display_options:
 
         """
+        # Initialise the base class
+        super().__init__(display_options, data_options)
 
-        # Had open(file, "r", encoding="utf-8")
-        with read.Reader(str(filename)) as (header, data):
+        # Was open(file, "r", encoding="utf-8") in case the encoding is
+        # for some reason important
+        with read.Reader(str(inp)) as (header, data):
             # read the data into a dict
             datapoints = {}
             for line in data:
@@ -71,16 +89,21 @@ class StackPlot(GenericDisplay):
                                      reverse=True)
 
             # Only keep first n at each time step
-            datapoints[x] = data_descending[0:number]
+            datapoints[x] = data_descending[0:self.display_options
+                                                  .top_processes]
 
             # Sum the rest of the values separately, as "other"
             if x not in other:
                 try:
-                    other[x] = np.sum(z[0] for z in data_descending[number:])
+                    other[x] = np.sum(z[0] for z in
+                                      data_descending[self.display_options
+                                                          .top_processes:])
                 except IndexError as ie:
                     raise IndexError("Not enough data to display stackplot "
                                      "with {} rows, use smaller number. {}"
-                                     .format(number, ie.args))
+                                     .format(self.display_options
+                                                 .top_processes,
+                                             ie.args))
 
             # Keep track of the labels that are in use in top n
             seen_labels = seen_labels.union(set(z[1] for z in datapoints[x]))
@@ -183,26 +206,7 @@ class StackPlot(GenericDisplay):
         ax.legend(handles[::-1], labels[::-1])
 
         # @@@ Set labels passed as arguments (options)
-        ax.set_xlabel('time/s')
-        ax.set_ylabel('memory/MB')
+        ax.set_xlabel(self.data_options.x + ' / ' + self.data_options.x_units)
+        ax.set_ylabel(self.data_options.y + ' / ' + self.data_options.y_units)
 
         plt.show()
-
-
-if __name__ == "__main__":
-    fn = "/tmp/stackplot.plt"
-    with open(fn, "w") as f:
-        f.writelines(io.StringIO("""
-        [CSV]
-        0,0,other
-        0,0,x
-        0,1,x
-        0,0,y
-        1,0.5,x
-        1,1,y
-        1,2,other
-        """.strip()))
-        # @@@Test other as name
-
-    sp = StackPlot(fn, 2)
-    sp.show()

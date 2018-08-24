@@ -14,9 +14,9 @@ object to be converted to standard representation using casting.
 """
 
 __all__ = (
-    'Datapoint',
-    'StackData',
-    'EventData',
+    'PointDatum',
+    'StackDatum',
+    'EventDatum',
 )
 
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
 
-class EventData(typing.NamedTuple):
+class EventDatum(typing.NamedTuple):
     """
     Represents a single scheduler event.
 
@@ -62,7 +62,7 @@ class EventData(typing.NamedTuple):
     @classmethod
     def from_string(cls, string):
         """
-        Converts a standard representation to a :class:`EventData` object.
+        Converts a standard representation to a :class:`EventDatum` object.
 
         Tolerant to whitespace/trailing linebreaks.
 
@@ -72,24 +72,24 @@ class EventData(typing.NamedTuple):
         :raises:
             exceptions.DatatypeException
         :return:
-            The resulting :class:`EventData` object.
+            The resulting :class:`EventDatum` object.
 
         """
         try:
             time, type_, datum = string.strip().split("#")
-            return EventData(time=int(time), type=type_,
-                             specific_datum=eval(datum))
+            return EventDatum(time=int(time), type=type_,
+                              specific_datum=eval(datum))
         except IndexError as ie:
             raise exceptions.DatatypeException(
-                "EventData - not enough values in datatype string "
+                "EventDatum - not enough values in datatype string "
                 "('{}')".format(string)) from ie
         except ValueError as ve:
             raise exceptions.DatatypeException(
-                "EventData - could not convert datatype string "
+                "EventDatum - could not convert datatype string "
                 "('{}')".format(string)) from ve
 
 
-class Datapoint(typing.NamedTuple):
+class PointDatum(typing.NamedTuple):
     """
     Represents a single 2D datapoint, potentially with added info.
 
@@ -120,7 +120,7 @@ class Datapoint(typing.NamedTuple):
     @classmethod
     def from_string(cls, string):
         """
-        Converts a standard representation into a :class:`Datapoint` object.
+        Converts a standard representation into a :class:`PointDatum` object.
 
         Tolerant to whitespace/trailing linebreaks.
 
@@ -130,23 +130,23 @@ class Datapoint(typing.NamedTuple):
         :raises:
             exceptions.DatatypeException
         :return:
-            The resulting :class:`Datapoint` object.
+            The resulting :class:`PointDatum` object.
 
         """
         try:
             x, y, info = string.strip().split(",")
-            return Datapoint(x=float(x), y=float(y), info=info)
+            return PointDatum(x=float(x), y=float(y), info=info)
         except IndexError as ie:
             raise exceptions.DatatypeException(
-                "Datapoint - not enough values in datatype string "
+                "PointDatum - not enough values in datatype string "
                 "('{}')".format(string)) from ie
         except ValueError as ve:
             raise exceptions.DatatypeException(
-                "Datapoint - could not convert datatype string "
+                "PointDatum - could not convert datatype string "
                 "('{}')".format(string)) from ve
 
 
-class StackData(typing.NamedTuple):
+class StackDatum(typing.NamedTuple):
     """
     Represents a single stack.
 
@@ -178,7 +178,7 @@ class StackData(typing.NamedTuple):
     @classmethod
     def from_string(cls, string):
         """
-        Converts a standard representation into a :class:`StackData` object.
+        Converts a standard representation into a :class:`StackDatum` object.
 
         Tolerant to whitespace/trailing linebreaks.
 
@@ -188,14 +188,99 @@ class StackData(typing.NamedTuple):
         :raises:
             exceptions.DatatypeException
         :return:
-            The resulting :class:`StackData` object.
+            The resulting :class:`StackDatum` object.
 
         """
         try:
             weight, stack = string.strip().split("#")
             stack_tuple = tuple(stack.split(';'))
-            return StackData(weight=int(weight), stack=stack_tuple)
+            return StackDatum(weight=int(weight), stack=stack_tuple)
         except ValueError as ve:
             raise exceptions.DatatypeException(
-                "StackData - could not convert datatype string "
+                "StackDatum - could not convert datatype string "
                 "('{}')".format(string)) from ve
+
+
+class StackData:
+    class DataOptions(typing.NamedTuple):
+        """
+        - weight_units: the units for the weight (calls, bytes etc)
+
+        """
+        weight_units: str
+
+    def __init__(self, datum_generator, start, end, interface, weight_units):
+        self.datum_generator = datum_generator()
+        self.start = start
+        self.end = end
+        self.interface = interface
+        self.datatype = "stack"
+        self.data_options = {
+            'weight_units': weight_units,
+        }
+
+    def header_to_dict(self):
+        header_dict = {
+            "start": self.start,
+            "end": self.end,
+            "interface": self.interface,
+            "datatype": self.datatype,
+            "data_options": self.data_options,
+        }
+        return header_dict
+
+
+class EventData:
+    def __init__(self, datum_generator, start, end, interface):
+        self.datum_generator = datum_generator()
+        self.start = start
+        self.end = end
+        self.interface = interface
+        self.datatype = "event"
+
+    def header_to_dict(self):
+        header_dict = {
+            "start": self.start,
+            "end": self.end,
+            "interface": self.interface,
+            "datatype": self.datatype,
+        }
+        return header_dict
+
+
+class PointData:
+    class DataOptions(typing.NamedTuple):
+        """
+        - x_label: label for the x axis;
+        - x_units: units for the x axis;
+        - y_label: label for the y axis;
+        - y_units: uni
+        """
+        x_label: str
+        y_label: str
+        x_units: str
+        y_units: str
+
+    def __init__(self, datum_generator, start, end, interface, x_label,
+                 x_units, y_label, y_units):
+        self.datum_generator = datum_generator()
+        self.start = start
+        self.end = end
+        self.interface = interface
+        self.datatype = "point"
+        self.data_options = {
+            'x_label': x_label,
+            'x_units': x_units,
+            'y_label': y_label,
+            'y_units': y_units,
+        }
+
+    def header_to_dict(self):
+        header_dict = {
+            "start": self.start,
+            "end": self.end,
+            "interface": self.interface,
+            "datatype": self.datatype,
+            "data_options": self.data_options
+        }
+        return header_dict

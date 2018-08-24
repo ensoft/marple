@@ -26,21 +26,21 @@ logger.debug('Entered module: %s', __name__)
 class Writer:
     @staticmethod
     @util.log(logger)
-    def write(data, filename, header):
+    def write(data_list, filename):
         """
-        Writes to a file the contents of an iterator
+        Writes to a file the contents data from  list of `Data` objects
 
-        :param data: the data to be written, as a generator
+        :param data_list: A list of datum generators
         :param filename: the name of the file that data is going to be written
                          to
-        :param header: a dictionary containing the header; should always
-                       contain start and end times of the collect and the
-                       datatype and interface used; can contain additional
-                       fields
         """
         with open(filename, "w") as out:
-            # We write the header of the file as the first line
-            out.write(json.dumps(header) + '\n')
+            for data in data_list:
+                # We write the header of the file as the first line
+                out.write(json.dumps(data.header_to_dict()) + '\n')
 
-            for datum in data:
-                out.write(str(datum) + "\n")
+                # It is here that the actual subprocesses are fired
+                for datum in data.datum_generator:
+                    out.write(str(datum) + "\n")
+
+                out.write("\n")

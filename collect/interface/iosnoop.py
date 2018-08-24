@@ -16,10 +16,11 @@ __all__ = (
 import logging
 import os
 import subprocess
+import datetime
 from typing import NamedTuple
 from io import StringIO
 
-from common.datatypes import Datapoint
+from common import datatypes
 from collect.interface import collecter
 from common import util
 
@@ -49,7 +50,7 @@ class DiskLatency(collecter.Collecter):
 
     @util.log(logger)
     @util.Override(collecter.Collecter)
-    def collect(self):
+    def get_generator(self):
         """ Collect data using iosnoop and yield it. """
         sub_process = subprocess.Popen([IOSNOOP_SCRIPT, "-ts", str(self.time)],
                                        stdout=subprocess.PIPE,
@@ -69,5 +70,18 @@ class DiskLatency(collecter.Collecter):
             values = line.split()
             if len(values) < 9:
                 continue  # skip footer lines
-            yield Datapoint(x=float(values[1]), y=float(values[8]),
-                            info=values[3])
+            yield datatypes.PointDatum(x=float(values[1]), y=float(values[8]),
+                                       info=values[3])
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def collect(self):
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.PointData(self.get_generator, start, end,
+                                   'Disk Latency/Time', 'Time', 'Latency',
+                                   'seconds', 'ms')

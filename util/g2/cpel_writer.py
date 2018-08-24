@@ -18,7 +18,7 @@ import logging
 import struct
 from datetime import datetime
 
-from common import datatypes, util
+from common import util
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -40,15 +40,20 @@ class CpelWriter:
     #     name, 4 for length info and for the event section, 4 for ticks per us.
     _SECTION_HEADER_LENGTHS = {1: 0, 2: 68, 3: 68, 4: 68, 5: 72}
 
-    def __init__(self, event_objects):
+    def __init__(self, event_objects, track):
         """
         Initialise the input data and read in the data
 
         :param event_objects:
-            An iterator of :class:`SchedEvent` objects to be processed.
+            An iterator of :class:`EventDatum` objects to be processed.
+        :param track:
+            The track to be used. The objects of are of type :class:`EventDatum`
+            which has a touple `specifid_data`; for the scheduling events the
+            order is (name/pid, cpu)
 
         """
         self.event_objects = event_objects
+        self.track = track
 
         # Information for writing the file header (no of sections etc.)
         self.info = {}
@@ -89,6 +94,27 @@ class CpelWriter:
         # fill the above data structures with data from event input.
         self._collect()
 
+    def _decide_track_label(self, event_object):
+        """
+        Method that decides the track and the label for a particular event
+        Scheduling events of the type `EventType` have their specific data as
+        follows: (name/pid, cpu)
+
+        :param event_object: the event we want to fine the track and label for
+        :return: a pair (track, label)
+
+        """
+        if self.track == "pid":
+            return (event_object.specific_datum[0],
+                    event_object.specific_datum[1])
+        elif self.track == "cpu":
+            return (event_object.specific_datum[1],
+                    event_object.specific_datum[0])
+        else:
+            raise ValueError("Unknown option for the track: {}. "
+                             "Expected cpu or pid.".format(
+                              self.track))
+
     def _insert_string(self, string_key: str):
         """
         Puts a string into the string table, taking care of updating the index.
@@ -110,8 +136,9 @@ class CpelWriter:
 
         """
         # insert datum, track, event_type (not time)
-        self._insert_string(event_object.specific_datum[1])
-        self._insert_string(event_object.specific_datum[0])
+        track, label = self._decide_track_label(event_object)
+        self._insert_string(label)
+        self._insert_string(track)
         self._insert_string(event_object.type)
 
     def _insert_object_symbols(self, event_object):
@@ -150,8 +177,9 @@ class CpelWriter:
         """
         # track_id track_format_offset (4 bytes each)
 
-        if event_object.specific_datum[0] not in self.track_definitions_dict:
-            self.track_definitions_dict[event_object.specific_datum[0]] = \
+        track, _ = self._decide_track_label(event_object)
+        if event_object.track not in self.track_definitions_dict:
+            self.track_definitions_dict[track] = \
                 self.track_def_index
             self.track_def_index += 1
 
@@ -170,11 +198,12 @@ class CpelWriter:
         # time,time (from object) track_id (from track_def_dict) event_code (
         #   from event_def_dict) event_datum (from string table) (4 bytes each)
 
+        track, label = self._decide_track_label(event_object)
         self.event_data.append(
             (event_object.time,
-             self.track_definitions_dict[event_object.specific_datum[0]],
+             self.track_definitions_dict[track],
              self.event_definitions_dict[event_object.type],
-             self.string_table[event_object.specific_datum[1]])
+             self.string_table[label])
         )
 
         # add 5 x 4 = 20 (bytes) to the event data section length

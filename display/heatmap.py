@@ -36,6 +36,7 @@ from matplotlib import widgets
 from common import util
 from common import datatypes
 from collect.IO import read
+from display.generic_display import GenericDisplay
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -45,7 +46,6 @@ logger.debug('Entered module: %s', __name__)
 # @@@ TODO scroll to zoom
 # @@@ TODO add extra dataset for display in annotation
 #     (e.g. PID of processes in current bin)
-
 
 class AxesLabels(NamedTuple):
     """
@@ -67,7 +67,6 @@ class AxesLabels(NamedTuple):
     y: str
     x_units: str
     y_units: str
-    colorbar: str
 
 
 class GraphParameters(NamedTuple):
@@ -93,13 +92,7 @@ class HeatmapException(Exception):
         super().__init__("Error in display.heatmap: " + msg)
 
 
-# Default parameters - the graph is 10 x 10 inches on screen, with a scale
-# factor of 5, and a y-axis resolution of 10 (10 histogram bins will be
-# visible below the median y-value.
-DEFAULT_PARAMETERS = GraphParameters(figure_size=10.0, scale=5.0, y_res=10.0)
-
-
-class HeatMap:
+class HeatMap(GenericDisplay):
     """
     The core class for creating and displaying heat maps.
 
@@ -113,29 +106,56 @@ class HeatMap:
 
     """
 
-    def __init__(self, inp, out, labels, parameters, normalise):
+    class DisplayOptions(NamedTuple):
+        """
+        Options:
+            - labels: axes labels used for the heatmap display
+            - parameters: the graph is 10 x 10 inches on screen, with a scale
+                          factor of 5, and a y-axis resolution of 10 (10
+                          histogram bins will be visible below the median
+                          y-value.
+            - normalised: tells if the coords are to be normalised
+        """
+        colorbar: str
+        parameters: GraphParameters
+        normalise: bool
+
+    _DEFAULT_OPTIONS = DisplayOptions(parameters=GraphParameters(
+                                                          figure_size=10.0,
+                                                          scale=5.0,
+                                                          y_res=10.0),
+                                      normalise=True,
+                                      colorbar="No. Accesses")
+
+    def __init__(self, inp, out, data_options,
+                 display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the heat map - initialises the heatmap.
 
-        :param datafile:
-            The input data file.
-        :param outfile:
-            The output file as a file object.
-        :param labels:
-            An object of :class:`AxesLabels`, storing labels for the heat map.
-        :param parameters:
-            An object of :class `GraphParameters`, storing parameters for
-            displaying the graph.
-        :param normalise:
-            True if the x-axis should be normalised to start from zero.
+        :param inp:
+            The input file that holds the data as an instance of the
+            :class:`DataFileName`.
+        :param out:
+            The output file where the image will be saved as an instance
+            of the :class:`DisplayFileName`.
+        :param data_options:
+        :param display_options:
 
         """
+        # Initialise the base class
+        super().__init__(data_options, display_options)
+
         out.set_options("heatmap", "svg")
         self.output = str(out)
 
-        self.labels = labels
-        self.params = parameters
-        self.x_data, self.y_data = self._get_data(inp, normalise)
+        self.labels = AxesLabels(data_options.x_label,
+                                 data_options.y_label,
+                                 data_options.x_units,
+                                 data_options.y_units)
+
+        self.params = display_options.parameters
+        self.x_data, self.y_data = self._get_data(inp,
+                                                  display_options.normalise)
 
         # Get values calculated from data
         self.data_stats = self._get_data_stats()
@@ -212,7 +232,7 @@ class HeatMap:
         """
         Gets heatmap data from a data file.
 
-        File is generated from writing :class:`Datapoint` objects to strings,
+        File is generated from writing :class:`PointDatum` objects to strings,
         one on each line.
 
         :param datafile:
@@ -226,7 +246,7 @@ class HeatMap:
         """
         with read.Reader(str(datafile)) as (header, data):
             # Get data
-            datapoints = [datatypes.Datapoint.from_string(line)
+            datapoints = [datatypes.PointDatum.from_string(line)
                           for line in data]
 
         x_values = [dp.x for dp in datapoints]
@@ -371,7 +391,7 @@ class HeatMap:
     def _add_colorbar(self):
         """ Add a colorbar scale to the graph. """
         colorbar = self.axes.figure.colorbar(self.image, ax=self.axes)
-        colorbar.ax.set_ylabel(self.labels.colorbar)
+        colorbar.ax.set_ylabel(self.display_options.colorbar)
 
     def _add_annotations(self):
         """

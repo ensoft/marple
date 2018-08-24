@@ -77,14 +77,14 @@ def main():
         # (program name: marple) and argv[1] (function name: {collect,display})
         if len(sys.argv) < 2:
             output.print_("usage: marple COMMAND\n The COMMAND "
-                          "can be either \"collect\" or \"display\"")
-        elif sys.argv[1] == "collect":
+                          "can be either \"--collect\" or \"--display\"")
+        elif sys.argv[1] == "--collect":
             collect_controller.main(sys.argv[2:], parser)
-        elif sys.argv[1] == "display":
+        elif sys.argv[1] == "--display":
             display_controller.main(sys.argv[2:])
         else:
             output.print_("usage: marple COMMAND\n The COMMAND "
-                          "can be either \"collect\" or \"display\"")
+                          "can be either \"--collect\" or \"--display\"")
     except exceptions.AbortedException:
         # If the user decides to abort
         output.error_("Aborted.", "Execution was aborted by the user.")

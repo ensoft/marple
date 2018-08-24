@@ -15,14 +15,15 @@ __all__ = "main"
 import argparse
 import logging
 import os
-import datetime
-from typing import NamedTuple
 
 from common import (
     exceptions,
     file,
     output,
-    util
+    util,
+    datatypes,
+    config,
+    consts
 )
 from collect.interface import (
     perf,
@@ -33,6 +34,40 @@ from collect.IO import write
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
+
+
+def _get_collecter_instance(interface_name, time, parser):
+    """
+    A helper function that returns an instance of the appropriate interface
+
+    :param interface_name: the name of the interface we want an instance of
+    :param time: the time used as an option for the collecter
+    :param parser: a config parser used to fetch collecter related options other
+                   than the time
+    :returns: a collecter for the interface
+    """
+    collecter = None
+    if interface_name == "cpusched":
+        collecter = perf.SchedulingEvents(time)
+    elif interface_name == "disklat":
+        collecter = iosnoop.DiskLatency(time)
+    elif interface_name == "ipc":
+        raise NotImplementedError("IPC not implemented")  # TODO
+    elif interface_name == "lib":
+        raise NotImplementedError("Lib not implemented")  # TODO
+    elif interface_name == "mallocstacks":
+        collecter = ebpf.MallocStacks(time)
+    elif interface_name == "memtime":
+        collecter = smem.MemoryGraph(time)
+    elif interface_name == "callstack":
+        options = perf.StackTrace.Options(parser.get_default_frequency(),
+                                          parser.get_system_wide())
+        collecter = perf.StackTrace(time, options)
+    elif interface_name == "memleak":
+        options = ebpf.Memleak.Options(10)
+        collecter = ebpf.Memleak(time, options)
+
+    return collecter
 
 
 @util.log(logger)
@@ -57,66 +92,44 @@ def _collect_and_store(args, parser):
         filename = file.DataFileName(args.outfile)
     else:
         filename = file.DataFileName()
-
     # Save latest filename to temporary file for display module
     filename.export_filename()
 
-    # TODO: get all options from either args or config
-    # Use user specified time for data collection, otherwise standard value
+    # Use user specified time for data collection, otherwise config value
     time = args.time if args.time is not None else parser.get_default_time()
-    start = datetime.datetime.now()
-    end = start + datetime.timedelta(0, time)
 
-    header = {}
-    header["start"] = str(start)
-    header["end"] = str(end)
+    all_interface_instances = []
+    interfaces_seen = set()
+    config_parser = config.Parser()
+    for interface in args.interfaces:
+        if interface in consts.interfaces_argnames:
+            if interface in interfaces_seen:
+                continue
+            interfaces_seen.union({interface})
 
-    # Select appropriate interfaces based on user input
-    if args.cpu:
-        collecter = perf.SchedulingEvents(time)
-        writer = write.Writer()
-        header["datatype"] = "Event Data"
-        header["interface"] = "Scheduling Events"
-        #header["event_specific_datum_order"] = ["track", "label"]
-    elif args.disk:
-        collecter = iosnoop.DiskLatency(time)
-        writer = write.Writer()
-        header["datatype"] = "Datapoint"
-        header["interface"] = "Disk Latency/Time"
-    elif args.ipc:
-        raise NotImplementedError("IPC not implemented")  # TODO
-    elif args.lib:
-        raise NotImplementedError("IPC not implemented")  # TODO
-    elif args.mem:
-        collecter = ebpf.MallocStacks(time)
-        writer = write.Writer()
-        header["datatype"] = "Stack Data"
-        header["interface"] = "Malloc Stacks"
-    elif args.memgraph:
-        collecter = smem.MemoryGraph(time)
-        writer = write.Writer()
-        header["datatype"] = "Datapoint"
-        header["interface"] = "Memory/Time"
-    elif args.stack:
-        options = perf.StackTrace.Options(parser.get_default_frequency(),
-                                          parser.get_system_wide())
-        collecter = perf.StackTrace(time, options)
-        writer = write.Writer()
-        header["datatype"] = "Stack Data"
-        header["interface"] = "Call Stacks"
-    elif args.memleak:
-        options = ebpf.Memleak.Options(10)
-        collecter = ebpf.Memleak(time, options)
-        writer = write.Writer()
-        header["datatype"] = "Stack Data"
-        header["interface"] = "Memory leaks"
-    else:
-        raise argparse.ArgumentError(message="Arguments not recognised",
-                                     argument=args)
+            collecter = _get_collecter_instance(interface, time, parser)
+            all_interface_instances.append(collecter.collect())
+        else:
+            # The interface is not a valid one, might be an alias
+            if not config_parser.has_option("Aliases", interface):
+                raise argparse.ArgumentError(message="Arguments not recognised",
+                                             argument=args)
 
-    # Run collection
-    data = collecter.collect()
-    writer.write(data, str(filename), header)
+            alias_interfaces = config_parser.get_option_from_section(
+                "Aliases", interface).split(',')
+            for alias_interface in alias_interfaces:
+                if alias_interface in alias_interfaces:
+                    continue
+                interfaces_seen.union({interface})
+
+                collecter = _get_collecter_instance(alias_interface, time,
+                                                    parser)
+                all_interface_instances.append(collecter.collect())
+
+    # For each pair (collecter, data) in all_data, we need to pass the
+    # datum generator collecter provides to the data
+    writer = write.Writer()
+    writer.write(all_interface_instances, str(filename))
 
     output.print_("Done.")
 
@@ -153,24 +166,14 @@ def _args_parse(argv):
                                      description="Collect performance data")
 
     # Add options for the modules
-    module_collect = parser.add_mutually_exclusive_group(required=True)
-    module_collect.add_argument("-c", "--cpu", action="store_true",
-                                help="gather cpu scheduling events")
-    module_collect.add_argument("-d", "--disk", action="store_true",
-                                help="monitor disk input/output")
-    module_collect.add_argument("-p", "--ipc", action="store_true",
-                                help="trace inter-process communication")
-    module_collect.add_argument("-l", "--lib", action="store_true",
-                                help="gather library load times")
-    module_collect.add_argument("-m", "--mem", action="store_true",
-                                help="trace memory allocation/ deallocation")
-    module_collect.add_argument("-g", "--memgraph", action="store_true",
-                                help="make a graph of memory allocation per "
-                                     "process by time")
-    module_collect.add_argument("-s", "--stack", action="store_true",
-                                help="gather general call stack tracing data")
-    module_collect.add_argument("-x", "--memleak", action="store_true",
-                                help="trace userspace allocations")
+    options = parser.add_argument_group()
+    options.add_argument("interfaces", nargs='+',
+                         help="Modules to be used when tracking. Options "
+                              "include: cpusched, disklat, ipc, lib,"
+                              "mallocstacks, memtime, memleak. The user can "
+                              "specify aliases for multiple such options in "
+                              "the config file and use them here just like "
+                              "with normal options")
 
     # Add flag and parameter for filename
     filename = parser.add_argument_group()
