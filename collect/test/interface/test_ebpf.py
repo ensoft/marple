@@ -36,7 +36,7 @@ class Mallocstacks(unittest.TestCase):
         Helper method for the testing of collect
 
         :param mock_ret: stdout mock value
-        :returns gen: generator of StackData objects, based on what mock_ret is
+        :returns gen: generator of StackDatum objects, based on what mock_ret is
         """
         with mock.patch("subprocess.Popen") as popenmock:
             popenmock().communicate.return_value = (mock_ret,
@@ -54,10 +54,10 @@ class Mallocstacks(unittest.TestCase):
         mock_return_popen_stdout = b"123123#proc1#func1#func2\n321321#proc2#" \
                                    b"func1#func2#func3\n"
 
-        expected = [datatypes.StackData(self.to_kilo(123123),
-                                        ("proc1", "func1", "func2")),
-                    datatypes.StackData(self.to_kilo(321321),
-                                        ("proc2", "func1", "func2", "func3"))]
+        expected = [datatypes.StackDatum(self.to_kilo(123123),
+                                         ("proc1", "func1", "func2")),
+                    datatypes.StackDatum(self.to_kilo(321321),
+                                         ("proc2", "func1", "func2", "func3"))]
 
         output = self.mock(mock_return_popen_stdout)
         self.assertEqual(output, expected)
@@ -69,8 +69,8 @@ class Mallocstacks(unittest.TestCase):
         """
         mock_return_popen_stdout = b"123123#1   [];'#[]-=1   2=\n"
 
-        expected = [datatypes.StackData(self.to_kilo(123123),
-                                        ("1   [];'", "[]-=1   2="))]
+        expected = [datatypes.StackDatum(self.to_kilo(123123),
+                                         ("1   [];'", "[]-=1   2="))]
 
         output = self.mock(mock_return_popen_stdout)
         self.assertEqual(output, expected)

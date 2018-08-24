@@ -6,7 +6,7 @@ import os
 import shutil
 
 from collect.IO import write
-from common.datatypes import StackData, EventData, Datapoint
+from common.datatypes import StackDatum, EventDatum, PointDatum
 import util.g2.cpel_writer as cpel_writer
 
 
@@ -32,9 +32,9 @@ class WriterTest(unittest.TestCase):
 
         # Set up test values
         stack_data = [
-            StackData(1, ("A", "B", "C")),
-            StackData(2, ("D", "E")),
-            StackData(3, ("F", "G"))
+            StackDatum(1, ("A", "B", "C")),
+            StackDatum(2, ("D", "E")),
+            StackDatum(3, ("F", "G"))
         ]
         expected = "{}\n1#A;B;C\n2#D;E\n3#F;G\n"
 
@@ -51,9 +51,9 @@ class WriterTest(unittest.TestCase):
 
         # Set up test values
         dp_data = [
-            Datapoint(1.0, 2.0, 'info1'),
-            Datapoint(3.0, 4.51, 'info2'),
-            Datapoint(0.0, 1.3, 'info3')
+            PointDatum(1.0, 2.0, 'info1'),
+            PointDatum(3.0, 4.51, 'info2'),
+            PointDatum(0.0, 1.3, 'info3')
         ]
         expected = "{}\n1.0,2.0,info1\n3.0,4.51,info2\n0.0,1.3,info3\n"
 
@@ -70,12 +70,12 @@ class WriterTest(unittest.TestCase):
 
         # Set up test values
         sched_data = [
-            EventData(time=1, type="type1",
-                      specific_datum=("track1", "datum1")),
-            EventData(time=2, type="type2",
-                      specific_datum=("track2", "datum2")),
-            EventData(time=3, type="type3",
-                      specific_datum=("track3", "datum3")),
+            EventDatum(time=1, type="type1",
+                       specific_datum=("track1", "datum1")),
+            EventDatum(time=2, type="type2",
+                       specific_datum=("track2", "datum2")),
+            EventDatum(time=3, type="type3",
+                       specific_datum=("track3", "datum3")),
         ]
         # First line is an empty header
         expected = "{}\n1#type1#('track1', 'datum1')\n2#type2#('track2'," \
@@ -100,12 +100,12 @@ class SchedTest(unittest.TestCase):
         shutil.rmtree(self._TEST_DIR)
 
     # Create Event iterators for testing
-    testEvents = [EventData(specific_datum=("cpu 2", "test_name (pid: 1234)"),
-                            time=11112221,
-                            type="event_type"),
-                  EventData(specific_datum=("cpu 1", "test_name2 (pid: 1234)"),
-                            time=11112222,
-                            type="event_type")]
+    testEvents = [EventDatum(specific_datum=("cpu 2", "test_name (pid: 1234)"),
+                             time=11112221,
+                             type="event_type"),
+                  EventDatum(specific_datum=("cpu 1", "test_name2 (pid: 1234)"),
+                             time=11112222,
+                             type="event_type")]
 
 
 class CPELTest(SchedTest):
@@ -227,8 +227,8 @@ class CPELTest(SchedTest):
 
         # Two different events with different data, track and event:
         writer = cpel_writer.CpelWriter([
-            EventData(specific_datum=("t1", "d1"), time=1, type="e1"),
-            EventData(specific_datum=("t2", "d2"), time=2, type="e2")])
+            EventDatum(specific_datum=("t1", "d1"), time=1, type="e1"),
+            EventDatum(specific_datum=("t2", "d2"), time=2, type="e2")])
         writer.write(filename)
 
         # Number of strings should be 8, 6 plus name of section plus format str
@@ -246,8 +246,8 @@ class CPELTest(SchedTest):
 
         # Two different events with same data, track, and event:
         writer = cpel_writer.CpelWriter([
-            EventData(specific_datum=("1", "d"), time=1, type="e"),
-            EventData(specific_datum=("1", "d"), time=1, type="e")])
+            EventDatum(specific_datum=("1", "d"), time=1, type="e"),
+            EventDatum(specific_datum=("1", "d"), time=1, type="e")])
         writer.write(filename)
 
         # There should be 5 strings in the string table, 3 plus table name + %s

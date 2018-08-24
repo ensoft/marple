@@ -14,6 +14,7 @@ __all__ = (
     "TCPTracer"
 )
 
+import datetime
 import logging
 import os
 import re
@@ -62,7 +63,7 @@ class MallocStacks(Collecter):
 
     @util.log(logger)
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """
         Collects memory stacks where the weight is the number of kilobytes
         :return:
@@ -92,10 +93,22 @@ class MallocStacks(Collecter):
             # The stack starts after the first hash
             stack_list = tuple(line[hash_pos + 1:].split('#'))
 
-            # Generator that yields StackData objects, constructed from the
+            # Generator that yields StackDatum objects, constructed from the
             # current line
-            yield datatypes.StackData(stack=stack_list,
-                                      weight=_to_kilo(weight))
+            yield datatypes.StackDatum(stack=stack_list,
+                                       weight=_to_kilo(weight))
+
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.StackData(self.get_generator, start, end, "kilobytes",
+                                   "Malloc Stacks")
 
 
 class Memleak(Collecter):
@@ -119,7 +132,7 @@ class Memleak(Collecter):
 
     @util.log(logger)
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """
         Collects all the top 'top_stacks' stacks with outstanding allocations
 
@@ -132,7 +145,7 @@ class Memleak(Collecter):
         (weight#name1;name2;name3;...) that is retrieved via stdout and
         processed here.
 
-        :return: a generator of 'StackData' objects
+        :return: a generator of 'StackDatum' objects
 
         """
         mall_subp = subprocess.Popen(["sudo", "python",
@@ -163,10 +176,22 @@ class Memleak(Collecter):
             # The stack starts after the first hash
             stack_list = tuple(line[hash_pos + 1:].split('#'))
 
-            # Generator that yields StackData objects, constructed from the
+            # Generator that yields StackDatum objects, constructed from the
             # current line
-            yield datatypes.StackData(stack=stack_list,
-                                      weight=_to_kilo(weight))
+            yield datatypes.StackDatum(stack=stack_list,
+                                       weight=_to_kilo(weight))
+
+    @util.log(logger)
+    @util.Override(Collecter)
+    def collect(self):
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.StackData(self.get_generator, start, end, "kilobytes",
+                                   "Memory Leaks")
 
 
 class TCPTracer(Collecter):
@@ -365,7 +390,7 @@ class TCPTracer(Collecter):
             dest_pids.add((dest_pid, dest_comm))  # Ensure set isn't altered
 
             # Otherwise output event
-            event = datatypes.EventData(time=time, type=type,
+            event = datatypes.EventDatum(time=time, type=type,
                                         specific_datum=(
                                             source_pid, source_comm,
                                             source_port,

@@ -41,3 +41,7 @@ class Collecter:
     def collect(self):
         """ Collect the data and return it. """
         pass
+
+    def get_generator(self):
+        """ Retrieves the datum generator """
+        pass

@@ -55,6 +55,6 @@ class DiskLatencyTest(_IosnoopCollecterBaseTest):
         ]
         self.log_mock.error.assert_has_calls(expected_logs)
 
-        expected = [datatypes.Datapoint(x=1.0, y=2.0, info='test_info')]
+        expected = [datatypes.PointDatum(x=1.0, y=2.0, info='test_info')]
 
         self.assertEqual(expected, datapoints)

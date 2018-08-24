@@ -44,15 +44,27 @@ class Parser:
                 value = self.config.get(sec, opt)
             elif typ == "int":
                 value = self.config.getint(sec, opt)
-            else:
+            elif typ == "bool":
                 value = self.config.getboolean(sec, opt)
+            elif typ == "float":
+                value = self.config.getfloat(sec, opt)
             return value
         except configparser.NoSectionError:
-            print("Invalid section %s" % sec)
-        except configparser.NoOptionError:
-            print("Invalid option %s" % opt)
+            raise
+        except configparser.NoOptionError as op:
+            raise
         except ValueError as err:
-            print("Invalid type specified" + str(err))
+            raise ValueError("Invalid type specified" + str(err))
+
+    def has_option(self, sec, opt):
+        """
+        Checks whether the an option exists
+
+        :param sec: The section we search
+        :param opt: The option to be verified
+        :return: a boolean indicating the presence or absence of an option
+        """
+        self.config.has_option(sec, opt)
 
     def get_default_blocking(self):
         """

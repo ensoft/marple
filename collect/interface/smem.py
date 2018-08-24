@@ -19,6 +19,7 @@ __all__ = (
 import re
 import subprocess
 import time
+import datetime
 from typing import NamedTuple
 
 from collect.interface.collecter import Collecter
@@ -41,7 +42,7 @@ class MemoryGraph(Collecter):
         super().__init__(time_, options)
 
     @util.Override(Collecter)
-    def collect(self):
+    def get_generator(self):
         """
         Collects sorted memory usage of a specific number of processes.
 
@@ -94,7 +95,19 @@ class MemoryGraph(Collecter):
         for key in datapoints:
             for lab in datapoints[key]:
                 mem = datapoints[key][lab]
-                yield datatypes.Datapoint(key, mem, lab)
+                yield datatypes.PointDatum(key, mem, lab)
+
+    @util.Override(Collecter)
+    def collect(self):
+        # Start and end times for the collection
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(0, self.time)
+        start = str(start)
+        end = str(end)
+
+        return datatypes.PointData(self.get_generator, start, end,
+                                   'Memory/Time', 'Time', 'Memory',
+                                   'seconds', 'megabytes')
 
     @staticmethod
     def _insert_datapoint(memory):

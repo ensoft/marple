@@ -177,11 +177,11 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
                                               r"(?P<event>\S+)",
                                               "test_out2")
 
-        expected_event = datatypes.EventData(specific_datum=
+        expected_event = datatypes.EventDatum(specific_datum=
                                              ("cpu 4",
                                               "test_name (pid: test_pid)"),
-                                             time=111000999,
-                                             type="test_event")
+                                              time=111000999,
+                                              type="test_event")
 
         self.assertIn(expected_event, sched_events)
 
@@ -369,7 +369,7 @@ class StackParserTest(unittest.TestCase):
             "\n"
 
         # Expected output data
-        expected = [datatypes.StackData(weight=1, stack=(
+        expected = [datatypes.StackDatum(weight=1, stack=(
             "swapper", "secondary_startup_64", "start_secondary",
             "cpu_startup_entry", "call_cpuidle", "do_idle", "cpuidle_enter",
             "cpuidle_enter_state", "intel_idle"))]

@@ -22,33 +22,50 @@ from common import (
 from display.generic_display import GenericDisplay
 from util.d3plus import d3IpyPlus as d3
 from collect.IO import read
+from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
 
 class Treemap(GenericDisplay):
-    def __init__(self, depth, inp, out):
+    # @TODO: Add more options (look at how the treemap is initialised
+    class DisplayOptions(NamedTuple):
+        """
+        Options:
+            - depth: the maximum depth of the treemap (max number of elements
+                     in a stack);
+        """
+        depth: int
+    _DEFAULT_OPTIONS = DisplayOptions(depth=25)
+
+    def __init__(self, inp, out, data_options,
+                 display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the Treemap.
 
-        :param depth:
-            The depth of Treemap. Should not be more than about 25, since the
-            loading times increase too much
         :param inp:
-            Input [Stack] file as a string
+            The input file that holds the data as an instance of the
+            :class:`DataFileName`.
         :param out:
-            Output file as a file object
+            The output file where the image will be saved as an instance
+            of the :class:`DisplayFileName`.
+        :param data_options:
+        :param display_options:
 
         """
-        self.depth = depth
+        # Initialise the base class
+        super().__init__(data_options, display_options)
+
+        # in_filename and out_filename File objects (see common.files)
+        # We need to get their string representations (paths) and set the
+        # right extension for the out file
         self.input = inp
         out.set_options("treemap", "html")
         self.output = str(out)
 
-    @staticmethod
     @util.log(logger)
-    def _generate_csv(in_file, out_file):
+    def _generate_csv(self, in_file, out_file):
         """
         Creates a semicolon separated file from a stack parser output.
         The output format will be:
@@ -60,7 +77,7 @@ class Treemap(GenericDisplay):
             - next lines: values of the above columns, separated by semicolons;
                           the values for the groups will be the function at that
                           depth;
-                          example: value;1;2;3 -- first row
+                          example: bytes;1;2;3 -- first row
                                    5;firefox;[unknown];libxul.so -- second row
 
         :param in_file: a collapsed stack produced by the stack parser; expects
@@ -83,7 +100,7 @@ class Treemap(GenericDisplay):
 
         with open(out_file, "w") as out_file:
             # Header of the csv; example: value;1;2;3;4;5...
-            out_file.write("value;" +
+            out_file.write(self.data_options.weight_units + ";" +
                            ";".join([str(i) for i in
                                      range(1, max_depth + 1)]) +
                            "\n")
@@ -121,10 +138,12 @@ class Treemap(GenericDisplay):
         # Generate the ids we use for the hierarchies and the columns of the
         # input file
         ids = [str(i) for i in range(1, max_depth + 1)]
-        cols = ["value"] + ids
+        cols = [self.data_options.weight_units] + ids
 
         data = d3.from_csv(temp_file, ';', columns=cols)
-        tmap = d3.TreeMap(id=ids[0:self.depth], value="value", color="value",
+        tmap = d3.TreeMap(id=ids[0:self.display_options.depth],
+                          value=self.data_options.weight_units,
+                          color=self.data_options.weight_units,
                           legend=True, width=700)
         with open(str(self.output), "w") as out:
             out.write(tmap.dump_html(data))
