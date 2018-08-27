@@ -20,15 +20,6 @@ class GenericDisplay:
         implementation.
 
         """
-        pass
-
-    class DataOptions(NamedTuple):
-        """
-        Any options that the data might have. Could be units in which it is
-        measured or any data related properties
-
-        """
-        pass
 
     def __init__(self, data_options, display_options):
         self.display_options = display_options

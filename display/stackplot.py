@@ -8,17 +8,17 @@
 Adds colours and legend and fills in between the lines.
 
 """
-import logging
-
-from display.generic_display import GenericDisplay
 
 __all__ = ("StackPlot", )
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-from common import util
+import logging
 from typing import NamedTuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from common import util, datatypes
+from display.generic_display import GenericDisplay
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class StackPlot(GenericDisplay):
     _DEFAULT_DISPLAY_OPTIONS = DisplayOptions(top_processes=5)
 
     @util.log(logger)
-    def __init__(self, data, data_options,
+    def __init__(self, data, data_options=datatypes.PointData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_DISPLAY_OPTIONS):
         """
         Constructor, initialises the stackplot.
@@ -52,8 +52,11 @@ class StackPlot(GenericDisplay):
         :param data:
             A generator that returns the lines for the section we want to
             display as a stackplot
-        :param data_options:
-        :param display_options:
+        :param data_options: object of the class specified in each of the `Data`
+                             classes, containig various data options to be used
+                             in the display class as labels or info
+        :param display_options: display related options that are meant to make
+                                the display option more customizable
 
         """
         # Initialise the base class

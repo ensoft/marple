@@ -120,13 +120,14 @@ class HeatMap(GenericDisplay):
         normalise: bool
 
     _DEFAULT_OPTIONS = DisplayOptions(parameters=GraphParameters(
-                                                          figure_size=10.0,
-                                                          scale=5.0,
-                                                          y_res=10.0),
+                                                     figure_size=10.0,
+                                                     scale=5.0,
+                                                     y_res=10.0),
                                       normalise=True,
                                       colorbar="No. Accesses")
 
-    def __init__(self, data, out, data_options,
+    def __init__(self, data, out,
+                 data_options=datatypes.PointData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the heat map - initialises the heatmap.
@@ -144,6 +145,7 @@ class HeatMap(GenericDisplay):
         # Initialise the base class
         super().__init__(data_options, display_options)
 
+        # Setting the right extension and getting the path of the outp
         out.set_options("heatmap", "svg")
         self.output = str(out)
 

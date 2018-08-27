@@ -10,7 +10,7 @@ from unittest import mock
 from io import StringIO
 
 from display import heatmap
-from common import file
+from common import file, datatypes
 
 
 class _BaseHeatMapTest(unittest.TestCase):
@@ -19,7 +19,7 @@ class _BaseHeatMapTest(unittest.TestCase):
     # Set up test data
     def setUp(self):
         self.test_params = heatmap.GraphParameters(figure_size=10, scale=10, y_res=8)
-        self.test_labels = heatmap.AxesLabels("X", "Y", "X units", "Y units", "Colorbar")
+        self.test_labels = heatmap.AxesLabels("X", "Y", "X units", "Y units")
         self.test_comps = heatmap.HeatMap._DataStats(x_min=1.0, x_max=5.0,
                                                 y_min=6.0, y_max=10.0,
                                                 y_median=8.0,
@@ -28,33 +28,28 @@ class _BaseHeatMapTest(unittest.TestCase):
                                                 x_delta=4, y_delta=40)
         self.test_x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
         self.test_y_data = [6.0, 7.0, 8.0, 9.0, 10.0]
-        self.test_string = "1.0,6.0,info1\n2.0,7.0,info2\n3.0,8.0,info3\n" \
-                           "4.0,9.0,info4\n5.0,10.0,info5"
+        self.test_data = iter(("1.0,6.0,info1\n", "2.0,7.0,info2\n",
+                               "3.0,8.0,info3\n", "4.0,9.0,info4\n",
+                               "5.0,10.0,info5\n"))
+        self.colorbar = "Colorbar"
 
 
 class GetDataTest(_BaseHeatMapTest):
-    @mock.patch("collect.IO.read.Reader")
-    def test_empty_data(self, read_mock):
+    def test_empty_data(self):
         """
         Ensure HeatMap._get_data() method copes with an empty input file.
 
         """
-        # Set up mock
-        file_mock = read_mock.return_value.__enter__
-        file_mock.return_value = ("", StringIO(""))
 
         # Create blank heatmap object to access methods
         hm = object.__new__(heatmap.HeatMap)
 
         # Test that correct exception is raised (including message)
         with self.assertRaises(heatmap.HeatmapException) as de:
-            hm._get_data("empty_data", normalised=True)
+            hm._get_data(iter(()))
         err = de.exception
         self.assertEqual(str(err),
                          "Error in display.heatmap: No data in input file.")
-
-        # Test that correct file methods were called
-        read_mock.assert_called_once_with("empty_data")
 
     @mock.patch("collect.IO.read.Reader")
     def test_simple_data(self, read_mock):
@@ -62,20 +57,14 @@ class GetDataTest(_BaseHeatMapTest):
         Ensure HeatMap._get_data() method correctly converts input file.
 
         """
-        # Set up mock
-        file_mock = read_mock.return_value.__enter__
-        file_mock.return_value = ("", StringIO("1.0,2.0, info1\n3.0,4.0,info2"))
-
         # Create blank heatmap object to access methods
         hm = object.__new__(heatmap.HeatMap)
 
         # Test that correct data is produced
-        x, y = hm._get_data("simple_data", normalised=False)
+        x, y = hm._get_data(iter(("1.0,2.0, info1", "3.0,4.0,info2")),
+                            normalised=False)
         self.assertEqual(x, [1.0, 3.0])
         self.assertEqual(y, [2.0, 4.0])
-
-        # Test that correct file methods were called
-        read_mock.assert_called_once_with("simple_data")
 
     @mock.patch("collect.IO.read.Reader")
     def test_simple_time_data(self, read_mock):
@@ -84,20 +73,14 @@ class GetDataTest(_BaseHeatMapTest):
         with x-axis data normalisation.
 
         """
-        # Set up mock
-        file_mock = read_mock.return_value.__enter__
-        file_mock.return_value = ("", StringIO("1.0,2.0, info1\n3.0,4.0,info2"))
-
         # Create blank heatmap object to access methods
         hm = object.__new__(heatmap.HeatMap)
 
         # Test that correct data is produced
-        x, y = hm._get_data("simple_data", normalised=True)
+        x, y = hm._get_data(iter(("1.0,2.0, info1", "3.0,4.0,info2")),
+                            normalised=True)
         self.assertEqual(x, [0.0, 2.0])
         self.assertEqual(y, [2.0, 4.0])
-
-        # Test that correct file methods were called
-        read_mock.assert_called_once_with("simple_data")
 
 
 class GetDataStatsTest(_BaseHeatMapTest):
@@ -177,8 +160,7 @@ class InitTest(_BaseHeatMapTest):
     @mock.patch('display.heatmap.np')
     @mock.patch('display.heatmap.plt')
     @mock.patch('display.heatmap.widgets.Slider')
-    @mock.patch("collect.IO.read.Reader")
-    def test_init(self, read_mock, slider_mock, pyplot_mock, numpy_mock):
+    def test_init(self, slider_mock, pyplot_mock, numpy_mock):
         """
         Test the __init__ method of the HeatMap class - stub out all external
         methods, and ensure correct API calls are made.
@@ -196,10 +178,6 @@ class InitTest(_BaseHeatMapTest):
             Mock class for the numpy package.
 
         """
-        # Create file mock
-        file_mock = read_mock.return_value.__enter__
-        file_mock.return_value = ("", StringIO(self.test_string))
-
         # Create pyplot mocks
         axes_mock = pyplot_mock.gca.return_value
         fig_mock = pyplot_mock.gcf.return_value
@@ -223,8 +201,13 @@ class InitTest(_BaseHeatMapTest):
         # RUN TRHOUGH INIT - CHECK VALUES/FUNCTION CALLS ARE AS EXPECTED
         # Mock out file
         out = file.DisplayFileName()
-        hm = heatmap.HeatMap("init_data", out, self.test_labels,
-                             self.test_params, normalise=False)
+        hm = heatmap.HeatMap(self.test_data, out,
+                             datatypes.PointData.DataOptions('X', 'Y',
+                                                             'X units',
+                                                             'Y units'),
+                             heatmap.HeatMap.DisplayOptions(self.colorbar,
+                                                            self.test_params,
+                                                            False))
 
         # Check field values
         self.assertEqual(hm.labels, self.test_labels)
@@ -276,7 +259,7 @@ class InitTest(_BaseHeatMapTest):
                                                           ax=axes_mock)
         cbar_mock = axes_mock.figure.colorbar.return_value
         cbar_mock.ax.set_ylabel.assert_called_once_with(
-            self.test_labels.colorbar)
+            self.colorbar)
 
         # Check _create_sliders()
         axes_calls = [mock.call([0.2, 0.95, 0.6, 0.015]),

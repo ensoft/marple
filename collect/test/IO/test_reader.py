@@ -16,14 +16,17 @@ from io import StringIO
 from collect.IO import read
 
 
-@mock.patch('builtins.open')
 class ReaderTest(unittest.TestCase):
     """
     Class that tests the reader context manager used to open marple files
     """
 
-    def test_normal_file(self, open_mock):
-        file_mock = open_mock
+    def test_normal_file(self):
+        """
+        Tests if under normal conditions the file object is consumed
+        correctly and the results are consistent
+
+        """
         file_header = "{\"start\": \"2018-08-20 18:46:38.403129\", " \
                       "\"end\": \"2018-08-20 18:46:39.403129\", " \
                       "\"datatype\": \"Event Data\", " \
@@ -32,21 +35,47 @@ class ReaderTest(unittest.TestCase):
         file_data = "1#2#3#4#5\n" \
                     "6#7#8#9#10\n" \
                     "11#12#13#14#15#16#17"
-        file_mock.return_value = StringIO(file_header + file_data)
+        file_object = StringIO(file_header + file_data)
 
-        with read.Reader("file") as (header, data):
-            self.assertDictEqual(header, {"start": "2018-08-20 18:46:38.403129",
-                                          "end": "2018-08-20 18:46:39.403129",
-                                          "datatype": "Event Data",
-                                          "interface": "Scheduling Events"})
-            self.assertEqual(data.read(), file_data)
+        header = read.Reader.read_header(file_object)
+        data = read.Reader.read_until_line(file_object, '\n')
+        self.assertDictEqual(header, {"start": "2018-08-20 18:46:38.403129",
+                                      "end": "2018-08-20 18:46:39.403129",
+                                      "datatype": "Event Data",
+                                      "interface": "Scheduling Events"})
+        self.assertEqual([line for line in data],
+                         ["1#2#3#4#5\n", "6#7#8#9#10\n",
+                          "11#12#13#14#15#16#17"])
 
-    def test_bad_JSON(self, open_mock):
+    def test_stops_correctly(self):
+        """
+        Tests if the data is being read until the separator and not beyond it
+
+        """
+        file_header = "{\"start\": \"2018-08-20 18:46:38.403129\", " \
+                      "\"end\": \"2018-08-20 18:46:39.403129\", " \
+                      "\"datatype\": \"Event Data\", " \
+                      "\"interface\": \"Scheduling Events\"}\n"
+
+        file_data = "1#2#3#4#5\n" \
+                    "6#7#8#9#10\n\n" \
+                    "11#12#13#14#15#16#17"
+        file_object = StringIO(file_header + file_data)
+
+        header = read.Reader.read_header(file_object)
+        data = read.Reader.read_until_line(file_object, '\n')
+        self.assertDictEqual(header, {"start": "2018-08-20 18:46:38.403129",
+                                      "end": "2018-08-20 18:46:39.403129",
+                                      "datatype": "Event Data",
+                                      "interface": "Scheduling Events"})
+        self.assertEqual([line for line in data],
+                         ["1#2#3#4#5\n", "6#7#8#9#10\n"])
+
+    def test_bad_JSON(self):
         """
         Tests an invalid header (ie not in a JSON format)
 
         """
-        file_mock = open_mock
         file_header = "{\"start\" \"2018-08-20 18:46:38.403129\", " \
                       "\"end\": \"2018-08-20 18:46:39.403129\", " \
                       "\"datatype\": \"Event Data\", " \
@@ -55,8 +84,7 @@ class ReaderTest(unittest.TestCase):
         file_data = "1#2#3#4#5\n" \
                     "6#7#8#9#10\n" \
                     "11#12#13#14#15#16#17"
-        file_mock.return_value = StringIO(file_header + file_data)
+        file_object = StringIO(file_header + file_data)
 
         with self.assertRaises(json.JSONDecodeError):
-            with read.Reader("file") as (header, data):
-                something = 1
+            read.Reader.read_header(file_object)

@@ -4,7 +4,12 @@
 # -------------------------------------------------------------
 
 """
-Data types comprising the interface between the collect and display packages.
+File is divided in two sections
+    - Data types comprising the interface between the collect and display
+      packages (the `Datum` part);
+    - 'Sections' (each of them will represent sections in the MARPLE files),
+      represented by classes that encapsulate generators of the
+      above, together with headers
 
 Usage: data types can be constructed using the constructors, or from a standard
 string representation using the from_string method. The standard representation
@@ -17,6 +22,9 @@ __all__ = (
     'PointDatum',
     'StackDatum',
     'EventDatum',
+    'StackData',
+    'PointData',
+    'EventData'
 )
 
 
@@ -203,6 +211,10 @@ class StackDatum(typing.NamedTuple):
                 "('{}')".format(string)) from ve
 
 
+# Classes from here onwards will encapsulate generators of the above defined
+# 'Datum' classes, together with the required information for the header
+
+
 class StackData:
     class DataOptions(typing.NamedTuple):
         """
@@ -210,6 +222,7 @@ class StackData:
 
         """
         weight_units: str
+    DEFAULT_OPTIONS = DataOptions("samples")
 
     def __init__(self, datum_generator, start, end, interface, weight_units):
         self.datum_generator = datum_generator
@@ -222,6 +235,10 @@ class StackData:
         }
 
     def header_to_dict(self):
+        """
+        :return: a dictionary containing the information associated with the
+                 header of a section
+        """
         header_dict = {
             "start": str(self.start),
             "end": str(self.end),
@@ -233,6 +250,10 @@ class StackData:
 
 
 class EventData:
+    class DataOptions(typing.NamedTuple):
+        pass
+    DEFAULT_OPTIONS = DataOptions()
+
     def __init__(self, datum_generator, start, end, interface):
         self.datum_generator = datum_generator
         self.start = start
@@ -241,6 +262,10 @@ class EventData:
         self.datatype = "event"
 
     def header_to_dict(self):
+        """
+        :return: a dictionary containing the information associated with the
+                 header of a section
+        """
         header_dict = {
             "start": str(self.start),
             "end": str(self.end),
@@ -256,12 +281,13 @@ class PointData:
         - x_label: label for the x axis;
         - x_units: units for the x axis;
         - y_label: label for the y axis;
-        - y_units: uni
+        - y_units: units for the y axis;
         """
         x_label: str
         y_label: str
         x_units: str
         y_units: str
+    DEFAULT_OPTIONS = DataOptions("x label", "y label", "x units", "y units")
 
     def __init__(self, datum_generator, start, end, interface, x_label,
                  x_units, y_label, y_units):
@@ -278,6 +304,10 @@ class PointData:
         }
 
     def header_to_dict(self):
+        """
+        :return: a dictionary containing the information associated with the
+                 header of a section
+        """
         header_dict = {
             "start": str(self.start),
             "end": str(self.end),

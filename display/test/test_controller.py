@@ -1,62 +1,168 @@
-import json
-
 import unittest
-from unittest.mock import patch, ANY
-from common import file
+from io import StringIO
 from unittest import mock
-from display import controller
+
+from common import consts, datatypes
+from display import (
+    controller,
+    flamegraph,
+    g2,
+    treemap,
+    stackplot,
+    heatmap
+)
+
 
 class DisplayTest(unittest.TestCase):
     """
     Tests the display function from the controller
 
     """
-    class MockedReader:
+    file = \
+        "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\":" \
+        " \"2018-08-20 18:46:39.403129\", \"datatype\": \"point\"," \
+        "\"interface\": \"Memory/Time\"}\n" \
+        "Dummy Line\n" \
+        "\n" \
+        "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
+        "\"2018-08-20 18:46:39.403129\", \"datatype\": \"event\"" \
+        ", \"interface\": \"Scheduling Events\"}\n" \
+        "Dummy Line\n" \
+        "\n" \
+        "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
+        "\"2018-08-20 18:46:39.403129\", \"datatype\": \"stack\"" \
+        ", \"interface\": \"Memory Leaks\"}\n" \
+        "Dummy Line\n" \
+        "\n" \
+        "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
+        "\"2018-08-20 18:46:39.403129\", \"datatype\": \"point\"" \
+        ", \"interface\": \"Disk Latency/Time\"}\n" \
+        "Dummy Line\n" \
+        "\n" \
+        "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
+        "\"2018-08-20 18:46:39.403129\", \"datatype\": \"stack\"" \
+        ", \"interface\": \"Malloc Stacks\"}\n" \
+        "Dummy Line\n" \
+        "\n"
+
+    class MockDisplay:
         """
-        Class used to mock the context manager Reader
-        """
-        def __init__(self, file):
-            pass
-
-        def __enter__(self):
-            js = "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
-                 "\"2018-08-20 18:46:39.403129\", \"datatype\": \"Event" \
-                 " Data\", \"interface\": \"Memory/Time\"}"
-            return json.loads(js), ""
-
-        def __exit__(self, *args):
-            pass
-
-    @mock.patch("display.stackplot.StackPlot.__init__", return_value=None)
-    @mock.patch("display.controller._select_mode",
-                return_value=controller.DisplayOptions.STACKPLOT)
-    @mock.patch("display.stackplot.StackPlot.show")
-    def test_display(self, show_mock, select_mock, sp_mock):
-        """
-        Testing if the display reaches the show method safely in a normal case
-        It covers every file type since we simply hard code it
-
-        """
-        with mock.patch("collect.IO.read.Reader", self.MockedReader):
-            args = ['-sp', '-i', 'test.in', '-o', 'test.out']
-            args = controller._args_parse(args)
-            controller._display(args)
-
-        show_mock.assert_called_once()
-        sp_mock.assert_called_once()
-
-    @mock.patch("display.controller._select_mode", return_value="foobar")
-    def test_display_filetype_unrecognized(self, select_mock):
-        """
-        Testing if the display method throws an error if the filetype is
-        unrecognized
+        Mock for all the display classes, that consumes the data from the
+        sections
 
         """
-        with self.assertRaises(ValueError), \
-             mock.patch("collect.IO.read.Reader", self.MockedReader):
-            args = ['-sp', '-i', 'test.in', '-o', 'test.out']
-            args = controller._args_parse(args)
-            controller._display(args)
+
+        def __init__(self, data, *args):
+            self.data = data
+
+        def show(self):
+            for _ in self.data:
+                continue
+
+    @mock.patch("display.stackplot.StackPlot")
+    @mock.patch("display.treemap.Treemap")
+    @mock.patch("display.flamegraph.Flamegraph")
+    @mock.patch("display.g2.G2")
+    @mock.patch("display.heatmap.HeatMap")
+    @mock.patch("display.controller.open")
+    @mock.patch("display.controller._get_display_options")
+    @mock.patch("display.controller._get_data_options")
+    def test_display_no_args_only_config(self, data_options_mock,
+                                         display_options_mock, open_mock,
+                                         hm, g2, fg, tm, sp):
+        """
+        Testing using a file that contains all the datatypes; we only use the
+        config
+
+        """
+        open_mock.side_effect = [StringIO(self.file)]
+        hm.side_effect = self.MockDisplay
+        g2.side_effect = self.MockDisplay
+        fg.side_effect = self.MockDisplay
+        tm.side_effect = self.MockDisplay
+        sp.side_effect = self.MockDisplay
+
+        args = ['-i', 'test.in', '-o', 'test.out']
+        args = controller._args_parse(args)
+
+        controller._display(args)
+        # Check if each one of them is called
+        self.assertTrue(fg.call_count == 1 and
+                        sp.call_count == 1 and
+                        hm.call_count == 1 and
+                        tm.call_count == 1 and
+                        g2.call_count == 1)
+
+    @mock.patch("display.stackplot.StackPlot")
+    @mock.patch("display.treemap.Treemap")
+    @mock.patch("display.flamegraph.Flamegraph")
+    @mock.patch("display.g2.G2")
+    @mock.patch("display.heatmap.HeatMap")
+    @mock.patch("display.controller.open")
+    @mock.patch("display.controller._get_display_options")
+    @mock.patch("display.controller._get_data_options")
+    def test_display_args(self, data_options_mock,
+                          display_options_mock, open_mock,
+                          hm, g2, fg, tm, sp):
+        """
+        Testing using a file that contains all the datatypes; we only use the
+        config
+
+        """
+        # File objects for each of the argument sets
+        open_mock.side_effect = [StringIO(self.file),
+                                 StringIO(self.file),
+                                 StringIO(self.file)]
+        hm.side_effect = self.MockDisplay
+        g2.side_effect = self.MockDisplay
+        fg.side_effect = self.MockDisplay
+        tm.side_effect = self.MockDisplay
+        sp.side_effect = self.MockDisplay
+
+        # First set of args
+        args = ['-sp', '-g2', '-tm', '-i', 'test.in', '-o', 'test.out']
+        args = controller._args_parse(args)
+        controller._display(args)
+        # Check if each one of them is called
+        self.assertTrue(fg.call_count == 0 and
+                        sp.call_count == 2 and
+                        hm.call_count == 0 and
+                        tm.call_count == 2 and
+                        g2.call_count == 1)
+
+        # Second set of args
+        g2.reset_mock()
+        fg.reset_mock()
+        tm.reset_mock()
+        sp.reset_mock()
+        hm.reset_mock()
+
+        args = ['-fg', '-g2', '-hm', '-i', 'test.in', '-o', 'test.out']
+        args = controller._args_parse(args)
+        controller._display(args)
+        # Check if each one of them is called
+        self.assertTrue(fg.call_count == 2 and
+                        sp.call_count == 0 and
+                        hm.call_count == 2 and
+                        tm.call_count == 0 and
+                        g2.call_count == 1)
+
+        # Third set of args
+        g2.reset_mock()
+        fg.reset_mock()
+        tm.reset_mock()
+        sp.reset_mock()
+        hm.reset_mock()
+
+        args = ['-sp', '-i', 'test.in', '-o', 'test.out']
+        args = controller._args_parse(args)
+        controller._display(args)
+        # Check if each one of them is called
+        self.assertTrue(fg.call_count == 1 and
+                        sp.call_count == 2 and
+                        hm.call_count == 0 and
+                        tm.call_count == 1 and
+                        g2.call_count == 1)
 
 
 class ArgsParseTest(unittest.TestCase):
@@ -82,88 +188,98 @@ class SelectModeTest(unittest.TestCase):
     # for both args and config file
 
     def test_hm_args(self):
-        mode = controller._select_mode("Disk Latency/Time",
+        mode = controller._select_mode("Disk Latency/Time", "point",
                                        vars(controller._args_parse(['-hm'])))
-        self.assertEqual(mode, controller.DisplayOptions.HEATMAP)
+        self.assertEqual(mode, consts.DisplayOptions.HEATMAP)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="heatmap")
     def test_hm_config(self, mock_opt):
-        mode = controller._select_mode("Disk Latency/Time",
+        mode = controller._select_mode("Disk Latency/Time", "point",
                                        vars(controller._args_parse([])))
-        self.assertEqual(mode, controller.DisplayOptions.HEATMAP)
+        self.assertEqual(mode, consts.DisplayOptions.HEATMAP)
 
     def test_tm_args(self):
-        mode = controller._select_mode("Malloc Stacks",
+        mode = controller._select_mode("Malloc Stacks", "stack",
                                        vars(controller._args_parse(['-tm'])))
-        self.assertEqual(mode, controller.DisplayOptions.TREEMAP)
+        self.assertEqual(mode, consts.DisplayOptions.TREEMAP)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="treemap")
     def test_tm_config(self, mock_opt):
-        mode = controller._select_mode("Malloc Stacks",
+        mode = controller._select_mode("Malloc Stacks", "stack",
                                        vars(controller._args_parse([])))
-        self.assertEqual(mode, controller.DisplayOptions.TREEMAP)
+        self.assertEqual(mode, consts.DisplayOptions.TREEMAP)
 
     def test_fg_args(self):
-        mode = controller._select_mode("Call Stacks",
+        mode = controller._select_mode("Call Stacks", "stack",
                                        vars(controller._args_parse(['-fg'])))
-        self.assertEqual(mode, controller.DisplayOptions.FLAMEGRAPH)
+        self.assertEqual(mode, consts.DisplayOptions.FLAMEGRAPH)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="flamegraph")
     def test_fg_config(self, mock_opt):
-        mode = controller._select_mode("Call Stacks",
+        mode = controller._select_mode("Call Stacks", "stack",
                                        vars(controller._args_parse([])))
-        self.assertEqual(mode, controller.DisplayOptions.FLAMEGRAPH)
+        self.assertEqual(mode, consts.DisplayOptions.FLAMEGRAPH)
 
     def test_sp_args(self):
-        mode = controller._select_mode("Memory/Time",
+        mode = controller._select_mode("Memory/Time", "point",
                                        vars(controller._args_parse(['-sp'])))
-        self.assertEqual(mode, controller.DisplayOptions.STACKPLOT)
+        self.assertEqual(mode, consts.DisplayOptions.STACKPLOT)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="stackplot")
     def test_sp_config(self, mock_opt):
-        mode = controller._select_mode("Memory/Time",
+        mode = controller._select_mode("Memory/Time", "point",
                                        vars(controller._args_parse([])))
-        self.assertEqual(mode, controller.DisplayOptions.STACKPLOT)
+        self.assertEqual(mode, consts.DisplayOptions.STACKPLOT)
 
     def test_g2_args(self):
-        mode = controller._select_mode("Scheduling Events",
+        mode = controller._select_mode("Scheduling Events", "event",
                                        vars(
                                            controller._args_parse(['-g2'])))
-        self.assertEqual(mode, controller.DisplayOptions.G2)
+        self.assertEqual(mode, consts.DisplayOptions.G2)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="g2")
     def test_g2_config(self, mock_opt):
-        mode = controller._select_mode("Scheduling Events",
+        mode = controller._select_mode("Scheduling Events", "event",
                                        vars(controller._args_parse([])))
-        self.assertEqual(mode, controller.DisplayOptions.G2)
+        self.assertEqual(mode, consts.DisplayOptions.G2)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="g2")
     def test_invalid_arg_but_valid_config(self, mock_opt):
         """
-        We call the select with an invalid arg
-        Covers all other cases (if it doesn't use the args it will used the
-        config, which we tested the config above)
+        We call the select with an invalid arg for the datatype, but it will
+        not trigger errors since we default it to the value from the config
+        Covers all such test cases
         """
 
-        mode = controller._select_mode("Scheduling Events",
+        mode = controller._select_mode("Scheduling Events", "event",
                                        vars(controller._args_parse(["-fg"])))
-        self.assertEqual(mode, controller.DisplayOptions.G2)
+        self.assertEqual(mode, consts.DisplayOptions.G2)
+
+    def test_invalid_interface_but_correct_mode(self):
+        """
+        Even though we have an invalid interface, since we have a cmd line
+        argument that is consistent with the datatype, the answer is correct
+        """
+
+        mode = controller._select_mode("INVALID", "event",
+                                       vars(controller._args_parse(["-g2"])))
+        self.assertEqual(mode, consts.DisplayOptions.G2)
 
     # The following tests verify that errors are triggered correctly
 
-    def test_file_not_supported(self):
+    def test_datatype_not_supported(self):
         with self.assertRaises(ValueError) as ve:
-            controller._select_mode("RANDOM",
+            controller._select_mode("RANDOM", "RANDOM",
                                     vars(controller._args_parse([])))
         err = ve.exception
         self.assertEqual(str(err),
-                         "The file type RANDOM is not supported")
+                         "The datatype RANDOM is not supported")
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="random")
@@ -173,13 +289,13 @@ class SelectModeTest(unittest.TestCase):
 
         """
         with self.assertRaises(ValueError) as ve:
-            controller._select_mode("Scheduling Events",
+            controller._select_mode("Scheduling Events", "event",
                                     vars(controller._args_parse([])))
         err = ve.exception
         self.assertEqual(str(err),
                          "The default value from the config could not be "
-                         "converted to a DisplayOptions enum. Check that the "
-                         "values in the config correspond with the "
+                         "converted to a consts.DisplayOptions enum. Check "
+                         "that the values in the config correspond with the "
                          "enum values.")
 
     @mock.patch("common.config.Parser.get_option_from_section",
@@ -191,10 +307,144 @@ class SelectModeTest(unittest.TestCase):
 
         """
         with self.assertRaises(ValueError) as ve:
-            controller._select_mode("Scheduling Events",
+            controller._select_mode("Scheduling Events", "event",
                                     vars(controller._args_parse([])))
         err = ve.exception
         self.assertEqual(str(err),
                          "No valid args or config values found for "
                          "Scheduling Events. Either add an arg in the terminal "
                          "command or modify the config file")
+
+    @mock.patch("common.config.Parser.get_option_from_section",
+                return_value="heatmap")
+    def test_invalid_(self, mock_opt):
+        """
+        If the default value from the config is valid but not supported by the
+        file
+
+        """
+        with self.assertRaises(ValueError) as ve:
+            controller._select_mode("Scheduling Events", "event",
+                                    vars(controller._args_parse([])))
+        err = ve.exception
+        self.assertEqual(str(err),
+                         "No valid args or config values found for "
+                         "Scheduling Events. Either add an arg in the terminal "
+                         "command or modify the config file")
+
+
+class TestDataOptions(unittest.TestCase):
+    """
+    Tests the _get_data_options function from the controller
+    Will have a test for each possibility
+
+    """
+    def test_stack(self):
+        """
+        Testing the stack datatype
+
+        """
+        header = {"datatype": "stack", "data_options": {"weight_units": "kb"}}
+        opts = controller._get_data_options(header)
+        self.assertEqual(opts, datatypes.StackData.DataOptions("kb"))
+
+    def test_point(self):
+        """
+        Testing the point datatype
+
+        """
+        header = {"datatype": "point", "data_options":
+                     {
+                         "x_label": "xlabel",
+                         "x_units": "xunits",
+                         "y_label": "ylabel",
+                         "y_units": "yunits"
+                     }
+                 }
+        opts = controller._get_data_options(header)
+        self.assertEqual(opts, datatypes.PointData.DataOptions(
+            "xlabel", "ylabel", "xunits", "yunits"))
+
+    def test_event(self):
+        """
+        Testing the event datatype
+
+        """
+        header = {"datatype": "event", "data_options": {}}
+        opts = controller._get_data_options(header)
+        self.assertEqual(opts, None)
+
+    def test_invalid_datatype(self):
+        """
+        Testing the event datatype
+
+        """
+        header = {"datatype": "RANDOM", "data_options": {}}
+        with self.assertRaises(ValueError):
+            opts = controller._get_data_options(header)
+
+
+class TestDisplayOptions(unittest.TestCase):
+    """
+    Class that tests if the Display options correctly retrieved
+
+    """
+    @mock.patch("common.config.Parser.get_option_from_section")
+    def test_flamegraph(self, mock_opt):
+        """
+        Display options for flamegraph retrieved correctly
+
+        """
+        mock_opt.side_effect = ['hot']
+
+        opt = controller._get_display_options(consts.DisplayOptions.FLAMEGRAPH)
+        self.assertEqual(opt,
+                         flamegraph.Flamegraph.DisplayOptions(coloring='hot'))
+
+    @mock.patch("common.config.Parser.get_option_from_section")
+    def test_heatmap(self, mock_opt):
+        """
+        Display options for heatmap retrieved correctly
+
+        """
+        mock_opt.side_effect = [1.0, 1.0, 1.0, True]
+
+        opt = controller._get_display_options(consts.DisplayOptions.HEATMAP)
+        self.assertEqual(opt, heatmap.HeatMap.DisplayOptions(
+                                  'No. Occurences',
+                                  heatmap.GraphParameters(figure_size=1,
+                                                          y_res=1,
+                                                          scale=1), True))
+
+    @mock.patch("common.config.Parser.get_option_from_section")
+    def test_g2(self, mock_opt):
+        """
+        Display options for g2 retrieved correctly
+
+        """
+        mock_opt.side_effect = ["pid"]
+
+        opt = controller._get_display_options(consts.DisplayOptions.G2)
+        self.assertEqual(opt, g2.G2.DisplayOptions("pid"))
+
+    @mock.patch("common.config.Parser.get_option_from_section")
+    def test_treemap(self, mock_opt):
+        """
+        Display options for treemap retrieved correctly
+
+        """
+        mock_opt.side_effect = [25]
+
+        opt = controller._get_display_options(consts.DisplayOptions.TREEMAP)
+        self.assertEqual(opt, treemap.Treemap.DisplayOptions(25))
+
+    @mock.patch("common.config.Parser.get_option_from_section")
+    def test_stackplot(self, mock_opt):
+        """
+        Display options for stackplot retrieved correctly
+
+        """
+        mock_opt.side_effect = [25]
+
+        opt = controller._get_display_options(consts.DisplayOptions.STACKPLOT)
+        self.assertEqual(opt, stackplot.StackPlot.DisplayOptions(25))

@@ -20,7 +20,8 @@ import logging
 
 from common import (
     file,
-    util
+    util,
+    datatypes
 )
 from collect.IO import read
 from common.datatypes import StackDatum
@@ -46,7 +47,8 @@ class Flamegraph(GenericDisplay):
 
     _DEFAULT_OPTIONS = DisplayOptions(coloring="hot")
 
-    def __init__(self, data, out, data_options,
+    def __init__(self, data, out,
+                 data_options=datatypes.StackData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the flamegraph.
@@ -57,26 +59,30 @@ class Flamegraph(GenericDisplay):
         :param out:
             The output file where the image will be saved as an instance
             of the :class:`DisplayFileName`.
-        :param data_options:
-        :param display_options:
+        :param data_options: object of the class specified in each of the `Data`
+                             classes, containig various data options to be used
+                             in the display class as labels or info
+        :param display_options: display related options that are meant to make
+                                the display option more customizable
 
 
         """
         # Initialise the base class
         super().__init__(data_options, display_options)
 
-        # in_filename and out_filename File objects (see common.files)
-        # We need to get their string representations (paths) and set the
-        # right extension for the out file
         self.data = data
+        # Setting the right extension and getting the path of the outp
         out.set_options("flamegraph", "svg")
         self.out_filename = str(out)
 
     @util.log(logger)
     def _read(self):
         """
-        Read stack events from a file in standard format.
+        Read stack events from the self.data generator and parse each line to
+        a StackDatum object
 
+        :returns: a generator yielding StackDatum for each line read from
+                  self.data
         """
 
         for line in self.data:

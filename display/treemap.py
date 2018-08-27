@@ -19,7 +19,8 @@ from typing import NamedTuple
 from common import (
     file,
     util,
-    consts
+    consts,
+    datatypes
 )
 from display.generic_display import GenericDisplay
 from util.d3plus import d3IpyPlus as d3
@@ -29,7 +30,7 @@ logger.debug('Entered module: %s', __name__)
 
 
 class Treemap(GenericDisplay):
-    # @TODO: Add more options (look at how the treemap is initialised
+    # @TODO: Add more options (look at how the treemap is initialised)
     class DisplayOptions(NamedTuple):
         """
         Options:
@@ -39,7 +40,8 @@ class Treemap(GenericDisplay):
         depth: int
     _DEFAULT_OPTIONS = DisplayOptions(depth=25)
 
-    def __init__(self, data, out, data_options,
+    def __init__(self, data, out,
+                 data_options=datatypes.StackData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the Treemap.
@@ -50,24 +52,25 @@ class Treemap(GenericDisplay):
         :param out:
             The output file where the image will be saved as an instance
             of the :class:`DisplayFileName`.
-        :param data_options:
-        :param display_options:
+        :param data_options: object of the class specified in each of the `Data`
+                             classes, containig various data options to be used
+                             in the display class as labels or info
+        :param display_options: display related options that are meant to make
+                                the display option more customizable
 
         """
         # Initialise the base class
         super().__init__(data_options, display_options)
 
-        # in_filename and out_filename File objects (see common.files)
-        # We need to get their string representations (paths) and set the
-        # right extension for the out file
         self.data = data
+        # Setting the right extension and getting the path of the outp
         out.set_options("treemap", "html")
         self.output = str(out)
 
     @util.log(logger)
-    def _generate_csv(self, data, out_file):
+    def _generate_csv(self, out_file):
         """
-        Creates a semicolon separated file from a stack parser output.
+        Creates a semicolon separated file using the data in self.data.
         The output format will be:
             - first line: Represents the columns (header); first column will
                           represent the value of the stack line; the rest of the
@@ -76,13 +79,12 @@ class Treemap(GenericDisplay):
                           hierarchies;
             - next lines: values of the above columns, separated by semicolons;
                           the values for the groups will be the function at that
-                          depth;
+                          depth; group priorities are from left to right,
+                          so group 1 has a higher priority (will be displayed
+                          over in the treemap) than group 2 (see bellow)
                           example: bytes;1;2;3 -- first row
                                    5;firefox;[unknown];libxul.so -- second row
 
-        :param data:
-            A generator that returns the lines for the section we want to
-            display as a stackplot
         :param out_file: a semicolon separated file generated from the in_file;
                          expects an absolute path
         :raises ValueError: in case the file is not in an accepted format
@@ -94,22 +96,24 @@ class Treemap(GenericDisplay):
             # Header of the csv; example: value;1;2;3;4;5...
             out_file.write(self.data_options.weight_units + ";" +
                            ";".join([str(i) for i in
-                                     range(1,
-                                           self.display_options.depth + 1)]) +
+                                     range(1, self.display_options.depth+1)]) +
                            "\n")
 
-            for line in data:
-                # If we don't have any ';' characters raise error
+            for line in self.data:
+                # If we do not have a separator between the weight and the
+                # first element of the stack, raise error
                 if line.count(consts.separator) != 1:
                     raise ValueError(
                         "Invalid format of the file! Each line should "
-                        "have the format weight#... Line that "
-                        "causes the problem {}".format(line))
+                        "have the format weight{}... Line that "
+                        "causes the problem {}".format(consts.separator, line))
 
-                # We replace the only '#' character, that separates the
-                # weight from the callstack
+                # We replace the only consts.separator character with ';',
+                # as requested by the d3 module that separates the weight from
+                # the callstack
                 call_stack = line.strip().replace(consts.separator, ";", 1)
                 sep = call_stack.split(';')
+                # We write the obtained stack, but only to the specified depth
                 out_file.write(';'.join(
                     sep[0:self.display_options.depth + 1]) + '\n')
 
@@ -125,13 +129,18 @@ class Treemap(GenericDisplay):
 
         # Temp file for the csv file
         temp_file = str(file.TempFileName())
-        self._generate_csv(self.data, temp_file)
+        self._generate_csv(temp_file)
+
         # Generate the ids we use for the hierarchies and the columns of the
         # input file
         ids = [str(i) for i in range(1, self.display_options.depth + 1)]
         cols = [self.data_options.weight_units] + ids
 
+        # Retrieve data from the temporary file that holds the csv format
+        # that d3 uses
         data = d3.from_csv(temp_file, ';', columns=cols)
+
+        # Create the treemap with the supplied display options
         tmap = d3.TreeMap(id=ids[0:self.display_options.depth],
                           value=self.data_options.weight_units,
                           color=self.data_options.weight_units,
