@@ -14,26 +14,26 @@ __all__ = (
     "TCPTracer"
 )
 
+import asyncio
 import datetime
 import logging
 import os
 import re
 import signal
-import subprocess
 import typing
 from io import StringIO
 
-from collect.interface.collecter import Collecter
+from collect.interface import collecter
 from common import util, datatypes, paths, output
 from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', __name__)
 
 BCC_TOOLS_PATH = paths.MARPLE_DIR + "/util/bcc-tools/"
 
 
-class MallocStacks(Collecter):
+class MallocStacks(collecter.Collecter):
     """
     Class that interacts with Brendan Gregg's mallocstacks tools
 
@@ -53,38 +53,53 @@ class MallocStacks(Collecter):
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def get_generator(self):
-        """
-        Collects memory stacks where the weight is the number of kilobytes
-        :return:
-
-        """
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
+        """ Collect raw data asynchronously using mallocstacks. """
         self.start_time = datetime.datetime.now()
-        mall_subp = subprocess.Popen(["sudo", "python",
-                                      BCC_TOOLS_PATH + "mallocstacks.py", "-f",
-                                      str(self.time)], stderr=subprocess.PIPE,
-                                     stdout=subprocess.PIPE)
-        self.end_time = datetime.datetime.now()
-        out, err = mall_subp.communicate()
 
+        sub_process = await asyncio.create_subprocess_exec(
+            'sudo', 'python', BCC_TOOLS_PATH + 'mallocstacks.py', '-f',
+            str(self.time),
+            stderr=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE
+        )
+        out, err = await sub_process.communicate()
+
+        self.end_time = datetime.datetime.now()
         logger.debug(err.decode())
 
-        for line in StringIO(out.decode()):
-            line = line.strip('\n')
+        return StringIO(out.decode())
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """ Convert raw data to standard datatypes and yield it. """
+        for line in raw_data:
             yield datatypes.StackDatum.from_string(line)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using iosnoop."""
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.StackData(data, self.start_time, self.end_time,
-                                   "bytes", InterfaceTypes.MALLOCSTACKS)
+                                   InterfaceTypes.MALLOCSTACKS, "kilobytes")
 
 
-class Memleak(Collecter):
+class Memleak(collecter.Collecter):
     """
     Class that interacts with the memleak tool.
+
+    Collects all the top 'top_stacks' stacks with outstanding allocations
+    The memleak.py script places an ebpf program in kernel memory that
+    places uprobes in all the userspace allocation and deallocation
+    functions in the kernel. This program keeps track, using hashtables,
+    of every stack's current allocated memory. If, by the end of a sleep
+    period of 'time' seconds, there are stacks that haven't freed all the
+    memory, the script prints them in a StackLine format
+    (weight#name1;name2;name3;...).
+    This class retrieves and processes this output.
 
     """
 
@@ -102,49 +117,41 @@ class Memleak(Collecter):
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def get_generator(self):
-        """
-        Collects all the top 'top_stacks' stacks with outstanding allocations
-
-        The memleak.py script places an ebpf program in kernel memory that
-        places UProbes in all the userspace allocation and deallocation
-        functions in the kernel. This program keeps track, using hashtables,
-        of every stack's current allocated memory. If, by the end of a sleep
-        period of 'time' seconds, there are stacks that haven't freed all the
-        memory, the script prints them in a StackLine format
-        (weight#name1;name2;name3;...) that is retrieved via stdout and
-        processed here.
-
-        :return: a generator of 'StackDatum' objects
-
-        """
-
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
+        """ Get raw data asynchronously using memleak.py """
         self.start_time = datetime.datetime.now()
-        mall_subp = subprocess.Popen(["sudo", "python",
-                                      BCC_TOOLS_PATH + "memleak.py",
-                                      "-t", str(self.time),
-                                      "-T", str(self.options.top_stacks)],
-                                     stderr=subprocess.PIPE,
-                                     stdout=subprocess.PIPE)
-        self.end_time = datetime.datetime.now()
-        out, err = mall_subp.communicate()
 
+        sub_process = await asyncio.create_subprocess_exec(
+            'sudo', 'python', BCC_TOOLS_PATH + 'memleak.py',
+            '-t', str(self.time), '-T', str(self.options.top_stacks),
+            stderr=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE
+        )
+
+        out, err = await sub_process.communicate()
+        self.end_time = datetime.datetime.now()
         logger.debug(err.decode())
 
-        for line in StringIO(out.decode()):
-            line = line.strip('\n')
+        return StringIO(out.decode())
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """ Convert raw data to standard datatypes and yield it """
+        for line in raw_data:
             yield datatypes.StackDatum.from_string(line)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using memleak.py """
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.StackData(data, self.start_time, self.end_time,
-                                   "bytes", InterfaceTypes.MEMLEAK)
+                                   InterfaceTypes.MEMLEAK, "kilobytes")
 
 
-class TCPTracer(Collecter):
+class TCPTracer(collecter.Collecter):
     """
     Trace local TCP system calls to connect(), accept(), and close().
 
@@ -178,12 +185,48 @@ class TCPTracer(Collecter):
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def get_generator(self):
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
         """
-        Collect TCP tracing data.
+        Collect raw data asynchronously using tcptracer.
 
-        Call tcptracer, and discard the KeyboardInterrupt error message.
+        Call tcptracer, and discard the KeyboardInterrupt error message
+        resulting from terminating the script.
+
+        """
+        cmd = BCC_TOOLS_PATH + 'tcptracer ' + '-tv'
+
+        self.start_time = datetime.datetime.now()
+        sub_process = await asyncio.create_subprocess_shell(
+            cmd, stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE, preexec_fn=os.setsid
+        )
+
+        # Timeout the subprocess
+        _, pending = await asyncio.wait(
+            [asyncio.ensure_future(sub_process.communicate())],
+            timeout=5
+        )
+        self.end_time = datetime.datetime.now()
+        os.killpg(sub_process.pid, signal.SIGINT)
+        out, err = await (pending.pop())
+
+        # Check for unexpected errors
+        # We expect tcptracer to print a stack trace on termination -
+        # anything more than that must be logged
+        pattern = r"^Traceback \(most recent call last\):" \
+                  r"(\S*\s)*KeyboardInterrupt\s$"
+        if not re.fullmatch(pattern, err.decode()):
+            logger.error(err.decode())
+
+        return StringIO(out.decode())
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """
+        Convert raw data to standard datatypes and yield it.
+
         Traverse the data once to build up a dictionary mapping ports to
         PIDs/comms.
         Traverse the data again using that dictionary to output events with
@@ -191,40 +234,19 @@ class TCPTracer(Collecter):
         Print and log error messages when ports cannot be resolved.
 
         :return:
-            A generator of :clase:`EventDatum` objects.
+            A generator of :class:`EventDatum` objects.
 
         """
-        cmd = [BCC_TOOLS_PATH + 'tcptracer ' + '-tv']
 
-        self.start_time = datetime.datetime.now()
-        sub_proc = subprocess.Popen(
-                cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                preexec_fn=os.setsid)
-        try:
-            self.end_time = datetime.datetime.now()
-            out, err = sub_proc.communicate(timeout=self.time)
-        except subprocess.TimeoutExpired:
-            # Send signal to the process group
-            self.end_time = datetime.datetime.now()
-            os.killpg(sub_proc.pid, signal.SIGINT)
-            out, err = sub_proc.communicate()
-
-        # Check for unexpected errors
-        # We expect tcptracer to print a stack trace on termination - anything
-        # more than that must be logged
-        pattern = r"^Traceback \(most recent call last\):" \
-                  r"(\S*\s)*KeyboardInterrupt\s$"
-        if not re.fullmatch(pattern, err.decode()):
-            logger.error(err.decode())
-
-        data = StringIO(out.decode())
-        port_lookup = self._generate_dict(data)
-        return self._generate_events(data, port_lookup)
+        port_lookup_dict = self._generate_dict(raw_data)
+        return self._generate_events(raw_data, port_lookup_dict)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using tcptracer """
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.EventData(data, self.start_time, self.end_time,
                                    InterfaceTypes.TCPTRACE)
 
@@ -298,7 +320,7 @@ class TCPTracer(Collecter):
         for line in data:
             values = line.split()
             time = int(values[0])
-            type = values[1]  # connect, accept, or close
+            tcp_type = values[1]  # connect, accept, or close
             source_pid = int(values[2])
             source_comm = values[3]
             source_addr = values[5]
@@ -324,7 +346,7 @@ class TCPTracer(Collecter):
                                 "Time: {}  Type: {}  Source PID: {}  "
                                 "Source comm: {}  Source port : {}  "
                                 "Dest port: {}  Net namespace: {}"
-                                .format(time, type, source_pid, source_comm,
+                                .format(time, tcp_type, source_pid, source_comm,
                                         source_port, dest_port, net_ns)
                 )
                 continue
@@ -340,7 +362,7 @@ class TCPTracer(Collecter):
                                 "Time: {}  Type: {}  Source PID: {}  "
                                 "Source comm: {}  Source port : {}  "
                                 "Dest (port, comm) pairs: {}  Net namespace: {}"
-                                .format(time, type, source_pid, source_comm,
+                                .format(time, tcp_type, source_pid, source_comm,
                                         source_port, str(sorted(dest_pids)),
                                         net_ns)
                 )
@@ -350,7 +372,7 @@ class TCPTracer(Collecter):
             dest_pids.add((dest_pid, dest_comm))  # Ensure set isn't altered
 
             # Otherwise output event
-            event = datatypes.EventDatum(time=time, type=type,
+            event = datatypes.EventDatum(time=time, type=tcp_type,
                                          specific_datum=(
                                              source_pid, source_comm,
                                              source_port,

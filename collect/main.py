@@ -13,6 +13,7 @@ cpu data collection, stack data collection, etc).
 __all__ = "main"
 
 import argparse
+import asyncio
 import logging
 import os
 
@@ -21,7 +22,6 @@ from common import (
     file,
     output,
     util,
-    datatypes,
     config,
     consts
 )
@@ -29,11 +29,142 @@ from collect.interface import (
     perf,
     iosnoop,
     smem,
-    ebpf)
+    ebpf
+)
 from collect.IO import write
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
+
+
+@util.log(logger)
+def main(argv, parser):
+    """
+    The main function of the controller.
+
+    Calls the middle level modules according to options selected by user.
+    Uses asyncio to asynchronously call collecters.
+
+    :param argv:
+        a list of command line arguments from call in main module
+    :param parser:
+        the parser that reads the config; it is passed around to avoid creating
+        multiple parser objects
+    """
+
+    # Parse arguments
+    args = _args_parse(argv)
+
+    # Use user output filename specified, otherwise create a unique one
+    if args.outfile:
+        if os.path.isfile(args.outfile):
+            output.print_("A file named {} already exists! Overwrite [y/n]? "
+                          .format(args.outfile))
+            if input() not in ("y", "yes"):
+                raise exceptions.AbortedException
+        filename = file.DataFileName(given_name=args.outfile)
+    else:
+        filename = file.DataFileName()
+
+    # Save latest filename to temporary file for display module
+    filename.export_filename()
+
+    # Create event loop to collect and write data
+    ioloop = asyncio.get_event_loop()
+    # ioloop.set_debug(True)
+
+    # Get collecter interfaces
+    collecters = _get_collecters(args, parser)
+
+    # Begin async collection
+    futures = tuple(collecter.collect() for collecter in collecters)
+    results = ioloop.run_until_complete(
+        asyncio.gather(*futures)
+    )
+
+    # Write results
+    for result in results:
+        write.Writer.write(result, str(filename))
+
+    # Cleanup
+    ioloop.close()
+    output.print_("Done.")
+
+
+@util.log(logger)
+def _args_parse(argv):
+    """
+    Creates a parser that parses the collect command.
+
+    :param argv:
+        a list of arguments passed by the main function.
+    :return:
+        an object containing the parsed command information.
+
+    Called by main when the program is started.
+
+    """
+
+    # Create parser object
+    parser = argparse.ArgumentParser(prog="marple collect",
+                                     description="Collect performance data")
+
+    # Add options for the modules
+    options = parser.add_argument_group()
+    options.add_argument("interfaces", nargs='+',
+                         help="Modules to be used when tracking. Options "
+                              "include: cpusched, disklat, ipc, lib,"
+                              "mallocstacks, callstack, memtime, memleak, "
+                              "memevents,"
+                              " diskblockrq, perf_malloc. The user can "
+                              "specify aliases for multiple such options in "
+                              "the config file and use them here just like "
+                              "with normal options")
+
+    # Add flag and parameter for filename
+    filename = parser.add_argument_group()
+    filename.add_argument("-o", "--outfile", type=str,
+                          help="Output file where collected data is stored")
+
+    # Add flag and parameter for time
+    time = parser.add_argument_group()
+    time.add_argument("-t", "--time", type=int,
+                      help="time in seconds that data is collected")
+
+    return parser.parse_args(argv)
+
+
+@util.log(logger)
+def _get_collecters(args, parser):
+    """
+    Calls the relevant functions that user chose and stores output in file.
+
+    :param args:
+        Command line arguments for data-collection.
+        Passed by main function.
+
+    """
+    # Use user specified time for data collection, otherwise config value
+    time = args.time if args.time else parser.get_default_time()
+
+    # Determine all arguments specifying collecter interfaces
+    args_seen = set()
+    config_parser = config.Parser()
+    for arg in args.interfaces:
+        if arg in consts.interfaces_argnames:
+            args_seen.add(arg)
+        else:
+            # The arg was not found, might be an alias
+            if not config_parser.has_option("Aliases", arg):
+                raise argparse.ArgumentError(message="Arguments not recognised",
+                                             argument=args)
+            alias_args = config_parser.get_option_from_section(
+                "Aliases", arg).split(',')
+            for alias_arg in alias_args:
+                args_seen.add(alias_arg)
+
+    return [_get_collecter_instance(arg, time, parser)
+            for arg in args_seen]
 
 
 def _get_collecter_instance(interface_name, time, parser):
@@ -46,7 +177,6 @@ def _get_collecter_instance(interface_name, time, parser):
                    than the time
     :returns: a collecter for the interface
     """
-    collecter = None
     if interface_name == "cpusched":
         collecter = perf.SchedulingEvents(time)
     elif interface_name == "disklat":
@@ -72,139 +202,7 @@ def _get_collecter_instance(interface_name, time, parser):
         collecter = perf.DiskBlockRequests(time)
     elif interface_name == "perf_malloc":
         collecter = perf.MemoryMalloc(time)
+    else:
+        raise NotImplementedError("{} not implemented!".format(interface_name))
 
     return collecter
-
-
-@util.log(logger)
-def _collect_and_store(args, parser):
-    """
-    Calls the relevant functions that user chose and stores output in file.
-
-    :param args:
-        Command line arguments for data-collection.
-        Passed by main function.
-
-    """
-
-    # Use user output filename specified, otherwise create a unique one
-    if args.outfile:
-        if os.path.isfile(args.outfile):
-            output.print_("A file named {} already exists! Overwrite [y/n]? "
-                          .format(args.outfile))
-            if input() not in ("y", "yes"):
-                raise exceptions.AbortedException
-        filename = file.DataFileName(given_name=args.outfile)
-    else:
-        filename = file.DataFileName()
-
-    # Save latest filename to temporary file for display module
-    filename.export_filename()
-
-    # Use user specified time for data collection, otherwise config value
-    time = args.time if args.time else parser.get_default_time()
-
-    # Determine all arguments specifying collecter interfaces
-    args_seen = set()
-    config_parser = config.Parser()
-    for arg in args.interfaces:
-        if arg in consts.interfaces_argnames:
-            args_seen.add(arg)
-        else:
-            # The arg was not found, might be an alias
-            if not config_parser.has_option("Aliases", arg):
-                raise argparse.ArgumentError(message="Arguments not recognised",
-                                             argument=args)
-            alias_args = config_parser.get_option_from_section(
-                "Aliases", arg).split(',')
-            for alias_arg in alias_args:
-                args_seen.add(alias_arg)
-
-    # collecter = _get_collecter_instance(interface, time, parser)
-    # all_interface_instances.append(collecter.collect())
-    # collecter = _get_collecter_instance(alias_interface, time,
-    #                                     parser)
-    # all_interface_instances.append(collecter.collect())
-    #
-    # # For each pair (collecter, data) in all_data, we need to pass the
-    # # datum generator collecter provides to the data
-    # writer = write.Writer()
-    # writer.write(all_interface_instances, str(filename))
-
-    output.print_("Done.")
-
-
-@util.log(logger)
-def _args_parse(argv):
-    """
-    Creates a parser that parses the collect command.
-
-    Arguments that are created in the parser object:
-
-        cpu: CPU scheduling data
-        disk: disk I/O data
-        ipc: ipc efficiency
-        lib: library load times
-        mem: memory allocation/ deallocation
-        stack: stack tracing
-
-        outfile o: the filename of the file that stores the output
-        time t: time in seconds to record data
-
-    :param argv:
-        a list of arguments passed by the main function.
-
-    :return:
-        an object containing the parsed command information.
-
-    Called by main when the program is started.
-
-    """
-
-    # Create parser object
-    parser = argparse.ArgumentParser(prog="marple collect",
-                                     description="Collect performance data")
-
-    # Add options for the modules
-    options = parser.add_argument_group()
-    options.add_argument("interfaces", nargs='+',
-                         help="Modules to be used when tracking. Options "
-                              "include: cpusched, disklat, ipc, lib,"
-                              "mallocstacks, memtime, memleak, memevents,"
-                              " diskblockrq, perf_malloc. The user can "
-                              "specify aliases for multiple such options in "
-                              "the config file and use them here just like "
-                              "with normal options")
-
-    # Add flag and parameter for filename
-    filename = parser.add_argument_group()
-    filename.add_argument("-o", "--outfile", type=str,
-                          help="Output file where collected data is stored")
-
-    # Add flag and parameter for time
-    time = parser.add_argument_group()
-    time.add_argument("-t", "--time", type=int,
-                      help="time in seconds that data is collected")
-
-    return parser.parse_args(argv)
-
-
-@util.log(logger)
-def main(argv, parser):
-    """
-    The main function of the controller.
-
-    Calls the middle level modules according to options selected by user.
-
-    :param argv:
-        a list of command line arguments from call in main module
-    :param parser:
-        the parser that reads the config; it is passed around to avoid creating
-        multiple parser objects
-    """
-
-    # Parse arguments
-    args = _args_parse(argv)
-
-    # Call the appropriate functions to collect input
-    _collect_and_store(args, parser)

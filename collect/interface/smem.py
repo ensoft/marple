@@ -16,18 +16,27 @@ __all__ = (
 )
 
 
+import asyncio
+import datetime
+import logging
 import re
 import subprocess
 import time
-import datetime
 from typing import NamedTuple
 
-from collect.interface.collecter import Collecter
+from collect.interface import collecter
 from common import datatypes, util
 from common.consts import InterfaceTypes
 
+logger = logging.getLogger(__name__)
+logger.debug('Entered module: %s', __name__)
 
-class MemoryGraph(Collecter):
+
+class MemoryGraph(collecter.Collecter):
+    """
+    Collects sorted memory usage for a specific number of processes.
+
+    """
     class Options(NamedTuple):
         """
         .. attribute:: mode:
@@ -35,22 +44,18 @@ class MemoryGraph(Collecter):
 
         """
         mode: str
+        frequency: float
 
-    _DEFAULT_OPTIONS = Options(mode="name")
+    _DEFAULT_OPTIONS = Options(mode="name", frequency=2.0)
 
-    @util.Override(Collecter)
+    @util.Override(collecter.Collecter)
     def __init__(self, time_, options=_DEFAULT_OPTIONS):
         super().__init__(time_, options)
 
-    @util.Override(Collecter)
-    def get_generator(self):
-        """
-        Collects sorted memory usage of a specific number of processes.
-
-        :return:
-            An iterator of :class: `DataPoint` objects.
-
-        """
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
+        """ Collect raw data asynchronously from smem """
         # Dict for the datapoints to be collected
         datapoints = {}
 
@@ -92,18 +97,28 @@ class MemoryGraph(Collecter):
                 datapoints[current_time][label] = float(int(memory / 1024))
 
             # Update the clock
+            await asyncio.sleep(1.0 / self.options.frequency)
             current_time = time.monotonic() - start_time
 
         self.end_time = datetime.datetime.now()
 
-        for key in datapoints:
-            for lab in datapoints[key]:
-                mem = datapoints[key][lab]
+        return datapoints
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """ Convert raw data to standard datatypes and yield them """
+        for key in raw_data:
+            for lab in raw_data[key]:
+                mem = raw_data[key][lab]
                 yield datatypes.PointDatum(key, mem, lab)
 
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using smem """
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.PointData(data, self.start_time, self.end_time,
                                    InterfaceTypes.MEMTIME, 'Time', 'Memory',
                                    'seconds', 'megabytes')
@@ -123,6 +138,6 @@ class MemoryGraph(Collecter):
 
 if __name__ == "__main__":
     mg=MemoryGraph(15)
-    it=mg.collect()
+    it=asyncio.wait_for(mg.collect(), 60)
     for i in it:
         print(i)

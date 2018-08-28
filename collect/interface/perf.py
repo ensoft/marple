@@ -19,14 +19,14 @@ __all__ = (
     'DiskBlockRequests'
 )
 
+import asyncio
 import datetime
 import logging
 import re
-import subprocess
 from io import StringIO
 from typing import NamedTuple
 
-from collect.interface.collecter import Collecter
+from collect.interface import collecter
 from common import datatypes, util
 from common.consts import InterfaceTypes
 
@@ -38,7 +38,7 @@ INCLUDE_TID = False
 INCLUDE_PID = False
 
 
-class MemoryEvents(Collecter):
+class MemoryEvents(collecter.Collecter):
     """ Collect memory load/store events using perf. """
 
     class Options(NamedTuple):
@@ -48,44 +48,55 @@ class MemoryEvents(Collecter):
     _DEFAULT_OPTIONS = None
 
     @util.check_kernel_version("2.6")
-    @util.Override(Collecter)
+    @util.Override(collecter.Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         """ Initialise the collecter (see superclass)."""
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def get_generator(self):
-        """ Collect data using perf, and return a data generator. """
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
+        """ Collect raw data asynchronously using perf """
         self.start_time = datetime.datetime.now()
 
-        sub_process = subprocess.Popen(
-            ["perf", "record", "-ag", "-e", "'{mem-loads,mem-stores}'",
-             "sleep", str(self.time)], stderr=subprocess.PIPE)
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf record -ag -e '{mem-loads,mem-stores}' sleep " +
+            str(self.time), stderr=asyncio.subprocess.PIPE
+        )
 
+        _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        _, err = sub_process.communicate()
-        logger.error(err.decode())
-
-        sub_process = subprocess.Popen(["perf", "script"],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-        out, err = sub_process.communicate()
 
         logger.error(err.decode())
 
-        stack_parser = StackParser(out.decode())
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf script", stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        out, err = await sub_process.communicate()
+
+        logger.error(err.decode())
+
+        return StringIO(out.decode())
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """ Convert raw data into standard datatypes and yield it """
+        stack_parser = StackParser(raw_data)
         return stack_parser.stack_collapse()
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using perf """
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.StackData(data, self.start_time, self.end_time,
-                                   "samples", InterfaceTypes.MEMEVENTS)
+                                   InterfaceTypes.MEMEVENTS, "samples")
 
 
-class MemoryMalloc(Collecter):
+class MemoryMalloc(collecter.Collecter):
     """ Collect malloc data using perf. """
 
     class Options(NamedTuple):
@@ -95,59 +106,67 @@ class MemoryMalloc(Collecter):
     _DEFAULT_OPTIONS = None
 
     @util.check_kernel_version("2.6")
-    @util.Override(Collecter)
+    @util.Override(collecter.Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         """ Initialise the collecter (see superclass). """
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def get_generator(self):
-        """ Collect data using perf and return a data generator. """
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
+        """ Collect raw data asynchronously using perf. """
         # Delete old probes and create a new one tracking allocation size
         # @@@ TODO THIS IS ARCHITECTURE SPECIFIC CURRENTLY
-        sub_process = subprocess.Popen(
-            ["perf", "probe", "-q", "--del", "*malloc*"],
-            stderr=subprocess.PIPE)
-        _, err = sub_process.communicate()
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf probe -q --del *malloc*", stderr=asyncio.subprocess.PIPE
+        )
+        _, err = await sub_process.communicate()
         logger.error(err.decode())
 
-        sub_process = subprocess.Popen(
-            ["perf", "probe", "-qx", "/lib*/*/libc.so.*",
-             "malloc:1 size=%di"], stderr=subprocess.PIPE)
-        _, err = sub_process.communicate()
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf probe -qx /lib*/*/libc.so.* malloc:1 size=%di",
+            stderr=asyncio.subprocess.PIPE
+        )
+        _, err = await sub_process.communicate()
         logger.error(err.decode())
 
         # Record perf data
         self.start_time = datetime.datetime.now()
-
-        sub_process = subprocess.Popen(
-            ["perf", "record", "-ag", "-e", "probe_libc:malloc:",
-             "sleep", str(self.time)], stderr=subprocess.PIPE)
-
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf record -ag -e probe_libc:malloc: sleep " + str(self.time),
+            stderr=asyncio.subprocess.PIPE
+        )
+        _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        _, err = sub_process.communicate()
         logger.error(err.decode())
 
-        sub_process = subprocess.Popen(["perf", "script"],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-        out, err = sub_process.communicate()
-
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf script",
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        out, err = await sub_process.communicate()
         logger.error(err.decode())
 
-        stack_parser = StackParser(out.decode())
+        return StringIO(out.decode())
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """ Convert raw data to standard datatypes and yield it"""
+        stack_parser = StackParser(raw_data)
         return stack_parser.stack_collapse()
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using perf """
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.StackData(data, self.start_time, self.end_time,
-                                   "kilobytes", InterfaceTypes.PERF_MALLOC)
+                                   InterfaceTypes.PERF_MALLOC, "kilobytes")
 
 
-class StackTrace(Collecter):
+class StackTrace(collecter.Collecter):
     """ Collect stack traces using perf. """
 
     class Options(NamedTuple):
@@ -172,42 +191,46 @@ class StackTrace(Collecter):
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def get_generator(self):
-        """ Collect data using perf and return a data generator. """
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
+        """ Collect raw data asynchronously using perf """
         self.start_time = datetime.datetime.now()
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf record -F " + str(self.options.frequency) + " " +
+            self.options.cpufilter + " -g -- sleep " + str(self.time),
+            stderr=asyncio.subprocess.PIPE)
 
-        sub_process = subprocess.Popen(["perf", "record", "-F",
-                                        str(self.options.frequency),
-                                        self.options.cpufilter,
-                                        "-g", "--", "sleep",
-                                        str(self.time)],
-                                       stderr=subprocess.PIPE)
-
+        _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        _, err = sub_process.communicate()
         logger.error(err.decode())
 
-        sub_process = subprocess.Popen(["perf", "script"],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-
-        out, err = sub_process.communicate()
-
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf script",
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        out, err = await sub_process.communicate()
         logger.error(err.decode())
 
-        stack_parser = StackParser(out.decode())
+        return StringIO(out.decode())
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """ Convert raw data to standard datatypes and yield it """
+        stack_parser = StackParser(raw_data)
         return stack_parser.stack_collapse()
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using perf """
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.StackData(data, self.start_time, self.end_time,
-                                   "samples", InterfaceTypes.CALLSTACK)
+                                   InterfaceTypes.CALLSTACK, "samples")
 
 
-class SchedulingEvents(Collecter):
+class SchedulingEvents(collecter.Collecter):
     """ Collect scheduling events using perf. """
 
     class Options(NamedTuple):
@@ -221,26 +244,32 @@ class SchedulingEvents(Collecter):
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def get_generator(self):
-        """ Collect data using perf and yield it. """
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
+        """ Collect raw data asynchronously using perf """
         self.start_time = datetime.datetime.now()
-
-        sub_process = subprocess.Popen(["perf", "sched", "record", "sleep",
-                                        str(self.time)], stderr=subprocess.PIPE)
-
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf sched record sleep " + str(self.time),
+            stderr=asyncio.subprocess.PIPE
+        )
+        _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        _, err = sub_process.communicate()
         logger.error(err.decode())
 
-        sub_process = subprocess.Popen(["perf", "sched", "script", "-F",
-                                        "comm,pid,cpu,time,event"],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-        out, err = sub_process.communicate()
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf sched script -F 'comm,pid,cpu,time,event'",
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        out, err = await sub_process.communicate()
         logger.error(err.decode())
 
-        for event_data in StringIO(out.decode()):
+        return StringIO(out.decode())
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """ Convert raw data to standard datatypes and yield it """
+        for event_data in raw_data:
             # e.g.   perf a  6997 [003] 363654.881950:       sched:sched_wakeup:
 
             event_data = event_data.strip()
@@ -280,14 +309,16 @@ class SchedulingEvents(Collecter):
             yield event
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using perf """
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.EventData(data, self.start_time, self.end_time,
                                    InterfaceTypes.SCHEDEVENTS)
 
 
-class DiskBlockRequests(Collecter):
+class DiskBlockRequests(collecter.Collecter):
     """ Collect requests for disk blocks using perf. """
 
     class Options(NamedTuple):
@@ -302,34 +333,42 @@ class DiskBlockRequests(Collecter):
         super().__init__(time, options)
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def get_generator(self):
-        """ Collect data using perf and return a data generator. """
+    @util.Override(collecter.Collecter)
+    async def _get_raw_data(self):
+        """ Collect raw data asynchronously using perf """
         self.start_time = datetime.datetime.now()
-
-        sub_process = subprocess.Popen(
-            ["perf", "record", "-ag", "-e", "block:block_rq_insert",
-             "sleep", str(self.time)], stderr=subprocess.PIPE)
-
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf record -ag -e block:block_rq_insert sleep " + str(self.time),
+            stderr=asyncio.subprocess.PIPE
+        )
+        _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        _, err = sub_process.communicate()
         logger.error(err.decode())
 
-        sub_process = subprocess.Popen(["perf", "script"],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-        out, err = sub_process.communicate()
+        sub_process = await asyncio.create_subprocess_shell(
+            "perf script",
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        out, err = await sub_process.communicate()
         logger.error(err.decode())
 
-        stack_parser = StackParser(out.decode())
+        return StringIO(out.decode())
+
+    @util.log(logger)
+    @util.Override(collecter.Collecter)
+    def _get_generator(self, raw_data):
+        """ Convert raw data to standard datatypes and yield it """
+        stack_parser = StackParser(raw_data)
         return stack_parser.stack_collapse()
 
     @util.log(logger)
-    @util.Override(Collecter)
-    def collect(self):
-        data = self.get_generator()
+    @util.Override(collecter.Collecter)
+    async def collect(self):
+        """ Collect data asynchronously using perf """
+        raw_data = await self._get_raw_data()
+        data = self._get_generator(raw_data)
         return datatypes.StackData(data, self.start_time, self.end_time,
-                                   "samples", InterfaceTypes.DISKBLOCK)
+                                   InterfaceTypes.DISKBLOCK, "samples")
 
 
 class StackParser:
@@ -368,7 +407,7 @@ class StackParser:
         """ Initialises the Parser.
 
         :param data_in:
-            Input from perf.
+            Input from perf as a StringIO object.
         :param event_filter:
             An optional string argument for an event type to be filtered for.
             Empty defaults to the first event type that is encountered.
@@ -524,7 +563,7 @@ class StackParser:
 
         """
 
-        for line in StringIO(self.data):
+        for line in self.data:
             # If end of stack, save cached data.
             if self._line_is_empty(line):
                 # Matches empty line

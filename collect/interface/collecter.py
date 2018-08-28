@@ -43,10 +43,13 @@ class Collecter:
         """ Any options that may be passed in to the collecter."""
         pass
 
-    def collect(self):
-        """ Collect the data and return it. """
+    async def _get_raw_data(self):
+        """ Collect raw data asynchronously from the collection tool """
+
+    def _get_generator(self, raw_data):
+        """ Convert the raw data to standard datatypes and yield it """
         pass
 
-    def get_generator(self):
-        """ Retrieves the datum generator """
+    async def collect(self):
+        """ Overall collection: collect data asynchronously and return it. """
         pass

@@ -242,7 +242,7 @@ class StackData:
         header_dict = {
             "start": str(self.start),
             "end": str(self.end),
-            "interface": self.interface,
+            "interface": self.interface.value,
             "datatype": self.datatype,
             "data_options": self.data_options,
         }
@@ -269,7 +269,7 @@ class EventData:
         header_dict = {
             "start": str(self.start),
             "end": str(self.end),
-            "interface": self.interface,
+            "interface": self.interface.value,
             "datatype": self.datatype,
         }
         return header_dict
@@ -311,7 +311,7 @@ class PointData:
         header_dict = {
             "start": str(self.start),
             "end": str(self.end),
-            "interface": self.interface,
+            "interface": self.interface.value,
             "datatype": self.datatype,
             "data_options": self.data_options
         }
