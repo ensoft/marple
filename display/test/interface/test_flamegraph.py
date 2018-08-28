@@ -87,9 +87,9 @@ class MakeTest(_FlamegraphBaseTest):
     expected_temp_file = "A1;A2;A3 4\n" \
                          "B1;B2;B3;B4 2\n"
 
-    @mock.patch('display.flamegraph.file')
+    @mock.patch('display.interface.flamegraph.file')
     @mock.patch('builtins.open')
-    @mock.patch('display.flamegraph.subprocess')
+    @mock.patch('display.interface.flamegraph.subprocess')
     def test_no_options(self, subproc_mock, open_mock, temp_file_mock):
         """ Test without display options """
         fg = flamegraph.Flamegraph(self.data, self.outfile)
@@ -119,9 +119,9 @@ class MakeTest(_FlamegraphBaseTest):
         )
         self.assertEqual(self.expected, actual)
 
-    @mock.patch('display.flamegraph.file')
+    @mock.patch('display.interface.flamegraph.file')
     @mock.patch('builtins.open')
-    @mock.patch('display.flamegraph.subprocess')
+    @mock.patch('display.interface.flamegraph.subprocess')
     def test_with_coloring(self, subproc_mock, open_mock, temp_file_mock):
         """ Test with a options """
         fg = flamegraph.Flamegraph(self.data, self.outfile,
@@ -155,10 +155,10 @@ class MakeTest(_FlamegraphBaseTest):
 class ShowTest(_FlamegraphBaseTest):
     """ Test the showing of the flamegraph """
 
-    @mock.patch('display.flamegraph.Flamegraph._read')
-    @mock.patch('display.flamegraph.Flamegraph._make')
-    @mock.patch('display.flamegraph.subprocess')
-    @mock.patch('display.flamegraph.os')
+    @mock.patch('display.interface.flamegraph.Flamegraph._read')
+    @mock.patch('display.interface.flamegraph.Flamegraph._make')
+    @mock.patch('display.interface.flamegraph.subprocess')
+    @mock.patch('display.interface.flamegraph.os')
     def test(self, os_mock, subproc_mock, make_mock, read_mock):
         environ_mock = {'SUDO_USER': 'test_user'}
         os_mock.environ.__getitem__.side_effect = environ_mock.__getitem__

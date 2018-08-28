@@ -95,10 +95,11 @@ class TreemapTest(unittest.TestCase):
 
     @mock.patch("builtins.open")
     @mock.patch("os.environ")
-    @mock.patch("display.treemap.Treemap._generate_csv")
-    @mock.patch("util.d3plus.d3IpyPlus.from_csv", return_value="")
+    @mock.patch("display.interface.treemap.Treemap._generate_csv")
+    @mock.patch("display.tools.d3plus.d3IpyPlus.from_csv", return_value="")
     @mock.patch("subprocess.Popen")
-    @mock.patch("util.d3plus.d3IpyPlus.TreeMap.dump_html", return_value="")
+    @mock.patch("display.tools.d3plus.d3IpyPlus.TreeMap.dump_html",
+                return_value="")
     def test_show_function(self, mock_dump, mock_popen, mock_from_csv,
                            mock_gen_csv, os_mock, mock_open):
         """

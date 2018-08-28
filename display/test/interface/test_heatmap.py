@@ -50,8 +50,7 @@ class GetDataTest(_BaseHeatMapTest):
         self.assertEqual(str(err),
                          "Error in display.heatmap: No data in input file.")
 
-    @mock.patch("collect.IO.read.Reader")
-    def test_simple_data(self, read_mock):
+    def test_simple_data(self):
         """
         Ensure HeatMap._get_data() method correctly converts input file.
 
@@ -65,8 +64,7 @@ class GetDataTest(_BaseHeatMapTest):
         self.assertEqual(x, [1.0, 3.0])
         self.assertEqual(y, [2.0, 4.0])
 
-    @mock.patch("collect.IO.read.Reader")
-    def test_simple_time_data(self, read_mock):
+    def test_simple_time_data(self):
         """
         Ensure HeatMap._get_data() method correctly converts input file,
         with x-axis data normalisation.
@@ -156,9 +154,9 @@ class SetAxesLimitsTest(_BaseHeatMapTest):
 
 
 class InitTest(_BaseHeatMapTest):
-    @mock.patch('display.heatmap.np')
-    @mock.patch('display.heatmap.plt')
-    @mock.patch('display.heatmap.widgets.Slider')
+    @mock.patch('display.interface.heatmap.np')
+    @mock.patch('display.interface.heatmap.plt')
+    @mock.patch('display.interface.heatmap.widgets.Slider')
     def test_init(self, slider_mock, pyplot_mock, numpy_mock):
         """
         Test the __init__ method of the HeatMap class - stub out all external

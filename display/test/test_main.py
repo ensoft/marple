@@ -55,14 +55,14 @@ class DisplayTest(unittest.TestCase):
             for _ in self.data:
                 continue
 
-    @mock.patch("display.stackplot.StackPlot")
-    @mock.patch("display.treemap.Treemap")
-    @mock.patch("display.flamegraph.Flamegraph")
-    @mock.patch("display.g2.G2")
-    @mock.patch("display.heatmap.HeatMap")
-    @mock.patch("display.controller.open")
-    @mock.patch("display.controller._get_display_options")
-    @mock.patch("display.controller._get_data_options")
+    @mock.patch("display.interface.stackplot.StackPlot")
+    @mock.patch("display.interface.treemap.Treemap")
+    @mock.patch("display.interface.flamegraph.Flamegraph")
+    @mock.patch("display.interface.g2.G2")
+    @mock.patch("display.interface.heatmap.HeatMap")
+    @mock.patch("display.main.open")
+    @mock.patch("display.main._get_display_options")
+    @mock.patch("display.main._get_data_options")
     def test_display_no_args_only_config(self, data_options_mock,
                                          display_options_mock, open_mock,
                                          hm, g2, fg, tm, sp):
@@ -89,14 +89,14 @@ class DisplayTest(unittest.TestCase):
                         tm.call_count == 1 and
                         g2.call_count == 1)
 
-    @mock.patch("display.stackplot.StackPlot")
-    @mock.patch("display.treemap.Treemap")
-    @mock.patch("display.flamegraph.Flamegraph")
-    @mock.patch("display.g2.G2")
-    @mock.patch("display.heatmap.HeatMap")
-    @mock.patch("display.controller.open")
-    @mock.patch("display.controller._get_display_options")
-    @mock.patch("display.controller._get_data_options")
+    @mock.patch("display.interface.stackplot.StackPlot")
+    @mock.patch("display.interface.treemap.Treemap")
+    @mock.patch("display.interface.flamegraph.Flamegraph")
+    @mock.patch("display.interface.g2.G2")
+    @mock.patch("display.interface.heatmap.HeatMap")
+    @mock.patch("display.main.open")
+    @mock.patch("display.main._get_display_options")
+    @mock.patch("display.main._get_data_options")
     def test_display_args(self, data_options_mock,
                           display_options_mock, open_mock,
                           hm, g2, fg, tm, sp):
@@ -377,7 +377,7 @@ class TestDataOptions(unittest.TestCase):
         """
         header = {"datatype": "RANDOM", "data_options": {}}
         with self.assertRaises(ValueError):
-            opts = main._get_data_options(header)
+            main._get_data_options(header)
 
 
 class TestDisplayOptions(unittest.TestCase):
