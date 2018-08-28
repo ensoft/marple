@@ -4,7 +4,7 @@ from unittest import mock
 
 from common import consts, datatypes
 from display import (
-    controller,
+    main,
     flamegraph,
     g2,
     treemap,
@@ -83,9 +83,9 @@ class DisplayTest(unittest.TestCase):
         sp.side_effect = self.MockDisplay
 
         args = ['-i', 'test.in', '-o', 'test.out']
-        args = controller._args_parse(args)
+        args = main._args_parse(args)
 
-        controller._display(args)
+        main._display(args)
         # Check if each one of them is called
         self.assertTrue(fg.call_count == 1 and
                         sp.call_count == 1 and
@@ -121,8 +121,8 @@ class DisplayTest(unittest.TestCase):
 
         # First set of args
         args = ['-sp', '-g2', '-tm', '-i', 'test.in', '-o', 'test.out']
-        args = controller._args_parse(args)
-        controller._display(args)
+        args = main._args_parse(args)
+        main._display(args)
         # Check if each one of them is called
         self.assertTrue(fg.call_count == 0 and
                         sp.call_count == 2 and
@@ -138,8 +138,8 @@ class DisplayTest(unittest.TestCase):
         hm.reset_mock()
 
         args = ['-fg', '-g2', '-hm', '-i', 'test.in', '-o', 'test.out']
-        args = controller._args_parse(args)
-        controller._display(args)
+        args = main._args_parse(args)
+        main._display(args)
         # Check if each one of them is called
         self.assertTrue(fg.call_count == 2 and
                         sp.call_count == 0 and
@@ -155,8 +155,8 @@ class DisplayTest(unittest.TestCase):
         hm.reset_mock()
 
         args = ['-sp', '-i', 'test.in', '-o', 'test.out']
-        args = controller._args_parse(args)
-        controller._display(args)
+        args = main._args_parse(args)
+        main._display(args)
         # Check if each one of them is called
         self.assertTrue(fg.call_count == 1 and
                         sp.call_count == 2 and
@@ -172,7 +172,7 @@ class ArgsParseTest(unittest.TestCase):
     """
     def test_args_normal(self):
         args = ['-fg', '-i', 'test.in', '-o', 'test.out']
-        args = controller._args_parse(args)
+        args = main._args_parse(args)
         self.assertTrue(args.flamegraph)
         self.assertEqual(args.infile, 'test.in')
         self.assertEqual(args.outfile, 'test.out')
@@ -188,64 +188,64 @@ class SelectModeTest(unittest.TestCase):
     # for both args and config file
 
     def test_hm_args(self):
-        mode = controller._select_mode("Disk Latency/Time", "point",
-                                       vars(controller._args_parse(['-hm'])))
+        mode = main._select_mode("Disk Latency/Time", "point",
+                                 vars(main._args_parse(['-hm'])))
         self.assertEqual(mode, consts.DisplayOptions.HEATMAP)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="heatmap")
     def test_hm_config(self, mock_opt):
-        mode = controller._select_mode("Disk Latency/Time", "point",
-                                       vars(controller._args_parse([])))
+        mode = main._select_mode("Disk Latency/Time", "point",
+                                 vars(main._args_parse([])))
         self.assertEqual(mode, consts.DisplayOptions.HEATMAP)
 
     def test_tm_args(self):
-        mode = controller._select_mode("Malloc Stacks", "stack",
-                                       vars(controller._args_parse(['-tm'])))
+        mode = main._select_mode("Malloc Stacks", "stack",
+                                 vars(main._args_parse(['-tm'])))
         self.assertEqual(mode, consts.DisplayOptions.TREEMAP)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="treemap")
     def test_tm_config(self, mock_opt):
-        mode = controller._select_mode("Malloc Stacks", "stack",
-                                       vars(controller._args_parse([])))
+        mode = main._select_mode("Malloc Stacks", "stack",
+                                 vars(main._args_parse([])))
         self.assertEqual(mode, consts.DisplayOptions.TREEMAP)
 
     def test_fg_args(self):
-        mode = controller._select_mode("Call Stacks", "stack",
-                                       vars(controller._args_parse(['-fg'])))
+        mode = main._select_mode("Call Stacks", "stack",
+                                 vars(main._args_parse(['-fg'])))
         self.assertEqual(mode, consts.DisplayOptions.FLAMEGRAPH)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="flamegraph")
     def test_fg_config(self, mock_opt):
-        mode = controller._select_mode("Call Stacks", "stack",
-                                       vars(controller._args_parse([])))
+        mode = main._select_mode("Call Stacks", "stack",
+                                 vars(main._args_parse([])))
         self.assertEqual(mode, consts.DisplayOptions.FLAMEGRAPH)
 
     def test_sp_args(self):
-        mode = controller._select_mode("Memory/Time", "point",
-                                       vars(controller._args_parse(['-sp'])))
+        mode = main._select_mode("Memory/Time", "point",
+                                 vars(main._args_parse(['-sp'])))
         self.assertEqual(mode, consts.DisplayOptions.STACKPLOT)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="stackplot")
     def test_sp_config(self, mock_opt):
-        mode = controller._select_mode("Memory/Time", "point",
-                                       vars(controller._args_parse([])))
+        mode = main._select_mode("Memory/Time", "point",
+                                 vars(main._args_parse([])))
         self.assertEqual(mode, consts.DisplayOptions.STACKPLOT)
 
     def test_g2_args(self):
-        mode = controller._select_mode("Scheduling Events", "event",
-                                       vars(
-                                           controller._args_parse(['-g2'])))
+        mode = main._select_mode("Scheduling Events", "event",
+                                 vars(
+                                           main._args_parse(['-g2'])))
         self.assertEqual(mode, consts.DisplayOptions.G2)
 
     @mock.patch("common.config.Parser.get_option_from_section",
                 return_value="g2")
     def test_g2_config(self, mock_opt):
-        mode = controller._select_mode("Scheduling Events", "event",
-                                       vars(controller._args_parse([])))
+        mode = main._select_mode("Scheduling Events", "event",
+                                 vars(main._args_parse([])))
         self.assertEqual(mode, consts.DisplayOptions.G2)
 
     @mock.patch("common.config.Parser.get_option_from_section",
@@ -257,8 +257,8 @@ class SelectModeTest(unittest.TestCase):
         Covers all such test cases
         """
 
-        mode = controller._select_mode("Scheduling Events", "event",
-                                       vars(controller._args_parse(["-fg"])))
+        mode = main._select_mode("Scheduling Events", "event",
+                                 vars(main._args_parse(["-fg"])))
         self.assertEqual(mode, consts.DisplayOptions.G2)
 
     def test_invalid_interface_but_correct_mode(self):
@@ -267,16 +267,16 @@ class SelectModeTest(unittest.TestCase):
         argument that is consistent with the datatype, the answer is correct
         """
 
-        mode = controller._select_mode("INVALID", "event",
-                                       vars(controller._args_parse(["-g2"])))
+        mode = main._select_mode("INVALID", "event",
+                                 vars(main._args_parse(["-g2"])))
         self.assertEqual(mode, consts.DisplayOptions.G2)
 
     # The following tests verify that errors are triggered correctly
 
     def test_datatype_not_supported(self):
         with self.assertRaises(ValueError) as ve:
-            controller._select_mode("RANDOM", "RANDOM",
-                                    vars(controller._args_parse([])))
+            main._select_mode("RANDOM", "RANDOM",
+                              vars(main._args_parse([])))
         err = ve.exception
         self.assertEqual(str(err),
                          "The datatype RANDOM is not supported")
@@ -289,8 +289,8 @@ class SelectModeTest(unittest.TestCase):
 
         """
         with self.assertRaises(ValueError) as ve:
-            controller._select_mode("Scheduling Events", "event",
-                                    vars(controller._args_parse([])))
+            main._select_mode("Scheduling Events", "event",
+                              vars(main._args_parse([])))
         err = ve.exception
         self.assertEqual(str(err),
                          "The default value from the config could not be "
@@ -307,8 +307,8 @@ class SelectModeTest(unittest.TestCase):
 
         """
         with self.assertRaises(ValueError) as ve:
-            controller._select_mode("Scheduling Events", "event",
-                                    vars(controller._args_parse([])))
+            main._select_mode("Scheduling Events", "event",
+                              vars(main._args_parse([])))
         err = ve.exception
         self.assertEqual(str(err),
                          "No valid args or config values found for "
@@ -324,8 +324,8 @@ class SelectModeTest(unittest.TestCase):
 
         """
         with self.assertRaises(ValueError) as ve:
-            controller._select_mode("Scheduling Events", "event",
-                                    vars(controller._args_parse([])))
+            main._select_mode("Scheduling Events", "event",
+                              vars(main._args_parse([])))
         err = ve.exception
         self.assertEqual(str(err),
                          "No valid args or config values found for "
@@ -345,7 +345,7 @@ class TestDataOptions(unittest.TestCase):
 
         """
         header = {"datatype": "stack", "data_options": {"weight_units": "kb"}}
-        opts = controller._get_data_options(header)
+        opts = main._get_data_options(header)
         self.assertEqual(opts, datatypes.StackData.DataOptions("kb"))
 
     def test_point(self):
@@ -361,7 +361,7 @@ class TestDataOptions(unittest.TestCase):
                          "y_units": "yunits"
                      }
                  }
-        opts = controller._get_data_options(header)
+        opts = main._get_data_options(header)
         self.assertEqual(opts, datatypes.PointData.DataOptions(
             "xlabel", "ylabel", "xunits", "yunits"))
 
@@ -371,7 +371,7 @@ class TestDataOptions(unittest.TestCase):
 
         """
         header = {"datatype": "event", "data_options": {}}
-        opts = controller._get_data_options(header)
+        opts = main._get_data_options(header)
         self.assertEqual(opts, None)
 
     def test_invalid_datatype(self):
@@ -381,7 +381,7 @@ class TestDataOptions(unittest.TestCase):
         """
         header = {"datatype": "RANDOM", "data_options": {}}
         with self.assertRaises(ValueError):
-            opts = controller._get_data_options(header)
+            opts = main._get_data_options(header)
 
 
 class TestDisplayOptions(unittest.TestCase):
@@ -397,7 +397,7 @@ class TestDisplayOptions(unittest.TestCase):
         """
         mock_opt.side_effect = ['hot']
 
-        opt = controller._get_display_options(consts.DisplayOptions.FLAMEGRAPH)
+        opt = main._get_display_options(consts.DisplayOptions.FLAMEGRAPH)
         self.assertEqual(opt,
                          flamegraph.Flamegraph.DisplayOptions(coloring='hot'))
 
@@ -409,7 +409,7 @@ class TestDisplayOptions(unittest.TestCase):
         """
         mock_opt.side_effect = [1.0, 1.0, 1.0, True]
 
-        opt = controller._get_display_options(consts.DisplayOptions.HEATMAP)
+        opt = main._get_display_options(consts.DisplayOptions.HEATMAP)
         self.assertEqual(opt, heatmap.HeatMap.DisplayOptions(
                                   'No. Occurences',
                                   heatmap.GraphParameters(figure_size=1,
@@ -424,7 +424,7 @@ class TestDisplayOptions(unittest.TestCase):
         """
         mock_opt.side_effect = ["pid"]
 
-        opt = controller._get_display_options(consts.DisplayOptions.G2)
+        opt = main._get_display_options(consts.DisplayOptions.G2)
         self.assertEqual(opt, g2.G2.DisplayOptions("pid"))
 
     @mock.patch("common.config.Parser.get_option_from_section")
@@ -435,7 +435,7 @@ class TestDisplayOptions(unittest.TestCase):
         """
         mock_opt.side_effect = [25]
 
-        opt = controller._get_display_options(consts.DisplayOptions.TREEMAP)
+        opt = main._get_display_options(consts.DisplayOptions.TREEMAP)
         self.assertEqual(opt, treemap.Treemap.DisplayOptions(25))
 
     @mock.patch("common.config.Parser.get_option_from_section")
@@ -446,5 +446,5 @@ class TestDisplayOptions(unittest.TestCase):
         """
         mock_opt.side_effect = [25]
 
-        opt = controller._get_display_options(consts.DisplayOptions.STACKPLOT)
+        opt = main._get_display_options(consts.DisplayOptions.STACKPLOT)
         self.assertEqual(opt, stackplot.StackPlot.DisplayOptions(25))

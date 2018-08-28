@@ -4,17 +4,35 @@
 # -------------------------------------------------------------
 
 """
-File is divided in two sections
-    - Data types comprising the interface between the collect and display
-      packages (the `Datum` part);
-    - 'Sections' (each of them will represent sections in the MARPLE files),
-      represented by classes that encapsulate generators of the
-      above, together with headers
+Handles data input and output for MARPLE.
 
-Usage: data types can be constructed using the constructors, or from a standard
-string representation using the from_string method. The standard representation
-is the one given by the __str__ method for each class, allowing a data type
-object to be converted to standard representation using casting.
+Standard datatypes (PointDatum, StackDatum, and EventDatum) are defined.
+Collections of data (including header info) are also defined - these are
+PointData, StackData, and EventData.
+Lastly, methods for writing and reading these to standard MARPLE data files
+are defined.
+
+Each datatype has __str__ and from_string methods, allowing for simple
+conversion to and from standard strings.
+Each collection of data has a method to convert the header to a string.
+
+MARPLE standard data files are as follows:
+<header 1>
+<collection of data
+...
+>
+<blank line>
+<header 2>
+<
+collection of data
+...
+>
+<blank line>
+...
+
+Where each collection of data consists of a single datapoint on each line.
+
+
 
 """
 
@@ -24,14 +42,17 @@ __all__ = (
     'EventDatum',
     'StackData',
     'PointData',
-    'EventData'
+    'EventData',
+    'write',
+    'read_header',
+    'read_until_line'
 )
 
-
+import json
 import logging
 import typing
 
-from common import exceptions, consts
+from common import exceptions, consts, util
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -211,10 +232,6 @@ class StackDatum(typing.NamedTuple):
                 "('{}')".format(string)) from ve
 
 
-# Classes from here onwards will encapsulate generators of the above defined
-# 'Datum' classes, together with the required information for the header
-
-
 class StackData:
     class DataOptions(typing.NamedTuple):
         """
@@ -316,3 +333,78 @@ class PointData:
             "data_options": self.data_options
         }
         return header_dict
+
+
+@util.log(logger)
+def write(data, filename):
+    """
+    Write standard datatypes to a standard format file.
+
+    Note that the file is appended to, rather than overwritten.
+
+    :param data:
+        A StackData, EventData, or PointData object
+    :param filename:
+        The output file name
+
+    """
+    with open(filename, "a") as out:
+        # Write the header of the file as the first line
+        out.write(json.dumps(data.header_to_dict()) + '\n')
+
+        # Write data
+        # out.writelines(data.datum_generator)
+        for datum in data.datum_generator:
+            out.write(str(datum) + "\n")
+
+        out.write("\n")
+
+
+@util.log(logger)
+def read_header(file_object):
+    """
+    Read the header of the file (its first line).
+
+    If the header is not a valid JSON on a single line, an error is thrown.
+    If at the end of a file, None is returned.
+
+    :param file_object:
+        The input file object.
+    :return:
+        The dictionary representation of the file header.
+    :raises:
+        json.JSONDecodeError if the header is invalid.
+
+    """
+    header_str = file_object.readline().strip()
+    if not header_str:  # end of a file
+        return None
+
+    try:
+        header_dict = json.loads(header_str)
+        return header_dict
+    except json.JSONDecodeError as jse:
+        jse.msg = "Malformed JSON header!"
+        raise jse
+
+
+@util.log(logger)
+def read_until_line(file_object, stop_line):
+    """
+    Lazily read from the file until a certain line.
+
+    If the end of the file is encountered, the results so far are returned.
+
+    :param file_object:
+        The input file to read.
+        Reading continues from the current file pointer position.
+    :param stop_line:
+        The line at which to stop.
+    :return:
+        Yields single lines from the file.
+
+    """
+    line = file_object.readline()
+    while line not in (stop_line, ''):
+        yield line
+        line = file_object.readline()

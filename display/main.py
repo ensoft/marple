@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# controller.py - user interface, parses and applies display commands
+# main.py - user interface, parses and applies display commands
 # June-July 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
@@ -10,12 +10,13 @@ Handles interaction between the output modules (flamegraph, g2, etc.)
 It calls the relevant functions for each command.
 
 """
+import common.datatypes
+
 __all__ = "main"
 
 import argparse
 import logging
 
-from collect.IO import read
 from common import (
     file,
     util,
@@ -217,7 +218,7 @@ def _display(args):
         # As long as we have not reached the eof (which is reached when the
         # header we read was None), try to display next section
         while not eof:
-            header = read.Reader.read_header(file_object)
+            header = common.datatypes.read_header(file_object)
             if header is None:
                 # EOF, we skip current step and exit the loop
                 eof = True
@@ -225,7 +226,7 @@ def _display(args):
 
             # Generator that returns data from the current section, one line
             # at a time
-            data = read.Reader.read_until_line(file_object, "\n")
+            data = common.datatypes.read_until_line(file_object, "\n")
 
             # We select the display option based on args or the config file,
             # and get the associated options with that display option

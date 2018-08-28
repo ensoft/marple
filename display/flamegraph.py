@@ -23,7 +23,6 @@ from common import (
     util,
     datatypes
 )
-from collect.IO import read
 from common.datatypes import StackDatum
 from display.generic_display import GenericDisplay
 from typing import NamedTuple

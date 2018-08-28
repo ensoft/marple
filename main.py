@@ -26,7 +26,7 @@ from common import (
     paths,
     config
 )
-from display import controller as display_controller
+from display import main as display_controller
 
 # use marple log across the whole module
 logger = logging.getLogger(__name__)

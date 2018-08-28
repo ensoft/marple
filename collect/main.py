@@ -10,6 +10,8 @@ Parses user input and calls to the appropriate functions (
 cpu data collection, stack data collection, etc).
 
 """
+import common.datatypes
+
 __all__ = "main"
 
 import argparse
@@ -31,7 +33,6 @@ from collect.interface import (
     smem,
     ebpf
 )
-from collect.IO import write
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -84,7 +85,7 @@ def main(argv, parser):
 
     # Write results
     for result in results:
-        write.Writer.write(result, str(filename))
+        common.datatypes.write(result, str(filename))
 
     # Cleanup
     ioloop.close()

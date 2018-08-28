@@ -13,6 +13,8 @@ import json
 
 from unittest import mock
 from io import StringIO
+
+import common.datatypes
 from collect.IO import read
 
 
@@ -37,8 +39,8 @@ class ReaderTest(unittest.TestCase):
                     "11#12#13#14#15#16#17"
         file_object = StringIO(file_header + file_data)
 
-        header = read.Reader.read_header(file_object)
-        data = read.Reader.read_until_line(file_object, '\n')
+        header = common.datatypes.Reader.read_header(file_object)
+        data = common.datatypes.Reader.read_until_line(file_object, '\n')
         self.assertDictEqual(header, {"start": "2018-08-20 18:46:38.403129",
                                       "end": "2018-08-20 18:46:39.403129",
                                       "datatype": "Event Data",
@@ -62,8 +64,8 @@ class ReaderTest(unittest.TestCase):
                     "11#12#13#14#15#16#17"
         file_object = StringIO(file_header + file_data)
 
-        header = read.Reader.read_header(file_object)
-        data = read.Reader.read_until_line(file_object, '\n')
+        header = common.datatypes.Reader.read_header(file_object)
+        data = common.datatypes.Reader.read_until_line(file_object, '\n')
         self.assertDictEqual(header, {"start": "2018-08-20 18:46:38.403129",
                                       "end": "2018-08-20 18:46:39.403129",
                                       "datatype": "Event Data",
@@ -87,4 +89,4 @@ class ReaderTest(unittest.TestCase):
         file_object = StringIO(file_header + file_data)
 
         with self.assertRaises(json.JSONDecodeError):
-            read.Reader.read_header(file_object)
+            common.datatypes.Reader.read_header(file_object)
