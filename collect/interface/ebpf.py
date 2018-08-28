@@ -24,13 +24,13 @@ import typing
 from io import StringIO
 
 from collect.interface import collecter
-from common import util, datatypes, paths, output
+from common import util, data_io, paths, output
 from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
-BCC_TOOLS_PATH = paths.MARPLE_DIR + "/util/bcc-tools/"
+BCC_TOOLS_PATH = paths.MARPLE_DIR + "/collect/tools/bcc-tools/"
 
 
 class MallocStacks(collecter.Collecter):
@@ -75,7 +75,7 @@ class MallocStacks(collecter.Collecter):
     def _get_generator(self, raw_data):
         """ Convert raw data to standard datatypes and yield it. """
         for line in raw_data:
-            yield datatypes.StackDatum.from_string(line)
+            yield data_io.StackDatum.from_string(line)
 
     @util.log(logger)
     @util.Override(collecter.Collecter)
@@ -83,8 +83,8 @@ class MallocStacks(collecter.Collecter):
         """ Collect data asynchronously using iosnoop."""
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.StackData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.MALLOCSTACKS, "kilobytes")
+        return data_io.StackData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.MALLOCSTACKS, "kilobytes")
 
 
 class Memleak(collecter.Collecter):
@@ -139,7 +139,7 @@ class Memleak(collecter.Collecter):
     def _get_generator(self, raw_data):
         """ Convert raw data to standard datatypes and yield it """
         for line in raw_data:
-            yield datatypes.StackDatum.from_string(line)
+            yield data_io.StackDatum.from_string(line)
 
     @util.log(logger)
     @util.Override(collecter.Collecter)
@@ -147,8 +147,8 @@ class Memleak(collecter.Collecter):
         """ Collect data asynchronously using memleak.py """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.StackData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.MEMLEAK, "kilobytes")
+        return data_io.StackData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.MEMLEAK, "kilobytes")
 
 
 class TCPTracer(collecter.Collecter):
@@ -247,8 +247,8 @@ class TCPTracer(collecter.Collecter):
         """ Collect data asynchronously using tcptracer """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.EventData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.TCPTRACE)
+        return data_io.EventData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.TCPTRACE)
 
     @util.log(logger)
     def _generate_dict(self, data):
@@ -372,12 +372,12 @@ class TCPTracer(collecter.Collecter):
             dest_pids.add((dest_pid, dest_comm))  # Ensure set isn't altered
 
             # Otherwise output event
-            event = datatypes.EventDatum(time=time, type=tcp_type,
-                                         specific_datum=(
+            event = data_io.EventDatum(time=time, type=tcp_type,
+                                       specific_datum=(
                                              source_pid, source_comm,
                                              source_port,
                                              dest_pid, dest_comm, dest_port,
                                              net_ns)
-                                         )
+                                       )
 
             yield event

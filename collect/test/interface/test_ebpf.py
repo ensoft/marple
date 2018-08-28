@@ -11,7 +11,7 @@ from io import StringIO
 from unittest import mock
 
 from collect.interface import ebpf
-from common import datatypes
+from common import data_io
 
 
 class Mallocstacks(unittest.TestCase):
@@ -54,10 +54,10 @@ class Mallocstacks(unittest.TestCase):
         mock_return_popen_stdout = b"123123#proc1#func1#func2\n321321#proc2#" \
                                    b"func1#func2#func3\n"
 
-        expected = [datatypes.StackDatum(self.to_kilo(123123),
-                                         ("proc1", "func1", "func2")),
-                    datatypes.StackDatum(self.to_kilo(321321),
-                                         ("proc2", "func1", "func2", "func3"))]
+        expected = [data_io.StackDatum(self.to_kilo(123123),
+                                       ("proc1", "func1", "func2")),
+                    data_io.StackDatum(self.to_kilo(321321),
+                                       ("proc2", "func1", "func2", "func3"))]
 
         output = self.mock(mock_return_popen_stdout)
         self.assertEqual(output, expected)
@@ -69,8 +69,8 @@ class Mallocstacks(unittest.TestCase):
         """
         mock_return_popen_stdout = b"123123#1   [];'#[]-=1   2=\n"
 
-        expected = [datatypes.StackDatum(self.to_kilo(123123),
-                                         ("1   [];'", "[]-=1   2="))]
+        expected = [data_io.StackDatum(self.to_kilo(123123),
+                                       ("1   [];'", "[]-=1   2="))]
 
         output = self.mock(mock_return_popen_stdout)
         self.assertEqual(output, expected)
@@ -381,11 +381,11 @@ class TCPTracerTest(unittest.TestCase):
         port_dict = {4: {('pid1', 'test1')}, 3: {('pid2', 'test2')}}
         result = list(tracer._generate_events(data, port_dict))
         expected = [
-            datatypes.EventData(time=1, type='A',
-                                specific_datum=(
+            data_io.EventData(time=1, type='A',
+                              specific_datum=(
                                     2, 'comm1', 3, 'pid1', 'test1', 4, 5)),
-            datatypes.EventData(time=6, type='B',
-                                specific_datum=(
+            data_io.EventData(time=6, type='B',
+                              specific_datum=(
                                     7, 'comm2', 4, 'pid2', 'test2', 3, 5))
         ]
         self.assertEqual(expected, result)
@@ -409,8 +409,8 @@ class TCPTracerTest(unittest.TestCase):
                      3: {('pid2', 'test2'), ('pid3', 'test3')}}
         result = list(tracer._generate_events(data, port_dict))
         expected = [
-            datatypes.EventData(time=1, type='A',
-                                specific_datum=(
+            data_io.EventData(time=1, type='A',
+                              specific_datum=(
                                     2, 'comm1', 3, 'pid1', 'test1', 4, 5)),
         ]
         self.assertEqual(expected, result)

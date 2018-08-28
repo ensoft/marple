@@ -21,17 +21,13 @@ from io import StringIO
 from typing import NamedTuple
 
 from collect.interface import collecter
-from common import datatypes
-from common import util
+from common import data_io, util, paths
 from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
-ROOT_DIR = str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(
-              __file__))))) + "/"
-
-IOSNOOP_SCRIPT = ROOT_DIR + "util/perf-tools/iosnoop"
+IOSNOOP_SCRIPT = paths.MARPLE_DIR + "/collect/tools/perf-tools/iosnoop"
 
 
 class DiskLatency(collecter.Collecter):
@@ -78,8 +74,8 @@ class DiskLatency(collecter.Collecter):
             values = line.split()
             if len(values) < 9:
                 continue  # skip footer lines
-            yield datatypes.PointDatum(x=float(values[1]), y=float(values[8]),
-                                       info=values[3])
+            yield data_io.PointDatum(x=float(values[1]), y=float(values[8]),
+                                     info=values[3])
 
     @util.log(logger)
     @util.Override(collecter.Collecter)
@@ -87,6 +83,6 @@ class DiskLatency(collecter.Collecter):
         """ Collect data asynchronously using iosnoop."""
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.PointData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.DISKLATENCY,
+        return data_io.PointData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.DISKLATENCY,
                                    'Time', 'Latency', 'seconds', 'ms')

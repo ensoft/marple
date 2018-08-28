@@ -7,10 +7,9 @@
 
 import unittest
 from unittest import mock
-from io import StringIO
 
-from display import heatmap
-from common import file, datatypes
+from display.interface import heatmap
+from common import file, data_io
 
 
 class _BaseHeatMapTest(unittest.TestCase):
@@ -21,11 +20,11 @@ class _BaseHeatMapTest(unittest.TestCase):
         self.test_params = heatmap.GraphParameters(figure_size=10, scale=10, y_res=8)
         self.test_labels = heatmap.AxesLabels("X", "Y", "X units", "Y units")
         self.test_comps = heatmap.HeatMap._DataStats(x_min=1.0, x_max=5.0,
-                                                y_min=6.0, y_max=10.0,
-                                                y_median=8.0,
-                                                x_bins=100.0, y_bins=10.0,
-                                                x_bin_size=0.04, y_bin_size=0.4,
-                                                x_delta=4, y_delta=40)
+                                                     y_min=6.0, y_max=10.0,
+                                                     y_median=8.0,
+                                                     x_bins=100.0, y_bins=10.0,
+                                                     x_bin_size=0.04, y_bin_size=0.4,
+                                                     x_delta=4, y_delta=40)
         self.test_x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
         self.test_y_data = [6.0, 7.0, 8.0, 9.0, 10.0]
         self.test_data = iter(("1.0,6.0,info1\n", "2.0,7.0,info2\n",
@@ -116,7 +115,7 @@ class SetAxesLimitsTest(_BaseHeatMapTest):
                                                    y_min=6.0, y_max=10.0,
                                                    y_median=8.0,
                                                    x_bins=5.0, x_bin_size=0.8,
-                                                   y_bins=10.0,y_bin_size=0.4,
+                                                   y_bins=10.0, y_bin_size=0.4,
                                                    x_delta=0.8, y_delta=0.4)
         hm.pos = test_pos
 
@@ -202,7 +201,7 @@ class InitTest(_BaseHeatMapTest):
         # Mock out file
         out = file.DisplayFileName()
         hm = heatmap.HeatMap(self.test_data, out,
-                             datatypes.PointData.DataOptions('X', 'Y',
+                             data_io.PointData.DataOptions('X', 'Y',
                                                              'X units',
                                                              'Y units'),
                              heatmap.HeatMap.DisplayOptions(self.colorbar,

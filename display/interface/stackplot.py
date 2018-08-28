@@ -17,8 +17,8 @@ from typing import NamedTuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import util, datatypes
-from display.generic_display import GenericDisplay
+from common import util, data_io
+from display.interface.generic_display import GenericDisplay
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class StackPlot(GenericDisplay):
     _DEFAULT_DISPLAY_OPTIONS = DisplayOptions(top_processes=5)
 
     @util.log(logger)
-    def __init__(self, data, data_options=datatypes.PointData.DEFAULT_OPTIONS,
+    def __init__(self, data, data_options=data_io.PointData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_DISPLAY_OPTIONS):
         """
         Constructor, initialises the stackplot.

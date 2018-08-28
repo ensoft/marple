@@ -2,15 +2,11 @@ import unittest
 from io import StringIO
 from unittest import mock
 
-from common import consts, datatypes
+from common import consts, data_io
 from display import (
-    main,
-    flamegraph,
-    g2,
-    treemap,
-    stackplot,
-    heatmap
+    main
 )
+from display.interface import heatmap, treemap, g2, flamegraph, stackplot
 
 
 class DisplayTest(unittest.TestCase):
@@ -346,7 +342,7 @@ class TestDataOptions(unittest.TestCase):
         """
         header = {"datatype": "stack", "data_options": {"weight_units": "kb"}}
         opts = main._get_data_options(header)
-        self.assertEqual(opts, datatypes.StackData.DataOptions("kb"))
+        self.assertEqual(opts, data_io.StackData.DataOptions("kb"))
 
     def test_point(self):
         """
@@ -362,7 +358,7 @@ class TestDataOptions(unittest.TestCase):
                      }
                  }
         opts = main._get_data_options(header)
-        self.assertEqual(opts, datatypes.PointData.DataOptions(
+        self.assertEqual(opts, data_io.PointData.DataOptions(
             "xlabel", "ylabel", "xunits", "yunits"))
 
     def test_event(self):

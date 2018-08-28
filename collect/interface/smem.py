@@ -25,7 +25,7 @@ import time
 from typing import NamedTuple
 
 from collect.interface import collecter
-from common import datatypes, util
+from common import data_io, util
 from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ class MemoryGraph(collecter.Collecter):
         for key in raw_data:
             for lab in raw_data[key]:
                 mem = raw_data[key][lab]
-                yield datatypes.PointDatum(key, mem, lab)
+                yield data_io.PointDatum(key, mem, lab)
 
     @util.log(logger)
     @util.Override(collecter.Collecter)
@@ -119,8 +119,8 @@ class MemoryGraph(collecter.Collecter):
         """ Collect data asynchronously using smem """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.PointData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.MEMTIME, 'Time', 'Memory',
+        return data_io.PointData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.MEMTIME, 'Time', 'Memory',
                                    'seconds', 'megabytes')
 
     @staticmethod

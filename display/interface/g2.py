@@ -19,10 +19,10 @@ import subprocess
 from typing import NamedTuple
 
 from common import (
-    file, util, datatypes
+    file, util, data_io
 )
-from display.generic_display import GenericDisplay
-from util.g2.cpel_writer import CpelWriter
+from display.interface.generic_display import GenericDisplay
+from display.tools.g2.cpel_writer import CpelWriter
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -41,7 +41,7 @@ class G2(GenericDisplay):
         track: str
     _DEFAULT_OPTIONS = DisplayOptions(track="pid")
 
-    def __init__(self, data, data_options=datatypes.EventData.DEFAULT_OPTIONS,
+    def __init__(self, data, data_options=data_io.EventData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the g2.
@@ -72,7 +72,7 @@ class G2(GenericDisplay):
 
         """
         for line in self.data:
-            yield datatypes.EventDatum.from_string(line)
+            yield data_io.EventDatum.from_string(line)
 
     @util.Override(GenericDisplay)
     @util.log(logger)

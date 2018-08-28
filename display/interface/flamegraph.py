@@ -21,19 +21,17 @@ import logging
 from common import (
     file,
     util,
-    datatypes
+    data_io,
+    paths
 )
-from common.datatypes import StackDatum
-from display.generic_display import GenericDisplay
+from common.data_io import StackDatum
+from display.interface.generic_display import GenericDisplay
 from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
-DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
-              __file__)))) + "/"
-
-FLAMEGRAPH_DIR = DISPLAY_DIR + "util/flamegraph/flamegraph.pl"
+FLAMEGRAPH_DIR = paths.MARPLE_DIR + "/display/tools/flamegraph/flamegraph.pl"
 
 
 class Flamegraph(GenericDisplay):
@@ -47,7 +45,7 @@ class Flamegraph(GenericDisplay):
     _DEFAULT_OPTIONS = DisplayOptions(coloring="hot")
 
     def __init__(self, data, out,
-                 data_options=datatypes.StackData.DEFAULT_OPTIONS,
+                 data_options=data_io.StackData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the flamegraph.

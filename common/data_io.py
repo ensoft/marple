@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# datatypes.py - intermediate form of data between collect and display
+# data_io.py - intermediate form of data between collect and display
 # June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 

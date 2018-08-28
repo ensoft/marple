@@ -27,7 +27,7 @@ from io import StringIO
 from typing import NamedTuple
 
 from collect.interface import collecter
-from common import datatypes, util
+from common import data_io, util
 from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
@@ -92,8 +92,8 @@ class MemoryEvents(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.StackData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.MEMEVENTS, "samples")
+        return data_io.StackData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.MEMEVENTS, "samples")
 
 
 class MemoryMalloc(collecter.Collecter):
@@ -162,8 +162,8 @@ class MemoryMalloc(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.StackData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.PERF_MALLOC, "kilobytes")
+        return data_io.StackData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.PERF_MALLOC, "kilobytes")
 
 
 class StackTrace(collecter.Collecter):
@@ -226,8 +226,8 @@ class StackTrace(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.StackData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.CALLSTACK, "samples")
+        return data_io.StackData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.CALLSTACK, "samples")
 
 
 class SchedulingEvents(collecter.Collecter):
@@ -303,9 +303,9 @@ class SchedulingEvents(collecter.Collecter):
             # The event specific data for this class is "track" and "label",
             # both used to display the marple file using g2
             specific_datum = (specific_datum_first, specific_datum_second)
-            event = datatypes.EventDatum(specific_datum=specific_datum,
-                                         time=time_int,
-                                         type=match.group("event"))
+            event = data_io.EventDatum(specific_datum=specific_datum,
+                                       time=time_int,
+                                       type=match.group("event"))
             yield event
 
     @util.log(logger)
@@ -314,8 +314,8 @@ class SchedulingEvents(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.EventData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.SCHEDEVENTS)
+        return data_io.EventData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.SCHEDEVENTS)
 
 
 class DiskBlockRequests(collecter.Collecter):
@@ -367,8 +367,8 @@ class DiskBlockRequests(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
-        return datatypes.StackData(data, self.start_time, self.end_time,
-                                   InterfaceTypes.DISKBLOCK, "samples")
+        return data_io.StackData(data, self.start_time, self.end_time,
+                                 InterfaceTypes.DISKBLOCK, "samples")
 
 
 class StackParser:
@@ -569,7 +569,7 @@ class StackParser:
                 # Matches empty line
                 stack_folded = self._make_stack()
                 if stack_folded:
-                    yield datatypes.StackDatum(weight=1, stack=stack_folded)
+                    yield data_io.StackDatum(weight=1, stack=stack_folded)
                     # @@@ TODO: generalise to allow different weights
             # event record start
             elif self._line_is_baseline(line):

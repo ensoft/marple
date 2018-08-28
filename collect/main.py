@@ -10,7 +10,7 @@ Parses user input and calls to the appropriate functions (
 cpu data collection, stack data collection, etc).
 
 """
-import common.datatypes
+import common.data_io
 
 __all__ = "main"
 
@@ -85,7 +85,7 @@ def main(argv, parser):
 
     # Write results
     for result in results:
-        common.datatypes.write(result, str(filename))
+        common.data_io.write(result, str(filename))
 
     # Cleanup
     ioloop.close()

@@ -3,8 +3,8 @@ import shutil
 import unittest
 from unittest import mock
 
-from common import file, datatypes, consts
-from display import treemap
+from common import file, data_io, consts
+from display.interface import treemap
 
 
 class TreemapTest(unittest.TestCase):
@@ -15,7 +15,7 @@ class TreemapTest(unittest.TestCase):
     tmap = object.__new__(treemap.Treemap)
 
     tmap.display_options = treemap.Treemap.DisplayOptions(25)
-    tmap.data_options = datatypes.StackData.DataOptions("kb")
+    tmap.data_options = data_io.StackData.DataOptions("kb")
     tmap.data = iter(())
     tmap.output = file.DisplayFileName("file")
 

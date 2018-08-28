@@ -9,7 +9,7 @@ import unittest
 from unittest import mock
 
 from collect.interface import iosnoop
-from common import datatypes
+from common import data_io
 
 
 class _IosnoopCollecterBaseTest(unittest.TestCase):
@@ -55,6 +55,6 @@ class DiskLatencyTest(_IosnoopCollecterBaseTest):
         ]
         self.log_mock.error.assert_has_calls(expected_logs)
 
-        expected = [datatypes.PointDatum(x=1.0, y=2.0, info='test_info')]
+        expected = [data_io.PointDatum(x=1.0, y=2.0, info='test_info')]
 
         self.assertEqual(expected, datapoints)

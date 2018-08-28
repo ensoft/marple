@@ -20,10 +20,10 @@ from common import (
     file,
     util,
     consts,
-    datatypes
+    data_io
 )
-from display.generic_display import GenericDisplay
-from util.d3plus import d3IpyPlus as d3
+from display.interface.generic_display import GenericDisplay
+from display.tools.d3plus import d3IpyPlus as d3
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -41,7 +41,7 @@ class Treemap(GenericDisplay):
     _DEFAULT_OPTIONS = DisplayOptions(depth=25)
 
     def __init__(self, data, out,
-                 data_options=datatypes.StackData.DEFAULT_OPTIONS,
+                 data_options=data_io.StackData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the Treemap.

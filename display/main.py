@@ -10,7 +10,7 @@ Handles interaction between the output modules (flamegraph, g2, etc.)
 It calls the relevant functions for each command.
 
 """
-import common.datatypes
+import common.data_io
 
 __all__ = "main"
 
@@ -22,15 +22,9 @@ from common import (
     util,
     config,
     consts,
-    datatypes,
+    data_io,
 )
-from display import (
-    flamegraph,
-    heatmap,
-    treemap,
-    g2,
-    stackplot
-)
+from display.interface import heatmap, treemap, g2, flamegraph, stackplot
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -170,7 +164,7 @@ def _get_data_options(header):
 
     if datatype == consts.Datatypes.STACK.value:
         weight_units = data_options['weight_units']
-        return datatypes.StackData.DataOptions(weight_units)
+        return data_io.StackData.DataOptions(weight_units)
     elif datatype == consts.Datatypes.EVENT.value:
         return None
     elif datatype == consts.Datatypes.POINT.value:
@@ -178,8 +172,8 @@ def _get_data_options(header):
         y_label = data_options['y_label']
         x_units = data_options['x_units']
         y_units = data_options['y_units']
-        return datatypes.PointData.DataOptions(x_label, y_label, x_units,
-                                               y_units)
+        return data_io.PointData.DataOptions(x_label, y_label, x_units,
+                                             y_units)
     else:
         raise ValueError("Invalid datatype")
 
@@ -218,7 +212,7 @@ def _display(args):
         # As long as we have not reached the eof (which is reached when the
         # header we read was None), try to display next section
         while not eof:
-            header = common.datatypes.read_header(file_object)
+            header = common.data_io.read_header(file_object)
             if header is None:
                 # EOF, we skip current step and exit the loop
                 eof = True
@@ -226,7 +220,7 @@ def _display(args):
 
             # Generator that returns data from the current section, one line
             # at a time
-            data = common.datatypes.read_until_line(file_object, "\n")
+            data = common.data_io.read_until_line(file_object, "\n")
 
             # We select the display option based on args or the config file,
             # and get the associated options with that display option

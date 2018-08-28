@@ -5,10 +5,9 @@ from io import StringIO
 import os
 import shutil
 
-import common.datatypes
-from collect.IO import write
-from common.datatypes import StackDatum, EventDatum, PointDatum
-import util.g2.cpel_writer as cpel_writer
+import common.data_io
+from common.data_io import StackDatum, EventDatum, PointDatum
+import display.tools.g2.cpel_writer as cpel_writer
 
 
 @mock.patch('builtins.open')
@@ -21,7 +20,7 @@ class WriterTest(unittest.TestCase):
         context_mock.__enter__.return_value = file_mock
 
         # Run test
-        writer = common.datatypes.Writer()
+        writer = common.data_io.Writer()
         writer.write([], "test", {})
         self.assertEqual("{}\n", file_mock.getvalue())
 
@@ -40,7 +39,7 @@ class WriterTest(unittest.TestCase):
         expected = "{}\n1#A;B;C\n2#D;E\n3#F;G\n"
 
         # Run test
-        writer = common.datatypes.Writer()
+        writer = common.data_io.Writer()
         writer.write(stack_data, "test", {})
         self.assertEqual(expected, file_mock.getvalue())
 
@@ -59,7 +58,7 @@ class WriterTest(unittest.TestCase):
         expected = "{}\n1.0,2.0,info1\n3.0,4.51,info2\n0.0,1.3,info3\n"
 
         # Run test
-        writer = common.datatypes.Writer()
+        writer = common.data_io.Writer()
         writer.write(dp_data, "test", {})
         self.assertEqual(expected, file_mock.getvalue())
 
@@ -83,7 +82,7 @@ class WriterTest(unittest.TestCase):
                    " 'datum2')\n3#type3#('track3', 'datum3')\n"
 
         # Run test
-        writer = common.datatypes.Writer()
+        writer = common.data_io.Writer()
         writer.write(sched_data, "test", {})
         self.assertEqual(expected, file_mock.getvalue())
 

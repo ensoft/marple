@@ -34,8 +34,8 @@ import numpy as np
 from matplotlib import widgets
 
 from common import util
-from common import datatypes
-from display.generic_display import GenericDisplay
+from common import data_io
+from display.interface.generic_display import GenericDisplay
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -127,7 +127,7 @@ class HeatMap(GenericDisplay):
                                       colorbar="No. Accesses")
 
     def __init__(self, data, out,
-                 data_options=datatypes.PointData.DEFAULT_OPTIONS,
+                 data_options=data_io.PointData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_OPTIONS):
         """
         Constructor for the heat map - initialises the heatmap.
@@ -247,7 +247,7 @@ class HeatMap(GenericDisplay):
 
         """
 
-        datapoints = [datatypes.PointDatum.from_string(line)
+        datapoints = [data_io.PointDatum.from_string(line)
                       for line in data]
 
         x_values = [dp.x for dp in datapoints]

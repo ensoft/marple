@@ -9,10 +9,9 @@ import unittest
 from unittest import mock
 from io import StringIO
 import collections
-import json
 
-from display import flamegraph
-from common import datatypes, consts
+from display.interface import flamegraph
+from common import data_io, consts
 
 
 class _FlamegraphBaseTest(unittest.TestCase):
@@ -29,7 +28,7 @@ class _FlamegraphBaseTest(unittest.TestCase):
     fg = object.__new__(flamegraph.Flamegraph)
 
     fg.display_options = flamegraph.Flamegraph.DisplayOptions(coloring)
-    fg.data_options = datatypes.StackData.DataOptions("kb")
+    fg.data_options = data_io.StackData.DataOptions("kb")
     fg.data = data
     fg.out_filename = outfilename
 
@@ -38,7 +37,7 @@ class InitTest(_FlamegraphBaseTest):
     """ Test the __init__ function for interface calls"""
     def test(self):
         fg = flamegraph.Flamegraph(self.data, self.outfile,
-                                   datatypes.StackData.DataOptions(
+                                   data_io.StackData.DataOptions(
                                        self.weight_units),
                                    flamegraph.Flamegraph.DisplayOptions(
                                        self.coloring))
@@ -67,8 +66,8 @@ class ReadTest(_FlamegraphBaseTest):
                                 "B1;B2;B3;B4\n")
 
         result = list(self.fg._read())
-        expected = [datatypes.StackDatum(1, ('A1', 'A2', 'A3')),
-                    datatypes.StackDatum(2, ('B1', 'B2', 'B3', 'B4'))]
+        expected = [data_io.StackDatum(1, ('A1', 'A2', 'A3')),
+                    data_io.StackDatum(2, ('B1', 'B2', 'B3', 'B4'))]
         self.assertEqual(expected, result)
 
 
@@ -77,9 +76,9 @@ class MakeTest(_FlamegraphBaseTest):
 
     # Set up test data and expected values
     test_stack_data = [
-        datatypes.StackDatum(1, ('A1', 'A2', 'A3')),
-        datatypes.StackDatum(2, ('B1', 'B2', 'B3', 'B4')),
-        datatypes.StackDatum(3, ('A1', 'A2', 'A3'))
+        data_io.StackDatum(1, ('A1', 'A2', 'A3')),
+        data_io.StackDatum(2, ('B1', 'B2', 'B3', 'B4')),
+        data_io.StackDatum(3, ('A1', 'A2', 'A3'))
     ]
 
     expected = collections.Counter({('A1', 'A2', 'A3'): 4,
@@ -126,7 +125,7 @@ class MakeTest(_FlamegraphBaseTest):
     def test_with_coloring(self, subproc_mock, open_mock, temp_file_mock):
         """ Test with a options """
         fg = flamegraph.Flamegraph(self.data, self.outfile,
-                                   datatypes.StackData.DataOptions("kb"),
+                                   data_io.StackData.DataOptions("kb"),
                                    flamegraph.Flamegraph.DisplayOptions("hot"))
 
         temp_file_mock.TempFileName.return_value.__str__.return_value = \
