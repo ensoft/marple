@@ -22,12 +22,13 @@ __all__ = (
 import asyncio
 import datetime
 import logging
+import os
 import re
 from io import StringIO
 from typing import NamedTuple
 
 from collect.interface import collecter
-from common import data_io, util
+from common import data_io, util, paths
 from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,8 @@ class MemoryEvents(collecter.Collecter):
 
     _DEFAULT_OPTIONS = None
 
+    _PERF_FILE_NAME = "memevent_perf.data"
+
     @util.check_kernel_version("2.6")
     @util.Override(collecter.Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
@@ -60,7 +63,8 @@ class MemoryEvents(collecter.Collecter):
         self.start_time = datetime.datetime.now()
 
         sub_process = await asyncio.create_subprocess_shell(
-            "perf record -ag -e '{mem-loads,mem-stores}' sleep " +
+            "perf record -ag -o " + self._PERF_FILE_NAME +
+            " -e '{mem-loads,mem-stores}' sleep " +
             str(self.time), stderr=asyncio.subprocess.PIPE
         )
 
@@ -70,12 +74,13 @@ class MemoryEvents(collecter.Collecter):
         logger.error(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
-            "perf script", stdout=asyncio.subprocess.PIPE,
+            "perf script -i " + self._PERF_FILE_NAME,
+            stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-
         logger.error(err.decode())
+        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
@@ -105,6 +110,8 @@ class MemoryMalloc(collecter.Collecter):
 
     _DEFAULT_OPTIONS = None
 
+    _PERF_FILE_NAME = "memmalloc_perf.data"
+
     @util.check_kernel_version("2.6")
     @util.Override(collecter.Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
@@ -133,7 +140,8 @@ class MemoryMalloc(collecter.Collecter):
         # Record perf data
         self.start_time = datetime.datetime.now()
         sub_process = await asyncio.create_subprocess_shell(
-            "perf record -ag -e probe_libc:malloc: sleep " + str(self.time),
+            "perf record -ag -o " + self._PERF_FILE_NAME +
+            " -e probe_libc:malloc: sleep " + str(self.time),
             stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
@@ -141,11 +149,12 @@ class MemoryMalloc(collecter.Collecter):
         logger.error(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
-            "perf script",
+            "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
         logger.error(err.decode())
+        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
@@ -185,6 +194,8 @@ class StackTrace(collecter.Collecter):
     # Default options - frequency 99 Hz, all CPUs
     _DEFAULT_OPTIONS = Options(frequency=99, cpufilter="-a")
 
+    _PERF_FILE_NAME = "stacktrace_perf.data"
+
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         """ Initialise the collecter (see superclass). """
@@ -197,7 +208,8 @@ class StackTrace(collecter.Collecter):
         self.start_time = datetime.datetime.now()
         sub_process = await asyncio.create_subprocess_shell(
             "perf record -F " + str(self.options.frequency) + " " +
-            self.options.cpufilter + " -g -- sleep " + str(self.time),
+            self.options.cpufilter + " -g -o " + self._PERF_FILE_NAME +
+            " -- sleep " + str(self.time),
             stderr=asyncio.subprocess.PIPE)
 
         _, err = await sub_process.communicate()
@@ -205,11 +217,12 @@ class StackTrace(collecter.Collecter):
         logger.error(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
-            "perf script",
+            "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
         logger.error(err.decode())
+        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
@@ -238,6 +251,8 @@ class SchedulingEvents(collecter.Collecter):
 
     _DEFAULT_OPTIONS = Options(track="cpu")
 
+    _PERF_FILE_NAME = "sched_perf.data"
+
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         """ Initialise the collecter (see superclass). """
@@ -249,7 +264,8 @@ class SchedulingEvents(collecter.Collecter):
         """ Collect raw data asynchronously using perf """
         self.start_time = datetime.datetime.now()
         sub_process = await asyncio.create_subprocess_shell(
-            "perf sched record sleep " + str(self.time),
+            "perf sched record -o " + self._PERF_FILE_NAME +
+            " sleep " + str(self.time),
             stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
@@ -257,11 +273,13 @@ class SchedulingEvents(collecter.Collecter):
         logger.error(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
-            "perf sched script -F 'comm,pid,cpu,time,event'",
+            "perf sched script -i " + self._PERF_FILE_NAME +
+            " -F 'comm,pid,cpu,time,event'",
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
         logger.error(err.decode())
+        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
@@ -327,6 +345,8 @@ class DiskBlockRequests(collecter.Collecter):
 
     _DEFAULT_OPTIONS = None
 
+    _PERF_FILE_NAME = "diskblockrq_perf.data"
+
     @util.check_kernel_version("2.6")
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         """ Initialise the collecter (see superclass). """
@@ -338,7 +358,8 @@ class DiskBlockRequests(collecter.Collecter):
         """ Collect raw data asynchronously using perf """
         self.start_time = datetime.datetime.now()
         sub_process = await asyncio.create_subprocess_shell(
-            "perf record -ag -e block:block_rq_insert sleep " + str(self.time),
+            "perf record -ag -o " + self._PERF_FILE_NAME +
+            " -e block:block_rq_insert sleep " + str(self.time),
             stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
@@ -346,11 +367,12 @@ class DiskBlockRequests(collecter.Collecter):
         logger.error(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
-            "perf script",
+            "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
         logger.error(err.decode())
+        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
