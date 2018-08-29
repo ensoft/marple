@@ -205,10 +205,11 @@ class TCPTracer(collecter.Collecter):
         # Timeout the subprocess
         _, pending = await asyncio.wait(
             [asyncio.ensure_future(sub_process.communicate())],
-            timeout=5
+            timeout=self.time
         )
         self.end_time = datetime.datetime.now()
         os.killpg(sub_process.pid, signal.SIGINT)
+
         out, err = await (pending.pop())
 
         # Check for unexpected errors

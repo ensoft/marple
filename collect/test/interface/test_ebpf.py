@@ -5,223 +5,191 @@
 
 """ Test bcc/ebpf interactions and stack parsing. """
 
-import subprocess
-import unittest
+import asyncio
+import asynctest
 from io import StringIO
-from unittest import mock
+
 
 from collect.interface import ebpf
 from common import data_io
 
 
-class Mallocstacks(unittest.TestCase):
+class Mallocstacks(asynctest.TestCase):
     """
     Class that tests the mallocstacks interface
 
     """
-
-    @staticmethod
-    def to_kilo(num):
-        """
-        Helper function, transforms from bytes to kilobytes
-        :param num: number of bytes
-        :return: closest into to the actual number of kilobytes
-
-        """
-        return int(num / 1000)
-
-    @staticmethod
-    def mock(mock_ret):
-        """
-        Helper method for the testing of collect
-
-        :param mock_ret: stdout mock value
-        :returns gen: generator of StackDatum objects, based on what mock_ret is
-        """
-        with mock.patch("subprocess.Popen") as popenmock:
-            popenmock().communicate.return_value = (mock_ret,
-                                                    b"")
-            ms_obj = ebpf.MallocStacks(100)
-            gen = ms_obj.collect()
-
-            return [stack_data for stack_data in gen]
-
-    def test_basic_collect(self):
-        """
-        Basic test case where everything should work as expected
-
-        """
-        mock_return_popen_stdout = b"123123#proc1#func1#func2\n321321#proc2#" \
-                                   b"func1#func2#func3\n"
-
-        expected = [data_io.StackDatum(self.to_kilo(123123),
-                                       ("proc1", "func1", "func2")),
-                    data_io.StackDatum(self.to_kilo(321321),
-                                       ("proc2", "func1", "func2", "func3"))]
-
-        output = self.mock(mock_return_popen_stdout)
-        self.assertEqual(output, expected)
-
-    def test_strange_symbols(self):
-        """
-        Basic test case where everything should work as expected
-
-        """
-        mock_return_popen_stdout = b"123123#1   [];'#[]-=1   2=\n"
-
-        expected = [data_io.StackDatum(self.to_kilo(123123),
-                                       ("1   [];'", "[]-=1   2="))]
-
-        output = self.mock(mock_return_popen_stdout)
-        self.assertEqual(output, expected)
-
-    def test_nan(self):
-        """
-        Tests if the weight is not a number the exception is raised correctly
-
-        """
-        mock_return_popen_stdout = b"NOTANUMBER#abcd#abcd\n"
-        with self.assertRaises(ValueError):
-            output = self.mock(mock_return_popen_stdout)
-
-
-class TCPTracerTest(unittest.TestCase):
     time = 5
 
-    @mock.patch('collect.interface.ebpf.subprocess')
-    @mock.patch('collect.interface.ebpf.logger')
-    @mock.patch('collect.interface.ebpf.os')
-    @mock.patch('collect.interface.ebpf.TCPTracer._generate_dict')
-    @mock.patch('collect.interface.ebpf.TCPTracer._generate_events')
-    def test_collect_normal(self, gen_events_mock, gen_dict_mock, os_mock,
-                            log_mock, proc_mock):
+    async def mock(self, out):
+        """
+        Helper method for mocking the mallocstqqacks.py subprocess.
+        Also tests that the appropriate subprocess call is made.
+
+        :param out:
+            Desired stdout output for the subprocess.
+        :return:
+            A generator of StackDatum objects created from the desired output.
+
+        """
+        with asynctest.patch("collect.interface.ebpf.asyncio") as async_mock:
+            # Set up mocks
+            create_mock = asynctest.CoroutineMock()
+            async_mock.create_subprocess_exec = create_mock
+            comm_mock = asynctest.CoroutineMock()
+            comm_mock.side_effect = [(out, b'')]
+            create_mock.return_value.communicate = comm_mock
+            pipe_mock = async_mock.subprocess.PIPE
+
+            # Run collecter
+            gen = await ebpf.MallocStacks(self.time).collect()
+            create_mock.assert_has_calls([
+                asynctest.call(
+                    'sudo', 'python', ebpf.BCC_TOOLS_PATH + 'mallocstacks.py',
+                    '-f', str(self.time), stderr=pipe_mock, stdout=pipe_mock
+                ),
+                asynctest.call().communicate()
+            ])
+
+            return [datum for datum in gen.datum_generator]
+
+    async def test_basic_collect(self):
+        """
+        Basic test case where everything should work as expected
+
+        """
+        mock_return_popen_stdout = b"123123$$$proc1;func1;func2\n" \
+                                   b"321321$$$proc2;func1;func2;func3\n"
+
+        expected = [data_io.StackDatum(123123,
+                                       ("proc1", "func1", "func2")),
+                    data_io.StackDatum(321321,
+                                       ("proc2", "func1", "func2", "func3"))]
+
+        output = await self.mock(mock_return_popen_stdout)
+        self.assertEqual(expected, output)
+
+    async def test_strange_symbols(self):
+        """
+        Basic test case where everything should work as expected
+
+        """
+        mock_return_popen_stdout = b"123123$$$1   []#';[]-=1   2=\n"
+
+        expected = [data_io.StackDatum(123123,
+                                       ("1   []#'", "[]-=1   2="))]
+
+        output = await self.mock(mock_return_popen_stdout)
+        self.assertEqual(output, expected)
+
+
+class TCPTracerTest(asynctest.TestCase):
+    time = 5
+
+    @asynctest.patch('collect.interface.ebpf.asyncio')
+    @asynctest.patch('collect.interface.ebpf.logger')
+    @asynctest.patch('collect.interface.ebpf.os')
+    @asynctest.patch('collect.interface.ebpf.TCPTracer._generate_dict')
+    @asynctest.patch('collect.interface.ebpf.TCPTracer._generate_events')
+    async def test_collect_normal(self, gen_events_mock, gen_dict_mock, os_mock,
+                                  log_mock, async_mock):
         """
         Test normal operation, when tcptracer outputs KeyboardInterrupt only
 
         """
-        communicate_mock = proc_mock.Popen.return_value.communicate
-        communicate_mock.side_effect = [
+        # Set up mocks
+        create_mock = asynctest.CoroutineMock()
+        wait_mock = asynctest.CoroutineMock()
+
+        # Set up subprocess
+        async_mock.create_subprocess_shell = create_mock
+
+        pipe_mock = async_mock.subprocess.PIPE
+
+        # Set up timeout stuff
+        async_mock.wait = wait_mock
+        output_mock = asyncio.Future()
+        output_mock.set_result(
             (b'output', b'Traceback (most recent call last):\nstacktrace'
-                        b'\nstacktrace etc.\nKeyboardInterrupt\n')]
-        pipe_mock = proc_mock.PIPE
+                        b'\nstacktrace etc.\nKeyboardInterrupt\n'))
+        wait_mock.side_effect = [([None], [output_mock])]
 
+        # Begin test
         collecter = ebpf.TCPTracer(self.time, None)
-        collecter.collect()
+        await collecter.collect()
 
-        proc_mock.Popen.assert_called_once_with(
-            [ebpf.BCC_TOOLS_PATH + 'tcptracer -tv'],
-            shell=True, stdout=pipe_mock, stderr=pipe_mock,
-            preexec_fn=os_mock.setsid)
+        # Run checks
+        create_mock.assert_has_calls([
+            asynctest.call(
+                ebpf.BCC_TOOLS_PATH + 'tcptracer ' + '-tv',
+                stdout=pipe_mock, stderr=pipe_mock, preexec_fn=os_mock.setsid
+            ),
+            asynctest.call().communicate()
+        ])
 
-        communicate_mock.assert_called_once_with(timeout=self.time)
+        wait_mock.assert_called_once_with(
+            [async_mock.ensure_future(
+                create_mock.return_value.communicate.return_value)],
+            timeout=self.time
+        )
 
-        log_mock.error.assert_has_calls([])
+        os_mock.killpg.assert_called_once_with(create_mock.return_value.pid,
+                                               ebpf.signal.SIGINT)
+
+        log_mock.error.assert_not_called()
 
         gen_dict_mock.assert_called_once()
         gen_events_mock.assert_called_once()
 
-    @mock.patch('collect.interface.ebpf.subprocess')
-    @mock.patch('collect.interface.ebpf.logger')
-    @mock.patch('collect.interface.ebpf.os')
-    @mock.patch('collect.interface.ebpf.TCPTracer._generate_dict')
-    @mock.patch('collect.interface.ebpf.TCPTracer._generate_events')
-    def test_collect_error(self, gen_events_mock, gen_dict_mock, os_mock,
-                           log_mock, proc_mock):
+    @asynctest.patch('collect.interface.ebpf.asyncio')
+    @asynctest.patch('collect.interface.ebpf.logger')
+    @asynctest.patch('collect.interface.ebpf.os')
+    @asynctest.patch('collect.interface.ebpf.TCPTracer._generate_dict')
+    @asynctest.patch('collect.interface.ebpf.TCPTracer._generate_events')
+    async def test_collect_error(self, gen_events_mock, gen_dict_mock, os_mock,
+                                 log_mock, async_mock):
         """
         Test error operation, when tcptracer outputs an error
 
         """
-        communicate_mock = proc_mock.Popen.return_value.communicate
-        communicate_mock.side_effect = [
+        # Set up mocks
+        create_mock = asynctest.CoroutineMock()
+        wait_mock = asynctest.CoroutineMock()
+
+        # Set up subprocess
+        async_mock.create_subprocess_shell = create_mock
+
+        pipe_mock = async_mock.subprocess.PIPE
+
+        # Set up timeout stuff
+        async_mock.wait = wait_mock
+        output_mock = asyncio.Future()
+        output_mock.set_result(
             (b'output', b'Traceback (most recent call last):\nstacktrace'
-                        b'\nstacktrace etc.\nKeyboardInterrupt\nERROR')]
-        pipe_mock = proc_mock.PIPE
+                        b'\nstacktrace etc.\nKeyboardInterrupt\nERROR'))
+        wait_mock.side_effect = [([None], [output_mock])]
 
+        # Begin test
         collecter = ebpf.TCPTracer(self.time, None)
-        collecter.collect()
+        await collecter.collect()
 
-        proc_mock.Popen.assert_called_once_with(
-            [ebpf.BCC_TOOLS_PATH + 'tcptracer -tv'],
-            shell=True, stdout=pipe_mock, stderr=pipe_mock,
-            preexec_fn=os_mock.setsid)
-
-        communicate_mock.assert_called_once_with(timeout=self.time)
-
-        log_mock.error.assert_called_once_with(
-            'Traceback (most recent call last):\nstacktrace'
-            '\nstacktrace etc.\nKeyboardInterrupt\nERROR')
-
-        gen_dict_mock.assert_called_once()
-        gen_events_mock.assert_called_once()
-
-    @mock.patch('collect.interface.ebpf.subprocess.Popen')
-    @mock.patch('collect.interface.ebpf.subprocess.PIPE')
-    @mock.patch('collect.interface.ebpf.logger')
-    @mock.patch('collect.interface.ebpf.os')
-    @mock.patch('collect.interface.ebpf.TCPTracer._generate_dict')
-    @mock.patch('collect.interface.ebpf.TCPTracer._generate_events')
-    def test_collect_timeout_normal(self, gen_events_mock, gen_dict_mock, os_mock,
-                             log_mock, pipe_mock, popen_mock):
-        """
-        Test when subprocess communicate times out under normal
-        operation, when tcptracer outputs KeyboardInterrupt only
-
-        """
-        communicate_mock = popen_mock.return_value.communicate
-        communicate_mock.side_effect = [
-            subprocess.TimeoutExpired('cmd', self.time),
-            (b'output', b'Traceback (most recent call last):\nstacktrace'
-                        b'\nstacktrace etc.\nKeyboardInterrupt\n')]
-
-        collecter = ebpf.TCPTracer(self.time, None)
-        collecter.collect()
-
-        popen_mock.assert_called_once_with(
-            [ebpf.BCC_TOOLS_PATH + 'tcptracer -tv'],
-            shell=True, stdout=pipe_mock, stderr=pipe_mock,
-            preexec_fn=os_mock.setsid)
-
-        communicate_mock.assert_has_calls([
-            mock.call(timeout=self.time),
-            mock.call()
+        # Run checks
+        create_mock.assert_has_calls([
+            asynctest.call(
+                ebpf.BCC_TOOLS_PATH + 'tcptracer ' + '-tv',
+                stdout=pipe_mock, stderr=pipe_mock, preexec_fn=os_mock.setsid
+            ),
+            asynctest.call().communicate()
         ])
 
-        log_mock.error.assert_has_calls([])
+        wait_mock.assert_called_once_with(
+            [async_mock.ensure_future(
+                create_mock.return_value.communicate.return_value)],
+            timeout=self.time
+        )
 
-        gen_dict_mock.assert_called_once()
-        gen_events_mock.assert_called_once()
-
-    @mock.patch('collect.interface.ebpf.subprocess.Popen')
-    @mock.patch('collect.interface.ebpf.subprocess.PIPE')
-    @mock.patch('collect.interface.ebpf.logger')
-    @mock.patch('collect.interface.ebpf.os')
-    @mock.patch('collect.interface.ebpf.TCPTracer._generate_dict')
-    @mock.patch('collect.interface.ebpf.TCPTracer._generate_events')
-    def test_collect_timeout_error(self, gen_events_mock, gen_dict_mock, os_mock,
-                             log_mock, pipe_mock, popen_mock):
-        """
-        Test when subprocess communicate times out under error
-        operation, when tcptracer outputs error
-
-        """
-        communicate_mock = popen_mock.return_value.communicate
-        communicate_mock.side_effect = [
-            subprocess.TimeoutExpired('cmd', self.time),
-            (b'output', b'Traceback (most recent call last):\nstacktrace'
-                        b'\nstacktrace etc.\nKeyboardInterrupt\nERROR')]
-
-        collecter = ebpf.TCPTracer(self.time, None)
-        collecter.collect()
-
-        popen_mock.assert_called_once_with(
-            [ebpf.BCC_TOOLS_PATH + 'tcptracer -tv'],
-            shell=True, stdout=pipe_mock, stderr=pipe_mock,
-            preexec_fn=os_mock.setsid)
-
-        communicate_mock.assert_has_calls([
-            mock.call(timeout=self.time),
-            mock.call()
-        ])
+        os_mock.killpg.assert_called_once_with(create_mock.return_value.pid,
+                                               ebpf.signal.SIGINT)
 
         log_mock.error.assert_called_once_with(
             'Traceback (most recent call last):\nstacktrace'
@@ -327,7 +295,7 @@ class TCPTracerTest(unittest.TestCase):
         result = list(tracer._generate_events(data, {4: (1, 'comm')}))
         self.assertEqual([], result)
 
-    @mock.patch('collect.interface.ebpf.output')
+    @asynctest.patch('collect.interface.ebpf.output')
     def test_generate_events_empty_dict(self, output_mock):
         """
         Test _generate_events with no dict - tests failure to find port mapping
@@ -345,7 +313,7 @@ class TCPTracerTest(unittest.TestCase):
         result = list(tracer._generate_events(data, {}))
         self.assertEqual([], result)
         expected_errors = [
-            mock.call(
+            asynctest.call(
                     text="IPC: Could not find destination port PID/comm. "
                          "Check log for details.",
                     description="Could not find destination port PID/comm: "
@@ -353,7 +321,7 @@ class TCPTracerTest(unittest.TestCase):
                                 "Source comm: comm1  Source port : 3  "
                                 "Dest port: 4  Net namespace: 5"
             ),
-            mock.call(
+            asynctest.call(
                 text="IPC: Could not find destination port PID/comm. "
                      "Check log for details.",
                 description="Could not find destination port PID/comm: "
@@ -381,16 +349,16 @@ class TCPTracerTest(unittest.TestCase):
         port_dict = {4: {('pid1', 'test1')}, 3: {('pid2', 'test2')}}
         result = list(tracer._generate_events(data, port_dict))
         expected = [
-            data_io.EventData(time=1, type='A',
-                              specific_datum=(
+            data_io.EventDatum(time=1, type='A',
+                               specific_datum=(
                                     2, 'comm1', 3, 'pid1', 'test1', 4, 5)),
-            data_io.EventData(time=6, type='B',
-                              specific_datum=(
+            data_io.EventDatum(time=6, type='B',
+                               specific_datum=(
                                     7, 'comm2', 4, 'pid2', 'test2', 3, 5))
         ]
         self.assertEqual(expected, result)
 
-    @mock.patch('collect.interface.ebpf.output')
+    @asynctest.patch('collect.interface.ebpf.output')
     def test_generate_events_full_dict(self, output_mock):
         """
         Test _generate_events under normal operation, using all net namespaces
@@ -409,14 +377,14 @@ class TCPTracerTest(unittest.TestCase):
                      3: {('pid2', 'test2'), ('pid3', 'test3')}}
         result = list(tracer._generate_events(data, port_dict))
         expected = [
-            data_io.EventData(time=1, type='A',
-                              specific_datum=(
+            data_io.EventDatum(time=1, type='A',
+                               specific_datum=(
                                     2, 'comm1', 3, 'pid1', 'test1', 4, 5)),
         ]
         self.assertEqual(expected, result)
 
         expected_errors = [
-            mock.call(
+            asynctest.call(
                 text="IPC: Too many destination port PIDs/comms found. "
                      "Check log for details.",
                 description="Too many destination port PIDs/comms found: "

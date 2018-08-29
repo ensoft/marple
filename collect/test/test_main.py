@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# test_controller.py - test the controller for the collect module.
+# test_main.py - test the controller for the collect module.
 # June - August 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 

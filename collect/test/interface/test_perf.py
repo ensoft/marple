@@ -5,14 +5,13 @@
 
 """ Test perf interactions and stack parsing. """
 
-import unittest
-from unittest import mock
-
+import asynctest
+from io import StringIO
 from collect.interface import perf
 from common import data_io
 
 
-class _PerfCollecterBaseTest(unittest.TestCase):
+class _PerfCollecterBaseTest(asynctest.TestCase):
     """
     Base test for perf data collection testing.
 
@@ -22,122 +21,150 @@ class _PerfCollecterBaseTest(unittest.TestCase):
     """
 
     time = 5
-    subproc_mock, log_mock, pipe_mock = None, None, None
+    async_mock, log_mock, pipe_mock, create_mock, strio_mock = \
+        None, None, None, None, None
 
     def run(self, result=None):
-        with mock.patch('collect.interface.perf.subprocess') as subproc_mock, \
-             mock.patch('collect.interface.perf.logger') as log_mock:
-            self.subproc_mock = subproc_mock
+        with asynctest.patch('collect.interface.perf.asyncio') as async_mock, \
+             asynctest.patch('collect.interface.perf.logger') as log_mock, \
+             asynctest.patch('collect.interface.perf.os') as os_mock, \
+             asynctest.patch('collect.interface.perf.StringIO') as strio_mock:
+            self.async_mock = async_mock
+
+            # Set up subprocess mocks
+            self.create_mock = asynctest.CoroutineMock()
+            async_mock.create_subprocess_shell = self.create_mock
+
+            # Set up communicate mocks
+            comm_mock = asynctest.CoroutineMock()
+            comm_mock.side_effect = [(b"test_out1", b"test_err1"),
+                                     (b"test_out2", b"test_err2"),
+                                     (b"test_out3", b"test_err3"),
+                                     (b"test_out4", b"test_err4")]
+            self.create_mock.return_value.communicate = comm_mock
+
+            # Set up other mocks
             self.log_mock = log_mock
-            self.subproc_mock.Popen.return_value.communicate.side_effect = \
-                [(b"test_out1", b"test_err1"), (b"test_out2", b"test_err2"),
-                 (b"test_out3", b"test_err3"), (b"test_out4", b"test_err4")]
-            self.pipe_mock = self.subproc_mock.PIPE
+            self.pipe_mock = async_mock.subprocess.PIPE
+            self.os_mock = os_mock
+            self.strio_mock = strio_mock
+
             super().run(result)
 
 
 class MemoryEventsTest(_PerfCollecterBaseTest):
     """ Test memory event collection. """
-    @mock.patch('collect.interface.perf.StackParser')
-    def test(self, stack_parse_mock):
+    @asynctest.patch('collect.interface.perf.StackParser')
+    async def test(self, stack_parse_mock):
         collecter = perf.MemoryEvents(self.time, None)
-        collecter.collect()
+        await collecter.collect()
 
-        expected_calls = [
-            mock.call(['perf', 'record', '-ag', '-e',
-                       "'{mem-loads,mem-stores}'", 'sleep', str(self.time)],
-                      stderr=self.pipe_mock),
-            mock.call().communicate(),
-            mock.call(['perf', 'script'], stdout=self.pipe_mock,
-                      stderr=self.pipe_mock),
-            mock.call().communicate()
+        self.create_mock.assert_has_calls([
+            asynctest.call(
+                "perf record -ag -o " + perf.MemoryEvents._PERF_FILE_NAME +
+                " -e '{mem-loads,mem-stores}' sleep " +
+                str(self.time), stderr=self.pipe_mock),
+            asynctest.call().communicate(),
+            asynctest.call(
+                "perf script -i " + perf.MemoryEvents._PERF_FILE_NAME,
+                stdout=self.pipe_mock,
+                stderr=self.pipe_mock),
+            asynctest.call().communicate()
+        ])
 
-        ]
+        self.log_mock.error.assert_has_calls([
+            asynctest.call('test_err1'),
+            asynctest.call('test_err2')
+        ])
 
-        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+        self.os_mock.remove.assert_called_once_with(
+            perf.paths.MARPLE_DIR + "/" + perf.MemoryEvents._PERF_FILE_NAME
+        )
 
-        expected_logs = [
-            mock.call("test_err1"),
-            mock.call("test_err2")
-        ]
-        self.log_mock.error.assert_has_calls(expected_logs)
-
-        stack_parse_mock.assert_called_once_with("test_out2")
+        self.strio_mock.assert_called_once_with('test_out2')
+        stack_parse_mock.assert_called_once_with(self.strio_mock('test_out2'))
         stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
 
 
 class MemoryMallocTest(_PerfCollecterBaseTest):
     """ Test memory malloc probe collection. """
-    @mock.patch('collect.interface.perf.StackParser')
-    def test(self, stack_parse_mock):
+    @asynctest.patch('collect.interface.perf.StackParser')
+    async def test(self, stack_parse_mock):
         collecter = perf.MemoryMalloc(self.time, None)
-        collecter.collect()
+        await collecter.collect()
 
-        expected_calls = [
-            mock.call(['perf', 'probe', '-q', '--del', '*malloc*'],
-                      stderr=self.pipe_mock),
-            mock.call().communicate(),
-            mock.call(["perf", "probe", "-qx", "/lib*/*/libc.so.*",
-                       "malloc:1 size=%di"], stderr=self.pipe_mock),
-            mock.call().communicate(),
-            mock.call(['perf', 'record', '-ag', '-e', 'probe_libc:malloc:',
-                       'sleep', str(self.time)], stderr=self.pipe_mock),
-            mock.call().communicate(),
-            mock.call(['perf', 'script'], stdout=self.pipe_mock,
-                      stderr=self.pipe_mock),
-            mock.call().communicate()
-        ]
+        self.create_mock.assert_has_calls([
+            asynctest.call(
+                "perf probe -q --del *malloc*", stderr=self.pipe_mock),
+            asynctest.call().communicate(),
+            asynctest.call(
+                "perf probe -qx /lib*/*/libc.so.* malloc:1 size=%di",
+                stderr=self.pipe_mock),
+            asynctest.call().communicate(),
+            asynctest.call(
+                "perf record -ag -o " + perf.MemoryMalloc._PERF_FILE_NAME +
+                " -e probe_libc:malloc: sleep " + str(self.time),
+                stderr=self.pipe_mock),
+            asynctest.call().communicate(),
+            asynctest.call(
+                "perf script -i " + perf.MemoryMalloc._PERF_FILE_NAME,
+                stdout=self.pipe_mock, stderr=self.pipe_mock),
+            asynctest.call().communicate()
+        ])
 
-        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+        self.log_mock.error.assert_has_calls([
+            asynctest.call("test_err1"),
+            asynctest.call("test_err2"),
+            asynctest.call("test_err3"),
+            asynctest.call("test_err4")
+        ])
 
-        expected_logs = [
-            mock.call("test_err1"),
-            mock.call("test_err2"),
-            mock.call("test_err3"),
-            mock.call("test_err4")
-        ]
-        self.log_mock.error.assert_has_calls(expected_logs)
-
-        stack_parse_mock.assert_called_once_with("test_out4")
+        self.strio_mock.assert_called_once_with('test_out4')
+        stack_parse_mock.assert_called_once_with(self.strio_mock('test_out4'))
         stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
 
 
 class StackTraceTest(_PerfCollecterBaseTest):
     """ Test stack trace collection. """
-    @mock.patch('collect.interface.perf.StackParser')
-    def test(self, stack_parse_mock):
+    @asynctest.patch('collect.interface.perf.StackParser')
+    async def test(self, stack_parse_mock):
         options = perf.StackTrace.Options(frequency=1, cpufilter="filter")
         collecter = perf.StackTrace(self.time, options)
-        collecter.collect()
+        await collecter.collect()
 
-        expected_calls = [
-            mock.call(['perf', 'record', '-F', str(options.frequency),
-                       options.cpufilter, '-g', '--', 'sleep', str(self.time)],
-                      stderr=self.pipe_mock),
-            mock.call().communicate(),
-            mock.call(['perf', 'script'], stdout=self.pipe_mock,
-                      stderr=self.pipe_mock),
-            mock.call().communicate()
-        ]
-
-        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+        self.create_mock.assert_has_calls([
+            asynctest.call(
+                "perf record -F " + str(options.frequency) + " " +
+                options.cpufilter + " -g -o " +
+                perf.StackTrace._PERF_FILE_NAME + " -- sleep " + str(self.time),
+                stderr=self.pipe_mock),
+            asynctest.call().communicate(),
+            asynctest.call(
+                "perf script -i " + perf.StackTrace._PERF_FILE_NAME,
+                stdout=self.pipe_mock, stderr=self.pipe_mock),
+            asynctest.call().communicate()
+        ])
 
         expected_logs = [
-            mock.call("test_err1"),
-            mock.call("test_err2"),
-        ]
-        self.log_mock.error.assert_has_calls(expected_logs)
 
-        stack_parse_mock.assert_called_once_with("test_out2")
+        ]
+        self.log_mock.error.assert_has_calls([
+            asynctest.call('test_err1'),
+            asynctest.call('test_err2')
+        ])
+
+        self.strio_mock.assert_called_once_with('test_out2')
+        stack_parse_mock.assert_called_once_with(self.strio_mock('test_out2'))
         stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
 
 
 class SchedulingEventsTest(_PerfCollecterBaseTest):
     """ Test scheduling event collection. """
-    @mock.patch('collect.interface.perf.re')
-    def test_success(self, re_mock):
+    @asynctest.patch('collect.interface.perf.re')
+    async def test_success(self, re_mock):
         """ Test successful regex matching. """
         # Set up mocks
+        self.strio_mock.return_value = StringIO('test_out2')
         match_mock = re_mock.match.return_value
         match_mock.group.side_effect = [
             "111.999",
@@ -148,26 +175,27 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
         ]
 
         collecter = perf.SchedulingEvents(self.time)
-        sched_events = list(collecter.collect())
+        data = await collecter.collect()
+        sched_events = list(data.datum_generator)
 
-        expected_calls = [
-            mock.call(['perf', 'sched', 'record', 'sleep',
-                       str(self.time)], stderr=self.pipe_mock),
-            mock.call().communicate(),
-            mock.call(['perf', 'sched', 'script', '-F',
-                       'comm,pid,cpu,time,event'],
-                      stdout=self.pipe_mock, stderr=self.pipe_mock),
-            mock.call().communicate()
-        ]
+        self.create_mock.assert_has_calls([
+            asynctest.call(
+                "perf sched record -o " +
+                perf.SchedulingEvents._PERF_FILE_NAME +
+                " sleep " + str(self.time), stderr=self.pipe_mock),
+            asynctest.call().communicate(),
+            asynctest.call(
+                "perf sched script -i " +
+                perf.SchedulingEvents._PERF_FILE_NAME +
+                " -F 'comm,pid,cpu,time,event'",
+                stdout=self.pipe_mock, stderr=self.pipe_mock),
+            asynctest.call().communicate()
+        ])
 
-        self.subproc_mock.Popen.assert_has_calls(expected_calls)
-
-        expected_logs = [
-            mock.call("test_err1"),
-            mock.call("test_err2")
-        ]
-
-        self.log_mock.error.assert_has_calls(expected_logs)
+        self.log_mock.error.assert_has_calls([
+            asynctest.call("test_err1"),
+            asynctest.call("test_err2")
+        ])
 
         re_mock.match.assert_called_once_with(r"\s*"
                                               r"(?P<name>\S+(\s+\S+)*)\s+"
@@ -177,43 +205,42 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
                                               r"(?P<event>\S+)",
                                               "test_out2")
 
-        expected_event = data_io.EventDatum(specific_datum=
-                                             ("cpu 4",
-                                              "test_name (pid: test_pid)"),
-                                            time=111000999,
-                                            type="test_event")
+        expected_event = data_io.EventDatum(
+            specific_datum=("test_name (pid: test_pid)", "cpu 4"),
+            time=111000999, type="test_event"
+        )
 
-        self.assertIn(expected_event, sched_events)
+        self.assertEqual([expected_event], sched_events)
 
-    @mock.patch('collect.interface.perf.re')
-    def test_no_match(self, re_mock):
+    @asynctest.patch('collect.interface.perf.re')
+    async def test_no_match(self, re_mock):
         """ Test failed regex matching. """
         # Set up mocks
+        self.strio_mock.return_value = StringIO('test_out2')
         re_mock.match.return_value = None
 
         collecter = perf.SchedulingEvents(self.time, None)
-        sched_events = list(collecter.collect())
+        data = await collecter.collect()
+        sched_events = list(data.datum_generator)
 
-        expected_calls = [
-            mock.call(['perf', 'sched', 'record', 'sleep',
-                       str(self.time)], stderr=self.pipe_mock),
-            mock.call().communicate(),
-            mock.call(['perf', 'sched', 'script', '-F',
-                       'comm,pid,cpu,time,event'],
-                      stdout=self.pipe_mock, stderr=self.pipe_mock),
-            mock.call().communicate()
-        ]
+        self.create_mock.assert_has_calls([
+            asynctest.call(
+                "perf sched record -o " +
+                perf.SchedulingEvents._PERF_FILE_NAME +
+                " sleep " + str(self.time), stderr=self.pipe_mock),
+            asynctest.call().communicate(),
+            asynctest.call(
+                "perf sched script -i " +
+                perf.SchedulingEvents._PERF_FILE_NAME +
+                " -F 'comm,pid,cpu,time,event'",
+                stdout=self.pipe_mock, stderr=self.pipe_mock),
+            asynctest.call().communicate()
+        ])
 
-        self.subproc_mock.Popen.assert_has_calls(expected_calls)
-
-        expected_logs = [
-            mock.call("test_err1"),
-            mock.call("test_err2"),
-            mock.call("Failed to parse event data: %s Expected format: name "
-                      "pid cpu time event", "test_out2")
-        ]
-
-        self.log_mock.error.assert_has_calls(expected_logs)
+        self.log_mock.error.assert_has_calls([
+            asynctest.call("test_err1"),
+            asynctest.call("test_err2")
+        ])
 
         re_mock.match.assert_called_once_with(r"\s*"
                                               r"(?P<name>\S+(\s+\S+)*)\s+"
@@ -228,34 +255,34 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
 
 class DiskBlockRequestsTest(_PerfCollecterBaseTest):
     """ Test disk block request data collection. """
-    @mock.patch('collect.interface.perf.StackParser')
-    def test(self, stack_parse_mock):
+    @asynctest.patch('collect.interface.perf.StackParser')
+    async def test(self, stack_parse_mock):
         collecter = perf.DiskBlockRequests(self.time, None)
-        collecter.collect()
+        await collecter.collect()
 
-        expected_calls = [
-            mock.call(['perf', 'record', '-ag', '-e', 'block:block_rq_insert',
-                       'sleep', str(self.time)], stderr=self.pipe_mock),
-            mock.call().communicate(),
-            mock.call(['perf', 'script'], stderr=self.pipe_mock,
-                      stdout=self.pipe_mock),
-            mock.call().communicate()
-        ]
+        self.create_mock.assert_has_calls([
+            asynctest.call(
+                "perf record -ag -o " + perf.DiskBlockRequests._PERF_FILE_NAME +
+                " -e block:block_rq_insert sleep " + str(self.time),
+                stderr=self.pipe_mock),
+            asynctest.call().communicate(),
+            asynctest.call(
+                "perf script -i " + perf.DiskBlockRequests._PERF_FILE_NAME,
+                stdout=self.pipe_mock, stderr=self.pipe_mock),
+            asynctest.call().communicate()
+        ])
 
-        self.subproc_mock.Popen.assert_has_calls(expected_calls)
+        self.log_mock.error.assert_has_calls([
+            asynctest.call("test_err1"),
+            asynctest.call("test_err2")
+        ])
 
-        expected_logs = [
-            mock.call("test_err1"),
-            mock.call("test_err2")
-        ]
-
-        self.log_mock.error.assert_has_calls(expected_logs)
-
-        stack_parse_mock.assert_called_once_with("test_out2")
+        self.strio_mock.assert_called_once_with('test_out2')
+        stack_parse_mock.assert_called_once_with(self.strio_mock('test_out2'))
         stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
 
 
-class StackParserTest(unittest.TestCase):
+class StackParserTest(asynctest.TestCase):
     """Test class for the StackParser class."""
     def setUp(self):
         """Creates a generic empty StackParser object."""
@@ -314,13 +341,13 @@ class StackParserTest(unittest.TestCase):
         # Check that the event_filter defaulted:
         self.assertTrue(self.stack_parser.event_filter == "cycles")
 
-    @mock.patch("collect.interface.perf.INCLUDE_PID", True)
+    @asynctest.patch("collect.interface.perf.INCLUDE_PID", True)
     def test_parse_baseline_pid(self):
         """Tests creation of pname with pid."""
         self.stack_parser._parse_baseline(line="java 27 464.116: cycles:")
         self.assertTrue(self.stack_parser._pname == "java-27")
 
-    @mock.patch("collect.interface.perf.INCLUDE_TID", True)
+    @asynctest.patch("collect.interface.perf.INCLUDE_TID", True)
     def test_parse_baseline_tid(self):
         """Tests creation of pname with pid and tid."""
         self.stack_parser._parse_baseline(line="java 27/1 464.116: cycles:")
@@ -380,7 +407,7 @@ class StackParserTest(unittest.TestCase):
         # context_mock =  open_mock.return_value
         # context_mock.__enter__.return_value = file_mock
 
-        self.stack_parser.data = sample_stack
+        self.stack_parser.data = StringIO(sample_stack)
         self.stack_parser.event_filter = ""
 
         # Run the whole stack_collapse function

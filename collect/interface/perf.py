@@ -210,7 +210,8 @@ class StackTrace(collecter.Collecter):
             "perf record -F " + str(self.options.frequency) + " " +
             self.options.cpufilter + " -g -o " + self._PERF_FILE_NAME +
             " -- sleep " + str(self.time),
-            stderr=asyncio.subprocess.PIPE)
+            stderr=asyncio.subprocess.PIPE
+        )
 
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
@@ -247,9 +248,10 @@ class SchedulingEvents(collecter.Collecter):
     """ Collect scheduling events using perf. """
 
     class Options(NamedTuple):
-        track: str
+        """ No options for this collecter class """
+        pass
 
-    _DEFAULT_OPTIONS = Options(track="cpu")
+    _DEFAULT_OPTIONS = None
 
     _PERF_FILE_NAME = "sched_perf.data"
 

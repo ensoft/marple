@@ -1,0 +1,13 @@
+[run]
+branch = true
+include =
+    collect/*
+    display/*
+    common/*
+omit =
+    collect/tools/*
+    collect/test/*
+    display/tools/*
+    display/test/*
+    common/test/*
+    *__init__*

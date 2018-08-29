@@ -9,16 +9,16 @@ install:
   - echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo # Edit sudoers file
 before_script:
   - python -m pip install -q pytest-cov codecov pylint anybadge # Code coverage, pylint, badges
-  - python -m pip install -U -q pytest # Pytest
+  - python -m pip install -U -q pytest asynctest # Pytest, asynctest
   - python -m pip install -q numpy matplotlib ipython pandas # numpy and so on for display
   - export PYTHONPATH=${PWD} # Set PYTHONPATH
 script:
   - set -o pipefail # ensure single failure causes whole pipe to fail
-  - python -m pytest --cov=collect --cov=display --cov=common collect/ display/ common/ |& tee pytest.txt # Run tests - build fails if any test fails
-  - pylint -E collect display common --rcfile=pylintrc.txt # Check for Pylint errors
+  - python -m pytest --cov=. collect display common |& tee pytest.txt # Run tests - build fails if any test fails
+  - pylint -E collect display common --rcfile=pylintrc.txt --ignore=tools # Check for Pylint errors
 after_success:
-  - python -m pylint collect display common --rcfile=pylintrc.txt |& tee pylint.txt # Check for Pylint warnings + errors
-  - python -m pytest --cov=common --cov=display --cov=collect --cov-report=annotate:coverage_annotate common collect display # Create annotated code coverage
+  - python -m pylint collect display common --rcfile=pylintrc.txt --ignore=tools |& tee pylint.txt # Check for Pylint warnings + errors
+  - python -m pytest --cov=. --cov-report=annotate:coverage_annotate common collect display # Create annotated code coverage
   - python -m codecov # Export code coverage to codecov
   - PYLINT=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' pylint.txt) # Get Pylint score
   - anybadge -l pylint -v ${PYLINT} -o -f pylint.svg 8=red 9=orange 9.5=yellow 10=green # Generate badge from Pylint result

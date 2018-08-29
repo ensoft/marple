@@ -200,11 +200,7 @@ class StackDatum(typing.NamedTuple):
         commas or semicolons.
 
         """
-        return ("{}" + consts.separator + "{}").\
-            format(self.weight, ";".join(self.stack))
-
-    def __repr__(self):
-        return self.__str__()
+        return consts.separator.join((str(self.weight), ';'.join(self.stack)))
 
     @classmethod
     def from_string(cls, string):
