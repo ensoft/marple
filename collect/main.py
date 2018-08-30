@@ -123,27 +123,33 @@ def _args_parse(argv, config_parser):
         [section + ": " + config_parser.config['Aliases'][section]
          for section in user_groups]
 
-    subcommand_help = [
-        "interfaces to use for data collection.",
-        "When multiple interfaces are specified, they will all be used "
-        "to collect data simultaneously.",
-        "Users can also define their own groups of interfaces using "
-        "the config file.",
-        "Built-in interfaces are:",
-        "    " + ", ".join(consts.interfaces_argnames),
-        "Current user-defined groups are:",
-        "    " + ", ".join(user_groups_help)
-    ]
+    subcommand_help = (
+            "interfaces to use for data collection.\n\n"
+            "When multiple interfaces are specified, they will all be used "
+            "to collect data simultaneously.\n"
+            "Users can also define their own groups of interfaces using "
+            "the config file.\n\n"
+            "Built-in interfaces are:\n"
+            ">" + ", ".join(consts.interfaces_argnames) + "\n"
+            "Current user-defined groups are:\n"
+            ">" + ", ".join(user_groups_help)
+    )
 
-    help_msg = \
-        "\n".join(sum([textwrap.wrap(line, replace_whitespace=False, width=55)
-                       for line in subcommand_help], []))
+    line_length = 55
+    wrapped = ""
+    for line in subcommand_help.split('\n'):
+        if len(line) > line_length:
+            line = '\n'.join(textwrap.wrap(line, width=line_length,
+                                           break_long_words=False))
+        if line.startswith(">"):
+            line = textwrap.indent(line[1:], prefix="    ")
+        wrapped = '\n'.join((wrapped, line)).lstrip()
 
     options.add_argument(
         "subcommands", nargs='+',
         choices=consts.interfaces_argnames + user_groups,
         metavar="subcommand",
-        help=help_msg
+        help=wrapped
     )
 
     # Add flag and parameter for filename

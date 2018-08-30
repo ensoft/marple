@@ -119,9 +119,10 @@ def setup_logger():
             header = super().format(record)
             original_msg = record.getMessage().split('\n')
             formatted_msg = ""
+            line_length = 75
             for line in original_msg:
-                if len(line) > 70:
-                    line = '\n'.join(textwrap.wrap(line, width=100,
+                if len(line) > line_length:
+                    line = '\n'.join(textwrap.wrap(line, width=line_length,
                                                    break_long_words=False))
                 formatted_msg = "\n".join((formatted_msg, line))
 
