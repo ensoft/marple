@@ -6,10 +6,6 @@
 """Custom exceptions"""
 
 
-class AbortedException(Exception):
-    """Exception for when the program is aborted by decision of the user"""
-
-
 class NotSupportedException(Exception):
     """Exception for when an interface is not suppported by the target kernel"""
     def __init__(self, message, required_kernel):

@@ -11,6 +11,7 @@ Provides functions for normal print output and errors.
 __all__ = ["print_", "error_"]
 
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -39,5 +40,5 @@ def error_(text, description):
         The error description for logging.
 
     """
-    logger.error("Error: %s", description)
-    print_(text)
+    logger.error("Error: %s, %s", text, description)
+    print(text, file=sys.stderr)

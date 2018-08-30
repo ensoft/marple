@@ -11,6 +11,7 @@ before_script:
   - python -m pip install -q pytest-cov codecov pylint anybadge # Code coverage, pylint, badges
   - python -m pip install -U -q pytest asynctest # Pytest, asynctest
   - python -m pip install -q numpy matplotlib ipython pandas # numpy and so on for display
+  - python -m pip install -q pyqtgraph PyQt5
   - export PYTHONPATH=${PWD} # Set PYTHONPATH
 script:
   - set -o pipefail # ensure single failure causes whole pipe to fail

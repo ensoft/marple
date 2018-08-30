@@ -18,7 +18,7 @@ class _FlamegraphBaseTest(unittest.TestCase):
     """ Base class for flamegraph tests """
     coloring = 'test_color'
     weight_units = "kb"
-    data = StringIO("1" + consts.separator + "2;3;4;5\n")
+    data = StringIO("1" + consts.datum_field_separator + "2;3;4;5\n")
     outfile = mock.MagicMock()
     outfilename = "test_output"
     outfile.__str__.return_value = outfilename
@@ -61,8 +61,8 @@ class ReadTest(_FlamegraphBaseTest):
 
     def test_normal_file(self):
         """ Test opening of a normal file """
-        self.fg.data = StringIO("1" + consts.separator +
-                                "A1;A2;A3\n2" + consts.separator +
+        self.fg.data = StringIO("1" + consts.datum_field_separator +
+                                "A1;A2;A3\n2" + consts.datum_field_separator +
                                 "B1;B2;B3;B4\n")
 
         result = list(self.fg._read())

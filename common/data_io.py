@@ -86,8 +86,8 @@ class EventDatum(typing.NamedTuple):
             since they are events).
 
         """
-        return consts.separator.join((str(self.time), self.type,
-                                     str(self.specific_datum)))
+        return consts.datum_field_separator.join((str(self.time), self.type,
+                                                  str(self.specific_datum)))
 
     @classmethod
     def from_string(cls, string):
@@ -106,7 +106,7 @@ class EventDatum(typing.NamedTuple):
 
         """
         try:
-            time, type_, datum = string.strip().split(consts.separator)
+            time, type_, datum = string.strip().split(consts.datum_field_separator)
             return EventDatum(time=int(time), type=type_,
                               specific_datum=eval(datum))
         except IndexError as ie:
@@ -200,7 +200,7 @@ class StackDatum(typing.NamedTuple):
         commas or semicolons.
 
         """
-        return consts.separator.join((str(self.weight), ';'.join(self.stack)))
+        return consts.datum_field_separator.join((str(self.weight), ';'.join(self.stack)))
 
     @classmethod
     def from_string(cls, string):
@@ -219,7 +219,7 @@ class StackDatum(typing.NamedTuple):
 
         """
         try:
-            weight, stack = string.strip().split(consts.separator)
+            weight, stack = string.strip().split(consts.datum_field_separator)
             stack_tuple = tuple(stack.split(';'))
             return StackDatum(weight=int(weight), stack=stack_tuple)
         except ValueError as ve:
@@ -353,7 +353,7 @@ def write(data, filename):
         for datum in data.datum_generator:
             out.write(str(datum) + "\n")
 
-        out.write("\n")
+        out.write(consts.data_separator)
 
 
 @util.log(logger)

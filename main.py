@@ -14,81 +14,61 @@ deals with exceptions.
 """
 __all__ = ["main"]
 
-import sys
-import os
+import argparse
 import logging
+import os
+import sys
 from datetime import datetime
+import textwrap
 
-from collect import main as collect_controller
 from common import (
     exceptions,
     output,
     paths,
-    config
+    config,
+    util
 )
-from display import main as display_controller
+from collect import main as collect
+from display import main as display
 
-# use marple log across the whole module
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
 def main():
-
+    """ Run MARPLE """
     # Check whether user is root, otherwise exit
-    global logger
     if os.geteuid() != 0:
-        exit("Error: You need to have root privileges to run marple.")
-
-    # Make sure the directories marple accesses actually exist.
-    # TODO: create config directory?
-    paths.create_directories()
-    parser = config.Parser()
-
-
-    try:
-        # create a unique and descriptive logfile in the standard linux
-        # log file directory
-        LOG_FORMAT = '%(asctime)s - %(name)-25.25s - %(levelname)-8.8s - ' \
-                     '%(message)-100.100s'
-        LOG_DATE_FORMAT = "%H:%M:%S"
-        now = datetime.now()
-        LOG_FILE = paths.LOG_DIR + now.strftime('%Y-%m-%d_%H:%M:%S') + ".log"
-        LEVEL = logging.DEBUG
-
-        logging.basicConfig(format=LOG_FORMAT, level=LEVEL,
-                            datefmt=LOG_DATE_FORMAT, filename=LOG_FILE,
-                            filemode="w")
-
-    except PermissionError:
-        # if setting up the logging fails there is something wrong with the
-        #   system
-        exit("Fatal Error: Failed to set up logging due to missing privileges "
-             "to the log directory!\n Make sure you have root privileges and "
-             "that you are allowed to access the log directory as root.")
-
-    except Exception as ex:
-        # if setting up the logging fails there is something wrong with the
-        #   system
-        exit("Fatal Error: Failed to set up logging! {}".format(str(ex)))
-
-    try:
-        # Call main function with command line arguments excluding argv[0]
-        # (program name: marple) and argv[1] (function name: {collect,display})
-        if len(sys.argv) < 2:
-            output.print_("usage: marple COMMAND\n The COMMAND "
-                          "can be either \"--collect\" or \"--display\"")
-        elif sys.argv[1] == "--collect":
-            collect_controller.main(sys.argv[2:], parser)
-        elif sys.argv[1] == "--display":
-            display_controller.main(sys.argv[2:])
-        else:
-            output.print_("usage: marple COMMAND\n The COMMAND "
-                          "can be either \"--collect\" or \"--display\"")
-    except exceptions.AbortedException:
-        # If the user decides to abort
-        output.error_("Aborted.", "Execution was aborted by the user.")
+        output.error_("You must have root privileges to run MARPLE.\n",
+                      "User was not root.")
         exit(1)
+
+    paths.create_directories()  # Create required directories TODO config dir?
+    setup_logger()  # Setup logging
+
+    # Parse arguments
+    parser = argparse.ArgumentParser(
+        prog="marple",
+        description="A Linux system profiling tool, which can collect data "
+                    "and display it.", add_help=False)
+    submodules = parser.add_mutually_exclusive_group(required=True)
+    submodules.add_argument(
+        "--collect", "-c", action='store_true',
+        help="Collect profiling data and write to disk.")
+    submodules.add_argument(
+        "--display", "-d", action='store_true',
+        help="Display profiling data stored on disk."
+    )
+    parsed, rest = parser.parse_known_args(sys.argv[1:])
+
+    # Call relevant module
+    try:
+        if parsed.collect:
+            collect.main(rest, config.Parser())
+        else:
+            assert parsed.display
+            display.main(rest)
+
     except NotImplementedError as nie:
         # if the requested function is not implemented, exit with an error
         output.error_("The command \"{}\" is currently not implemented. "
@@ -96,7 +76,7 @@ def main():
                       "Exited with a NotImplementedError. Command: {}"
                       .format(nie.args[0]))
         exit(1)
-    except FileExistsError as fee:
+    except FileExistsError as fee:  # TODO is this ever raised?
         # If the output filename requested by the user already exists
         output.error_("A file with the name {} already exists. Please "
                       "choose a unique filename.".format(fee.filename),
@@ -107,14 +87,14 @@ def main():
         # If no input file was found
         output.error_(" No file named {} found. Please choose a "
                       "different input file.".format(fnfe.filename),
-                      "Exited with a FileNotFoundError. Filename: {}".format(
-                          fnfe.filename))
+                      "Exited with a FileNotFoundError. Filename: {}"
+                      .format(fnfe.filename))
         exit(1)
     except exceptions.NotSupportedException as nse:
         # If the target kernel does not meet the requirements
         output.error_("You need to have kernel {} or above for this "
                       "functionality".format(nse.required_kernel),
-                      "Exited with NotSupportedError. Required Kernel: "
+                      "Exited with NotSupportedError. Required kernel: "
                       "{}".format(nse.required_kernel))
         exit(1)
     except IsADirectoryError as iade:
@@ -123,10 +103,60 @@ def main():
                       "with that name. Please choose a different "
                       "filename".format(iade.filename),
                       "Exited with an IsADirectoryError.")
+        exit(1)
     except Exception as ex:
         # If anything else goes wrong, handle it here
         output.error_("An unexpected error occurred. Check log for details.",
-                      str(ex))
+                      ex)
+        exit(1)
+
+
+def setup_logger():
+    """ Create a log in paths.LOG_DIR """
+    class LogFormatter(logging.Formatter):
+        @util.Override(logging.Formatter)
+        def format(self, record):
+            header = super().format(record)
+            original_msg = record.getMessage().split('\n')
+            formatted_msg = ""
+            for line in original_msg:
+                if len(line) > 70:
+                    line = '\n'.join(textwrap.wrap(line, width=100,
+                                                   break_long_words=False))
+                formatted_msg = "\n".join((formatted_msg, line))
+
+            indented_msg = textwrap.indent(formatted_msg, prefix="    ")
+
+            return header + indented_msg
+
+        @util.Override(logging.Formatter)
+        def formatException(self, ei):
+            return textwrap.indent(super().formatException(ei), prefix="    ")
+
+    try:
+        msg_format = '%(asctime)s - %(name)-25.25s - %(levelname)-8.8s'
+        date_format = "%H:%M:%S"
+        now = datetime.now()
+        log_file = paths.LOG_DIR + now.strftime('%Y-%m-%d_%H:%M:%S') + ".log"
+        level = logging.DEBUG
+
+        handler = logging.FileHandler(log_file, mode='w')
+        formatter = LogFormatter(fmt=msg_format, datefmt=date_format)
+        handler.setFormatter(formatter)
+
+        logging.basicConfig(level=level, handlers=[handler])
+        logging.basicConfig()
+
+    except PermissionError:
+        output.error_(
+            "Fatal error: failed to set up logging due to permissions.",
+            "Ensure you have root privileges and can access the log directory"
+            "as root.")
+        exit(1)
+    except Exception as ex:
+        output.error_(
+            "Fatal error: failed to set up logging.",
+            str(ex))
         exit(1)
 
 

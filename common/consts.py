@@ -28,17 +28,17 @@ class DisplayOptions(Enum):
 
 class InterfaceTypes(Enum):
     # The values here should correspond to the ones from the config
-    SCHEDEVENTS = 'Scheduling Events'
-    DISKLATENCY = 'Disk Latency/Time'
-    MALLOCSTACKS = 'Malloc Stacks'
-    MEMLEAK = 'Memory Leaks'
-    MEMTIME = 'Memory/Time'
-    CALLSTACK = 'Call Stacks'
-    TCPTRACE = 'TCP Trace'
-    MEMEVENTS = 'Memory Events'
-    DISKBLOCK = 'Disk Block Requests'
-    PERF_MALLOC = 'Perf Malloc Stacks'
-
+    SCHEDEVENTS = 'cpusched'
+    DISKLATENCY = 'disklat'
+    MALLOCSTACKS = 'mallocstacks'
+    MEMLEAK = 'memleak'
+    MEMTIME = 'memtime'
+    CALLSTACK = 'callstack'
+    TCPTRACE = 'ipc'
+    MEMEVENTS = 'memevents'
+    DISKBLOCK = 'diskblockeq'
+    PERF_MALLOC = 'perf_malloc'
+    LIB = 'lib'
 
 class Datatypes(Enum):
     STACK = 'stack'
@@ -54,8 +54,7 @@ display_dictionary = {
     Datatypes.POINT: [DisplayOptions.HEATMAP, DisplayOptions.STACKPLOT],
 }
 
-interfaces_argnames = ["cpusched", "disklat", "ipc", "lib", "mallocstacks",
-                       "memtime", "callstack", "memleak", "memevents",
-                       "diskblockrq", "perf_malloc"]
+interfaces_argnames = [interface.value for interface in InterfaceTypes]
 
-separator = "$$$"
+datum_field_separator = "$$$"
+data_separator = "\n"

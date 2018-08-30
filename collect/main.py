@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# write.py - user interface, parses and applies collect commands
+# main.py - user interface, parses and applies collect commands
 # June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
@@ -18,9 +18,9 @@ import argparse
 import asyncio
 import logging
 import os
+import textwrap
 
 from common import (
-    exceptions,
     file,
     output,
     util,
@@ -39,7 +39,7 @@ logger.debug('Entered module: %s', __name__)
 
 
 @util.log(logger)
-def main(argv, parser):
+def main(argv, config_parser):
     """
     The main function of the controller.
 
@@ -48,21 +48,23 @@ def main(argv, parser):
 
     :param argv:
         a list of command line arguments from call in main module
-    :param parser:
+    :param config_parser:
         the parser that reads the config; it is passed around to avoid creating
         multiple parser objects
     """
 
     # Parse arguments
-    args = _args_parse(argv)
+    args = _args_parse(argv, config_parser)
 
     # Use user output filename specified, otherwise create a unique one
     if args.outfile:
         if os.path.isfile(args.outfile):
             output.print_("A file named {} already exists! Overwrite [y/n]? "
                           .format(args.outfile))
-            if input() not in ("y", "yes"):
-                raise exceptions.AbortedException
+            if input() not in ("y", "yes", "Y"):
+                output.error_("Aborted.\n",
+                              "User aborted collect due to file overwrite.")
+                exit(1)
         filename = file.DataFileName(given_name=args.outfile)
     else:
         filename = file.DataFileName()
@@ -75,7 +77,7 @@ def main(argv, parser):
     # ioloop.set_debug(True)
 
     # Get collecter interfaces
-    collecters = _get_collecters(args, parser)
+    collecters = _get_collecters(args, config_parser)
 
     # Begin async collection
     futures = tuple(collecter.collect() for collecter in collecters)
@@ -93,12 +95,14 @@ def main(argv, parser):
 
 
 @util.log(logger)
-def _args_parse(argv):
+def _args_parse(argv, config_parser):
     """
     Creates a parser that parses the collect command.
 
     :param argv:
         a list of arguments passed by the main function.
+    :param config_parser:
+        a config parser for MARPLE.
     :return:
         an object containing the parsed command information.
 
@@ -107,30 +111,51 @@ def _args_parse(argv):
     """
 
     # Create parser object
-    parser = argparse.ArgumentParser(prog="marple collect",
-                                     description="Collect performance data")
+    parser = argparse.ArgumentParser(
+        prog="marple --collect", description="Collect performance data.",
+        formatter_class=argparse.RawTextHelpFormatter, epilog="\n\n")
 
     # Add options for the modules
     options = parser.add_argument_group()
-    options.add_argument("interfaces", nargs='+',
-                         help="Modules to be used when tracking. Options "
-                              "include: cpusched, disklat, ipc, lib,"
-                              "mallocstacks, callstack, memtime, memleak, "
-                              "memevents,"
-                              " diskblockrq, perf_malloc. The user can "
-                              "specify aliases for multiple such options in "
-                              "the config file and use them here just like "
-                              "with normal options")
+
+    user_groups = [section for section in config_parser.config['Aliases']]
+    user_groups_help = \
+        [section + ": " + config_parser.config['Aliases'][section]
+         for section in user_groups]
+
+    subcommand_help = [
+        "interfaces to use for data collection.",
+        "When multiple interfaces are specified, they will all be used "
+        "to collect data simultaneously.",
+        "Users can also define their own groups of interfaces using "
+        "the config file.",
+        "Built-in interfaces are:",
+        "    " + ", ".join(consts.interfaces_argnames),
+        "Current user-defined groups are:",
+        "    " + ", ".join(user_groups_help)
+    ]
+
+    help_msg = \
+        "\n".join(sum([textwrap.wrap(line, replace_whitespace=False, width=55)
+                       for line in subcommand_help], []))
+
+    options.add_argument(
+        "subcommands", nargs='+',
+        choices=consts.interfaces_argnames + user_groups,
+        metavar="subcommand",
+        help=help_msg
+    )
 
     # Add flag and parameter for filename
     filename = parser.add_argument_group()
-    filename.add_argument("-o", "--outfile", type=str,
-                          help="Output file where collected data is stored")
+    filename.add_argument(
+        "-o", "--outfile", type=str, help="specify the data output file")
 
     # Add flag and parameter for time
     time = parser.add_argument_group()
-    time.add_argument("-t", "--time", type=int,
-                      help="time in seconds that data is collected")
+    time.add_argument(
+        "-t", "--time", type=int, help="specify the duration for data "
+                                       "collection (in seconds)")
 
     return parser.parse_args(argv)
 
@@ -151,18 +176,15 @@ def _get_collecters(args, parser):
     # Determine all arguments specifying collecter interfaces
     args_seen = set()
     config_parser = config.Parser()
-    for arg in args.interfaces:
+    for arg in args.subcommands:
         if arg in consts.interfaces_argnames:
             args_seen.add(arg)
         else:
-            # The arg was not found, might be an alias
-            if not config_parser.has_option("Aliases", arg):
-                raise argparse.ArgumentError(message="Arguments not recognised",
-                                             argument=args)
-            alias_args = config_parser.get_option_from_section(
-                "Aliases", arg).split(',')
-            for alias_arg in alias_args:
-                args_seen.add(alias_arg)
+            assert config_parser.has_option("Aliases", arg)
+            # Look for aliases
+            alias_args = set(config_parser.get_option_from_section(
+                "Aliases", arg).split(','))
+            args_seen = args_seen.union(alias_args)
 
     return [_get_collecter_instance(arg, time, parser)
             for arg in args_seen]
@@ -172,36 +194,46 @@ def _get_collecter_instance(interface_name, time, parser):
     """
     A helper function that returns an instance of the appropriate interface
 
-    :param interface_name: the name of the interface we want an instance of
-    :param time: the time used as an option for the collecter
-    :param parser: a config parser used to fetch collecter related options other
-                   than the time
-    :returns: a collecter for the interface
+    :param interface_name:
+        the name of the interface we want an instance of
+    :param time:
+        the time used as an option for the collecter
+    :param parser:
+        a config parser used to fetch collecter related
+        options other than the time
+    :returns:
+        a collecter for the interface
+
     """
-    if interface_name == "cpusched":
+    interfaces = consts.InterfaceTypes
+    interface_enum = interfaces(interface_name)
+
+    assert interface_enum in interfaces
+
+    if interface_enum is interfaces.SCHEDEVENTS:
         collecter = perf.SchedulingEvents(time)
-    elif interface_name == "disklat":
+    elif interface_enum is interfaces.DISKLATENCY:
         collecter = iosnoop.DiskLatency(time)
-    elif interface_name == "ipc":
+    elif interface_enum is interfaces.TCPTRACE:
         collecter = ebpf.TCPTracer(time)
-    elif interface_name == "lib":
+    elif interface_enum is interfaces.LIB:
         raise NotImplementedError("Lib not implemented")  # TODO
-    elif interface_name == "mallocstacks":
+    elif interface_enum is interfaces.MALLOCSTACKS:
         collecter = ebpf.MallocStacks(time)
-    elif interface_name == "memtime":
+    elif interface_enum is interfaces.MEMTIME:
         collecter = smem.MemoryGraph(time)
-    elif interface_name == "callstack":
+    elif interface_enum is interfaces.CALLSTACK:
         options = perf.StackTrace.Options(parser.get_default_frequency(),
                                           parser.get_system_wide())
         collecter = perf.StackTrace(time, options)
-    elif interface_name == "memleak":
+    elif interface_enum is interfaces.MEMLEAK:
         options = ebpf.Memleak.Options(10)
         collecter = ebpf.Memleak(time, options)
-    elif interface_name == "memevents":
+    elif interface_enum is interfaces.MEMEVENTS:
         collecter = perf.MemoryEvents(time)
-    elif interface_name == "diskblockrq":
+    elif interface_enum is interfaces.DISKBLOCK:
         collecter = perf.DiskBlockRequests(time)
-    elif interface_name == "perf_malloc":
+    elif interface_enum is interfaces.PERF_MALLOC:
         collecter = perf.MemoryMalloc(time)
     else:
         raise NotImplementedError("{} not implemented!".format(interface_name))

@@ -194,13 +194,13 @@ def _display(args):
 
     """
     # Try to use the specified input file, otherwise use last one created
-    if args.infile is not None:
+    if args.infile:
         input_filename = file.DataFileName(given_name=args.infile)
     else:
         input_filename = file.DataFileName.import_filename()
 
     # Use user output filename specified, otherwise create a unique one
-    if args.outfile is not None:
+    if args.outfile:
         output_filename = file.DisplayFileName(given_name=args.outfile)
     else:
         output_filename = file.DisplayFileName()
@@ -220,7 +220,8 @@ def _display(args):
 
             # Generator that returns data from the current section, one line
             # at a time
-            data = common.data_io.read_until_line(file_object, "\n")
+            data = common.data_io.read_until_line(
+                file_object, consts.data_separator)
 
             # We select the display option based on args or the config file,
             # and get the associated options with that display option
@@ -231,19 +232,19 @@ def _display(args):
 
             # We know the display option, we have its specific options, we only
             # need to initialize the display object
-            if display_for_interface == consts.DisplayOptions.G2:
+            if display_for_interface is consts.DisplayOptions.G2:
                 display_object = g2.G2(data, data_options,
                                        display_options)
-            elif display_for_interface == consts.DisplayOptions.HEATMAP:
+            elif display_for_interface is consts.DisplayOptions.HEATMAP:
                 display_object = heatmap.HeatMap(data, output_filename,
                                                  data_options, display_options)
-            elif display_for_interface == consts.DisplayOptions.TREEMAP:
+            elif display_for_interface is consts.DisplayOptions.TREEMAP:
                 display_object = treemap.Treemap(data, output_filename,
                                                  data_options, display_options)
-            elif display_for_interface == consts.DisplayOptions.STACKPLOT:
+            elif display_for_interface is consts.DisplayOptions.STACKPLOT:
                 display_object = stackplot.StackPlot(data, data_options,
                                                      display_options)
-            elif display_for_interface == consts.DisplayOptions.FLAMEGRAPH:
+            elif display_for_interface is consts.DisplayOptions.FLAMEGRAPH:
                 display_object = flamegraph.Flamegraph(data,
                                                        output_filename,
                                                        data_options,
@@ -264,7 +265,7 @@ def _args_parse(argv):
     Mutex groups of arguments that are created in the parser object (each
     group represents the display options for a datatype, each group is
     optional):
-        Stack
+        Stack:
             fg: display with a flamegraph
             tm: display with a treemap
 
@@ -289,7 +290,7 @@ def _args_parse(argv):
     """
 
     # Create parser object
-    parser = argparse.ArgumentParser(prog="marple display",
+    parser = argparse.ArgumentParser(prog="marple --display",
                                      description="Display collected data "
                                      "in required format")
 

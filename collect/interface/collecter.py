@@ -53,3 +53,17 @@ class Collecter:
     async def collect(self):
         """ Overall collection: collect data asynchronously and return it. """
         pass
+
+    @staticmethod
+    def log_error(msg, log):
+        """
+        Logs a byte string at level ERROR on logger if non-empty.
+
+        :param msg:
+            Message to log, as a byte string.
+        :param log:
+            Logger object to log to.
+
+        """
+        if msg.decode():
+            log.error(msg.decode())

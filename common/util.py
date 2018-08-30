@@ -67,16 +67,20 @@ def log(logger):
         @wraps(fn)
         def wrapper(*args, **kwargs):
             logger.debug('Entering function: {}'.format(fn.__name__))
-            args_list = list(args)
-            logger.debug("Args: {:<90.90s}...".format(str(args_list)))
-            if kwargs != {}:
-                logger.debug("Kwargs: {:<90.90s}...".format(str(kwargs)))
+            args_list = [str(arg) for arg in list(args)]
+            if kwargs:
+                logger.debug(
+                    "Args: {}\nKwargs: {}".format(str(args_list), str(kwargs))
+                )
+            else:
+                logger.debug("Args: {}".format(str(args_list)))
             try:
                 # Apply the function
                 out = fn(*args, **kwargs)
             except Exception:
                 # Catch and log any exceptions
-                logger.exception("Exception in {}".format(fn.__name__))
+                logger.debug("Exception in {}".format(fn.__name__),
+                             exc_info=True)
                 # Re-raise the exception
                 raise
 

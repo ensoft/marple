@@ -57,7 +57,7 @@ class DiskLatency(collecter.Collecter):
         out, err = await sub_process.communicate()
 
         self.end_time = datetime.datetime.now()
-        logger.error(err.decode())
+        self.log_error(err, logger)
 
         return StringIO(out.decode())
 

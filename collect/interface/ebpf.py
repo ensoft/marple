@@ -66,7 +66,7 @@ class MallocStacks(collecter.Collecter):
         out, err = await sub_process.communicate()
 
         self.end_time = datetime.datetime.now()
-        logger.debug(err.decode())
+        self.log_error(err, logger)
 
         return StringIO(out.decode())
 
@@ -130,7 +130,7 @@ class Memleak(collecter.Collecter):
 
         out, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        logger.debug(err.decode())
+        self.log_error(err, logger)
 
         return StringIO(out.decode())
 
@@ -218,7 +218,7 @@ class TCPTracer(collecter.Collecter):
         pattern = r"^Traceback \(most recent call last\):" \
                   r"(\S*\s)*KeyboardInterrupt\s$"
         if not re.fullmatch(pattern, err.decode()):
-            logger.error(err.decode())
+            self.log_error(err, logger)
 
         return StringIO(out.decode())
 

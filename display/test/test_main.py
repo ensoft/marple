@@ -17,27 +17,27 @@ class DisplayTest(unittest.TestCase):
     file = \
         "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\":" \
         " \"2018-08-20 18:46:39.403129\", \"datatype\": \"point\"," \
-        "\"interface\": \"Memory/Time\"}\n" \
+        "\"interface\": \"memtime\"}\n" \
         "Dummy Line\n" \
         "\n" \
         "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
         "\"2018-08-20 18:46:39.403129\", \"datatype\": \"event\"" \
-        ", \"interface\": \"Scheduling Events\"}\n" \
+        ", \"interface\": \"cpusched\"}\n" \
         "Dummy Line\n" \
         "\n" \
         "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
         "\"2018-08-20 18:46:39.403129\", \"datatype\": \"stack\"" \
-        ", \"interface\": \"Memory Leaks\"}\n" \
+        ", \"interface\": \"memleak\"}\n" \
         "Dummy Line\n" \
         "\n" \
         "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
         "\"2018-08-20 18:46:39.403129\", \"datatype\": \"point\"" \
-        ", \"interface\": \"Disk Latency/Time\"}\n" \
+        ", \"interface\": \"disklat\"}\n" \
         "Dummy Line\n" \
         "\n" \
         "{\"start\": \"2018-08-20 18:46:38.403129\", \"end\": " \
         "\"2018-08-20 18:46:39.403129\", \"datatype\": \"stack\"" \
-        ", \"interface\": \"Malloc Stacks\"}\n" \
+        ", \"interface\": \"mallocstacks\"}\n" \
         "Dummy Line\n" \
         "\n"
 

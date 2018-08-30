@@ -78,7 +78,8 @@ class MemoryEventsTest(_PerfCollecterBaseTest):
         ])
 
         self.os_mock.remove.assert_called_once_with(
-            perf.paths.MARPLE_DIR + "/" + perf.MemoryEvents._PERF_FILE_NAME
+            self.os_mock.getcwd.return_value + "/" +
+            perf.MemoryEvents._PERF_FILE_NAME
         )
 
         self.strio_mock.assert_called_once_with('test_out2')
@@ -119,6 +120,11 @@ class MemoryMallocTest(_PerfCollecterBaseTest):
             asynctest.call("test_err4")
         ])
 
+        self.os_mock.remove.assert_called_once_with(
+            self.os_mock.getcwd.return_value + "/" +
+            perf.MemoryMalloc._PERF_FILE_NAME
+        )
+
         self.strio_mock.assert_called_once_with('test_out4')
         stack_parse_mock.assert_called_once_with(self.strio_mock('test_out4'))
         stack_parse_mock.return_value.stack_collapse.assert_called_once_with()
@@ -152,6 +158,11 @@ class StackTraceTest(_PerfCollecterBaseTest):
             asynctest.call('test_err1'),
             asynctest.call('test_err2')
         ])
+
+        self.os_mock.remove.assert_called_once_with(
+            self.os_mock.getcwd.return_value + "/" +
+            perf.StackTrace._PERF_FILE_NAME
+        )
 
         self.strio_mock.assert_called_once_with('test_out2')
         stack_parse_mock.assert_called_once_with(self.strio_mock('test_out2'))
@@ -196,6 +207,11 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
             asynctest.call("test_err1"),
             asynctest.call("test_err2")
         ])
+
+        self.os_mock.remove.assert_called_once_with(
+            self.os_mock.getcwd.return_value + "/" +
+            perf.SchedulingEvents._PERF_FILE_NAME
+        )
 
         re_mock.match.assert_called_once_with(r"\s*"
                                               r"(?P<name>\S+(\s+\S+)*)\s+"
@@ -242,6 +258,11 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
             asynctest.call("test_err2")
         ])
 
+        self.os_mock.remove.assert_called_once_with(
+            self.os_mock.getcwd.return_value + "/" +
+            perf.SchedulingEvents._PERF_FILE_NAME
+        )
+
         re_mock.match.assert_called_once_with(r"\s*"
                                               r"(?P<name>\S+(\s+\S+)*)\s+"
                                               r"(?P<pid>\d+)\s+"
@@ -276,6 +297,11 @@ class DiskBlockRequestsTest(_PerfCollecterBaseTest):
             asynctest.call("test_err1"),
             asynctest.call("test_err2")
         ])
+
+        self.os_mock.remove.assert_called_once_with(
+            self.os_mock.getcwd.return_value + "/" +
+            perf.DiskBlockRequests._PERF_FILE_NAME
+        )
 
         self.strio_mock.assert_called_once_with('test_out2')
         stack_parse_mock.assert_called_once_with(self.strio_mock('test_out2'))

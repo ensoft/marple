@@ -102,16 +102,16 @@ class Treemap(GenericDisplay):
             for line in self.data:
                 # If we do not have a separator between the weight and the
                 # first element of the stack, raise error
-                if line.count(consts.separator) != 1:
+                if line.count(consts.datum_field_separator) != 1:
                     raise ValueError(
                         "Invalid format of the file! Each line should "
                         "have the format weight{}... Line that "
-                        "causes the problem {}".format(consts.separator, line))
+                        "causes the problem {}".format(consts.datum_field_separator, line))
 
                 # We replace the only consts.separator character with ';',
                 # as requested by the d3 module that separates the weight from
                 # the callstack
-                call_stack = line.strip().replace(consts.separator, ";", 1)
+                call_stack = line.strip().replace(consts.datum_field_separator, ";", 1)
                 sep = call_stack.split(';')
                 # We write the obtained stack, but only to the specified depth
                 out_file.write(';'.join(

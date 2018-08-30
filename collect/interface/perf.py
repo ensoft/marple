@@ -28,7 +28,7 @@ from io import StringIO
 from typing import NamedTuple
 
 from collect.interface import collecter
-from common import data_io, util, paths
+from common import data_io, util
 from common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
@@ -70,8 +70,7 @@ class MemoryEvents(collecter.Collecter):
 
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-
-        logger.error(err.decode())
+        self.log_error(err, logger)
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
@@ -79,8 +78,8 @@ class MemoryEvents(collecter.Collecter):
             stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        logger.error(err.decode())
-        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
+        self.log_error(err, logger)
+        os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
@@ -128,14 +127,14 @@ class MemoryMalloc(collecter.Collecter):
             "perf probe -q --del *malloc*", stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
-        logger.error(err.decode())
+        self.log_error(err, logger)
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf probe -qx /lib*/*/libc.so.* malloc:1 size=%di",
             stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
-        logger.error(err.decode())
+        self.log_error(err, logger)
 
         # Record perf data
         self.start_time = datetime.datetime.now()
@@ -146,15 +145,15 @@ class MemoryMalloc(collecter.Collecter):
         )
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        logger.error(err.decode())
+        self.log_error(err, logger)
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        logger.error(err.decode())
-        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
+        self.log_error(err, logger)
+        os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
@@ -215,15 +214,15 @@ class StackTrace(collecter.Collecter):
 
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        logger.error(err.decode())
+        self.log_error(err, logger)
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        logger.error(err.decode())
-        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
+        self.log_error(err, logger)
+        os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
@@ -272,7 +271,7 @@ class SchedulingEvents(collecter.Collecter):
         )
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        logger.error(err.decode())
+        self.log_error(err, logger)
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf sched script -i " + self._PERF_FILE_NAME +
@@ -280,8 +279,8 @@ class SchedulingEvents(collecter.Collecter):
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        logger.error(err.decode())
-        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
+        self.log_error(err, logger)
+        os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 
@@ -366,15 +365,15 @@ class DiskBlockRequests(collecter.Collecter):
         )
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        logger.error(err.decode())
+        self.log_error(err, logger)
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        logger.error(err.decode())
-        os.remove(paths.MARPLE_DIR + "/" + self._PERF_FILE_NAME)
+        self.log_error(err, logger)
+        os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
 

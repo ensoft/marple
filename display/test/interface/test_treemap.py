@@ -51,8 +51,8 @@ class TreemapTest(unittest.TestCase):
 
         # Get the output from a collapsed stack (first line in inpt is the
         # empty header
-        data = iter(("00000" + consts.separator + "pname;call1;call2\n",
-                     "000000000" + consts.separator + "pname;call3;call4\n"))
+        data = iter(("00000" + consts.datum_field_separator + "pname;call1;call2\n",
+                     "000000000" + consts.datum_field_separator + "pname;call3;call4\n"))
         outpt = self._get_output(data)
 
         # Check that we got the desired output
@@ -72,10 +72,10 @@ class TreemapTest(unittest.TestCase):
                    "000000000;pname;call1;call2\n" \
                    "000;pname;call1;call2;call3\n"
 
-        data = iter(("00000" + consts.separator
+        data = iter(("00000" + consts.datum_field_separator
                      + "pname;call1;call2;call3;call4;call5\n",
-                     "000000000" + consts.separator + "pname;call1;call2\n",
-                     "000" + consts.separator + "pname;call1;call2;call3"))
+                     "000000000" + consts.datum_field_separator + "pname;call1;call2\n",
+                     "000" + consts.datum_field_separator + "pname;call1;call2;call3"))
 
         out = self._get_output(data)
 
