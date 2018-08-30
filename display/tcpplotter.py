@@ -41,8 +41,6 @@ class _TCPMessage(typing.NamedTuple):
 
 
 # TODO: Tooltip for the unused data
-# TODO: Add multiple colors to lines (search for Luke's answer on coloring
-# TODO: discrete segments on the Google Forum)
 class _TCPDDrawWidget(pg.GraphicsWindow):
     source_brush = pg.mkBrush('w')
     destination_brush = pg.mkBrush('w')
@@ -76,7 +74,34 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
             self.plotter.plot([0, max_time], [y, y],
                               pen=pg.mkPen(255, 255, 255, 32))
 
+    def _plot_lines(self, coord_pair, line_color, symbols, symbol_brushes):
+        num_points = len(coord_pair[0])
+
+        self.plotter.plot({'x': coord_pair[0], 'y': coord_pair[1]},
+                          symbol=symbols[0:num_points], pen=line_color,
+                          symbolBrush=symbol_brushes[0:num_points],
+                          connect="pairs")
+
     def _draw_data(self):
+        xs = []
+        ys = []
+        conn_type_coords = {'A': ([], []),
+                            'C': ([], []),
+                            'X': ([], [])}
+        for message in self.messages:
+            xs.extend([message.time, message.time])
+            ys.extend([self.comm_to_y_map[message.source.comm],
+                       self.comm_to_y_map[message.destination.comm]])
+            if message.type == 'A':
+                coords = conn_type_coords['A']
+            elif message.type == 'C':
+                coords = conn_type_coords['C']
+            else:
+                coords = conn_type_coords['X']
+            coords[0].extend([message.time, message.time])
+            coords[1].extend([self.comm_to_y_map[message.source.comm],
+                              self.comm_to_y_map[message.destination.comm]])
+
         symbols = []
         for _ in range(0, len(self.messages)):
             symbols.extend(['s', 'o'])
@@ -85,25 +110,12 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
         for _ in range(0, len(self.messages)):
             symbol_brushes.extend([self.source_brush,
                                    self.destination_brush])
-
-        xs = []
-        ys = []
-        line_colors = []
-        for message in self.messages:
-            xs.extend([message.time, message.time])
-            ys.extend([self.comm_to_y_map[message.source.comm],
-                       self.comm_to_y_map[message.destination.comm]])
-            if message.type == 'A':
-                color = self.accept_color
-            elif message.type == 'C':
-                color = self.connect_color
-            else:
-                color = self.close_color
-            line_colors.append(color)
-
-        self.plotter.plot({'x': xs, 'y': ys}, symbol=symbols,
-                          pen='b', symbolBrush=symbol_brushes,
-                          connect="pairs")
+        self._plot_lines(conn_type_coords['A'], self.accept_color, symbols,
+                         symbol_brushes)
+        self._plot_lines(conn_type_coords['C'], self.connect_color, symbols,
+                         symbol_brushes)
+        self._plot_lines(conn_type_coords['X'], self.close_color, symbols,
+                         symbol_brushes)
 
     def set_lines(self, x, y):
         symbols = []
@@ -115,7 +127,7 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
         brush_dest = pg.mkBrush('r')
         for i in range(0, int(len(x)/2)):
             colors.extend([brush_sour, brush_dest])
-        self.plotDataLines.setData({'x':x, 'y':y}, symbol=symbols,
+        self.plotDataLines.setData({'x': x, 'y': y}, symbol=symbols,
                                    pen='r', symbolBrush=colors)
 
 
@@ -201,15 +213,35 @@ import random
 
 data = []
 types = ['A', 'X', 'C']
+# data.append(data_io.EventDatum(time=1,
+#                                    type=types[0],
+#                                    specific_datum=(
+#         None, 'process' + str(1), None, None, 'process' + str(3), None, None)))
+# data.append(data_io.EventDatum(time=2,
+#                                    type=types[1],
+#                                    specific_datum=(
+#         None, 'process' + str(3), None, None, 'process' + str(1), None, None)))
+# data.append(data_io.EventDatum(time=4,
+#                                    type=types[2],
+#                                    specific_datum=(
+#         None, 'process' + str(3), None, None, 'process' + str(1), None, None)))
+# data.append(data_io.EventDatum(time=10,
+#                                    type=types[2],
+#                                    specific_datum=(
+#         None, 'process' + str(5), None, None, 'process' + str(4), None, None)))
+# data.append(data_io.EventDatum(time=15,
+#                                    type=types[1],
+#                                    specific_datum=(
+#         None, 'process' + str(5), None, None, 'process' + str(4), None, None)))
 
-for i in range(1, int(random.random() * 100)):
-    time = random.random() * 100
-    s = int(random.random() * 100)
-    d = int(random.random() * 100)
-    data.append(data_io.EventDatum(time=time,
-                                   type=types[random.randrange(0, 3)],
-                                   specific_datum=(
-        None, 'process' + str(s), None, None, 'process' + str(d), None, None)))
+# for i in range(1, int(random.random() * 10000)):
+#     time = random.random() * 100
+#     s = int(random.random() * 100)
+#     d = int(random.random() * 100)
+#     data.append(data_io.EventDatum(time=time,
+#                                    type=types[random.randrange(0, 3)],
+#                                    specific_datum=(
+#         None, 'process' + str(s), None, None, 'process' + str(d), None, None)))
 
 plot = TCPPlotter(data)
 plot.show()
