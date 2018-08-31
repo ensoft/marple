@@ -20,6 +20,8 @@ import os
 import sys
 from datetime import datetime
 import textwrap
+import warnings
+import traceback
 
 from common import (
     exceptions,
@@ -28,13 +30,52 @@ from common import (
     config,
     util
 )
-from collect import main as collect
-from display import main as display
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+config_parser = config.Parser()
 
 
+# Attempt to import collect and display - keep track of which are present
+collect_exists, display_exists = True, True
+warn = config_parser.get_option_from_section("General", "warnings", "bool")
+
+try:
+    from collect import main as collect
+except ImportError:
+    if warn:
+        msg = ("No data collection package detected - "
+               "only data display package (marple -d/--display) may be used."
+               "To suppress this warning, edit config.txt.")
+        warnings.warn(RuntimeWarning(msg))
+        logger.error(msg)
+    collect_exists = False
+    collect = None
+
+try:
+    from display import main as display
+except ImportError:
+    if warn:
+        msg = ("No data display package detected - "
+               "only data collection package (marple -c/--collect) may be used."
+               "To suppress this warning, edit config.txt")
+        warnings.warn(RuntimeWarning(msg))
+        logger.error(msg)
+    display_exists = False
+    display = None
+
+# If neither is present, exit immediately
+if not collect_exists and not display_exists:
+    output.error_(
+        "Fatal error: neither data collection nor data display packages found!",
+        "User must have at least one of the data collection ('collect') "
+        "and data display ('display') packages installed."
+    )
+    exit(1)
+
+
+@util.log(logger)
 def main():
     """ Run MARPLE """
     # Check whether user is root, otherwise exit
@@ -62,13 +103,28 @@ def main():
     parsed, rest = parser.parse_known_args(sys.argv[1:])
 
     # Call relevant module
+    global collect_exists, display_exists, config_parser
     try:
         if parsed.collect:
-            collect.main(rest, config.Parser())
+            if collect_exists:
+                collect.main(rest, config_parser)
+            else:
+                raise ModuleNotFoundError(
+                    name='common', path=(paths.MARPLE_DIR + '/main.py'))
         else:
             assert parsed.display
-            display.main(rest)
+            if display_exists:
+                display.main(rest)
+            else:
+                raise ModuleNotFoundError(
+                    name='display', path=(paths.MARPLE_DIR + '/main.py'))
 
+    except ModuleNotFoundError as mnfe:
+        output.error_("Package {} does not exists on this system!"
+                      .format(mnfe.name),
+                      "Attempted to import '{}' in {}:\n"
+                      .format(mnfe.name, mnfe.path) + traceback.format_exc())
+        exit(1)
     except NotImplementedError as nie:
         # if the requested function is not implemented, exit with an error
         output.error_("The command \"{}\" is currently not implemented. "
@@ -107,10 +163,11 @@ def main():
     except Exception as ex:
         # If anything else goes wrong, handle it here
         output.error_("An unexpected error occurred. Check log for details.",
-                      ex)
+                      "\n" + traceback.format_exc())
         exit(1)
 
 
+@util.log(logger)
 def setup_logger():
     """ Create a log in paths.LOG_DIR """
     class LogFormatter(logging.Formatter):
@@ -119,7 +176,7 @@ def setup_logger():
             header = super().format(record)
             original_msg = record.getMessage().split('\n')
             formatted_msg = ""
-            line_length = 75
+            line_length = 70
             for line in original_msg:
                 if len(line) > line_length:
                     line = '\n'.join(textwrap.wrap(line, width=line_length,

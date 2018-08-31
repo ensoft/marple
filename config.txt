@@ -5,6 +5,7 @@
     time:10
     frequency:99
     system_wide: -a
+    warnings:true
 
 [DisplayInterfaces]
     # Used to set the default display mode for the interfaces
