@@ -11,6 +11,8 @@ Display option that can display ipc/tcp data as a line graph
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtWidgets
 import logging
+import re
+from functools import partial
 
 import typing
 from common import data_io
@@ -50,12 +52,16 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
     }
 
     class DrawMethodWrapper:
-        def __init__(self, draw_func, conn_types):
+        def __init__(self, draw_func, **kwargs):
             self.draw_func = draw_func
-            self.conn_types = conn_types
+            self.options_dict = kwargs
 
         def draw(self):
-            self.draw_func(self.conn_types)
+            if 'conn_types' in self.options_dict:
+                self.draw_func(self.options_dict['conn_types'])
+            if 'selected' in self.options_dict:
+                self.draw_func(self.options_dict['selected']())
+
 
     def __init__(self, messages_gen, parent=None):
         super().__init__(parent=parent)
@@ -63,9 +69,43 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
             self._create_comm_to_y_map(messages_gen)
 
         self.conn_partition_data = self._create_conn_partition()
+        self._setup_graph()
+        self._add_legend()
+        self._add_UI()
 
-        # We create the layout
-        # First the ploting stuff
+        self.symbols = ['s', 'o'] * len(self.messages)
+        self.symbol_brushes = [self.source_brush, self.destination_brush] * \
+                               len(self.messages)
+
+    def _add_UI(self):
+        # Now the UI
+        self.UI_dict = {}
+        # Radio buttons for all the options
+        options_group = QtGui.QButtonGroup(self)
+        self.all = self.DrawMethodWrapper(self.draw, conn_types='AXC')
+        self.conn = self.DrawMethodWrapper(self.draw, conn_types='C')
+        self.acc = self.DrawMethodWrapper(self.draw, conn_types='A')
+        self.close = self.DrawMethodWrapper(self.draw, conn_types='X')
+        self.UI_elems_factory("radio", "all_radio", "Show all", 1, 0,
+                              group=options_group,
+                              callback_function=self.all.draw)
+        self.UI_elems_factory("radio", "acc_radio", "Show accept", 1, 1,
+                              group=options_group,
+                              callback_function=self.acc.draw)
+        self.UI_elems_factory("radio", "cls_radio", "Show close", 1, 2,
+                              group=options_group,
+                              callback_function=self.close.draw)
+        self.UI_elems_factory("radio", "cnt_radio", "Show connect", 1, 3,
+                              group=options_group,
+                              callback_function=self.conn.draw)
+
+        self.UI_elems_factory("text", "choices", "", 2, 1)
+        self.selected = self.DrawMethodWrapper(self.draw_selected_only,
+                                               selected=self.UI_dict['choices'].text)
+        self.UI_elems_factory("button", "display_choices", "Display Choices",
+                              2, 2, callback_function=self.selected.draw)
+
+    def _setup_graph(self):
         tcp_graph_layout = self.addLayout(row=0, col=0, colspan=4)
         comm_axis = pg.AxisItem(orientation='left')
         comm_axis.setTicks([dict(enumerate(self.comm_to_y_map.keys())).items()])
@@ -74,51 +114,47 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
         self.plots = {
             'A': self.plot_container.plot([], []),
             'X': self.plot_container.plot([], []),
-            'C': self.plot_container.plot([], [])
+            'C': self.plot_container.plot([], []),
+            'lines': self.plot_container.plot([], []),
+            'highlighted': self.plot_container.plot([], [])
         }
         tcp_graph_layout.addItem(self.plot_container)
 
-        # Now the UI
-        self.UI_dict = {}
-        #Radio buttons for all the options
-        options_group = QtGui.QButtonGroup(self)
-        self.all = self.DrawMethodWrapper(self._draw, 'AXC')
-        self.conn = self.DrawMethodWrapper(self._draw, 'C')
-        self.acc = self.DrawMethodWrapper(self._draw, 'A')
-        self.close = self.DrawMethodWrapper(self._draw, 'X')
-        self._UI_elems_factory("radio", "all_radio", "Show all", 1, 0,
-                               group=options_group,
-                               callback_function=self.all.draw)
-        self._UI_elems_factory("radio", "acc_radio", "Show accept", 1, 1,
-                               group=options_group,
-                               callback_function=self.close.draw)
-        self._UI_elems_factory("radio", "cls_radio", "Show close", 1, 2,
-                               group=options_group,
-                               callback_function=self.conn.draw)
-        self._UI_elems_factory("radio", "cnt_radio", "Show connect", 1, 3,
-                               group=options_group,
-                               callback_function=self.all.draw)
-        self._UI_elems_factory("text", "choices", "", 2, 1)
-        self._UI_elems_factory("button", "display_choices", "Display Choices",
-                               2, 2, callback_function=self._empty_plots)
+        max_y = max(self.comm_to_y_map.values())
+        self.max_time = max([message.time for message in self.messages])
+        self.plot_container.vb.setLimits(xMin=-1, xMax=self.max_time + 1,
+                                         yMin=-1, yMax=max_y + 1)
 
-        self._draw_background()
+        ys = []
+        for y in range(0, max_y + 1):
+            ys.extend([y, y])
+        self.plots['lines'].setData([0, self.max_time] * (max_y + 1), ys,
+                                    pen=pg.mkPen(255, 255, 255, 32),
+                                    connect="pairs")
 
-        self.symbols = []
-        for _ in range(0, len(self.messages)):
-            self.symbols.extend(['s', 'o'])
+    def _add_legend(self):
+        legend = pg.LegendItem((170, 0), (-1, 50))
+        legend.setParentItem(self.plot_container)
+        legend.addItem(pg.PlotDataItem(symbol='s'),
+                       "Source")
+        legend.addItem(pg.PlotDataItem(symbol='o'),
+                       "Destination")
+        legend.addItem(pg.PlotDataItem(pen=self.color_dict['A']),
+                       "Accept")
+        legend.addItem(pg.PlotDataItem(pen=self.color_dict['C']),
+                       "Connect")
+        legend.addItem(pg.PlotDataItem(pen=self.color_dict['X']),
+                       "Close")
+        legend.addItem(pg.PlotDataItem(pen='y'),
+                       "Selected process")
 
-        self.symbol_brushes = []
-        for _ in range(0, len(self.messages)):
-            self.symbol_brushes.extend([self.source_brush,
-                                        self.destination_brush])
-
-    def _empty_plots(self):
+    def empty_plots(self):
         self.plots['A'].setData([], [], symbol=[], symbolBrush=[])
         self.plots['C'].setData([], [], symbol=[], symbolBrush=[])
         self.plots['X'].setData([], [], symbol=[], symbolBrush=[])
+        self.plots['highlighted'].setData([], [])
 
-    def _UI_elems_factory(self, type, name, text, row, col, **kwargs):
+    def UI_elems_factory(self, type, name, text, row, col, **kwargs):
         proxy_elem = QtGui.QGraphicsProxyWidget()
         if type == 'radio':
             new_elem = QtGui.QRadioButton(text)
@@ -132,18 +168,61 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
         proxy_elem.setWidget(new_elem)
         layout = self.addLayout(row=row, col=col)
         layout.addItem(proxy_elem)
-        self.UI_dict[name] = proxy_elem
+        self.UI_dict[name] = new_elem
 
-    def _draw(self, types):
-        self._empty_plots()
+    # @TODO: Heavy refactor
+    def draw_selected_only(self, wanted_processes):
+        def check_regex(to_match, regex_list):
+            for reg_ex in regex_list:
+                if re.match(reg_ex, to_match):
+                    return True
+            return False
 
-        for type in types:
-            xs, ys = self.conn_partition_data[type]
-            num_points = len(xs)
-            self.plots[type].setData(
-                {'x': xs, 'y': ys},
+        self.empty_plots()
+        wanted_processes = wanted_processes.replace(' ', '').split(',')
+
+        ys = []
+        for conn_type in 'AXC':
+            times, processes = self.conn_partition_data[conn_type]
+            selected_times = []
+            selected_processes = []
+            for idx in range(0, len(times), 2):
+                if check_regex(processes[idx], wanted_processes) or \
+                   check_regex(processes[idx + 1], wanted_processes):
+                    selected_times.extend(times[idx:idx+2])
+                    selected_processes.extend(processes[idx:idx+2])
+            num_points = len(selected_times)
+
+            for y in list(filter(lambda proc: check_regex(proc, wanted_processes), selected_processes)):
+                ys.extend([self.comm_to_y_map[y], self.comm_to_y_map[y]])
+
+            self.plots[conn_type].setData(
+                {'x': selected_times,
+                 'y': list(map(lambda process: self.comm_to_y_map[process],
+                               selected_processes))},
                 symbol=self.symbols[0:num_points],
-                pen=self.color_dict[type],
+                pen=self.color_dict[conn_type],
+                symbolBrush=self.symbol_brushes[0:num_points],
+                connect="pairs"
+            )
+        self.plots['highlighted'].setData(
+            [0, self.max_time] * int(len(ys) / 2),
+            ys,
+            pen='y',
+            connect="pairs")
+
+    def draw(self, conn_types):
+        self.empty_plots()
+
+        for conn_type in conn_types:
+            times, processes = self.conn_partition_data[conn_type]
+            num_points = len(times)
+            self.plots[conn_type].setData(
+                {'x': times,
+                 'y': list(map(lambda process: self.comm_to_y_map[process],
+                               processes))},
+                symbol=self.symbols[0:num_points],
+                pen=self.color_dict[conn_type],
                 symbolBrush=self.symbol_brushes[0:num_points],
                 connect="pairs"
             )
@@ -180,15 +259,6 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
             messages.append(message)
         return messages, comm_to_y_map
 
-    def _draw_background(self):
-        max_y = max(self.comm_to_y_map.values())
-        max_time = max([message.time for message in self.messages])
-        self.plot_container.vb.setLimits(xMin=-1, xMax=max_time + 1, yMin=-1,
-                                         yMax=max_y + 1)
-        for y in range(0, max_y + 1):
-            self.plot_container.plot([0, max_time], [y, y],
-                                     pen=pg.mkPen(255, 255, 255, 32))
-
     def _create_conn_partition(self):
         xs = []
         ys = []
@@ -206,8 +276,7 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
             else:
                 coords = conn_type_coords['X']
             coords[0].extend([message.time, message.time])
-            coords[1].extend([self.comm_to_y_map[message.source.comm],
-                              self.comm_to_y_map[message.destination.comm]])
+            coords[1].extend([message.source.comm, message.destination.comm])
 
         return conn_type_coords
 
@@ -251,8 +320,7 @@ class TCPPlotter(generic_display.GenericDisplay):
 
         renderer = _TCPDDrawWidget(self.data_gen)
         pg.setConfigOptions(antialias=False)
-        renderer.resize(800, 600)
-        renderer.show()
+        renderer.showMaximized()
         renderer.raise_()
         app.exec_()
 
@@ -261,35 +329,35 @@ import random
 
 data = []
 types = ['A', 'X', 'C']
-# data.append(data_io.EventDatum(time=1,
-#                                    type=types[0],
-#                                    specific_datum=(
-#         None, 'process' + str(1), None, None, 'process' + str(3), None, None)))
-# data.append(data_io.EventDatum(time=2,
-#                                    type=types[1],
-#                                    specific_datum=(
-#         None, 'process' + str(3), None, None, 'process' + str(1), None, None)))
-# data.append(data_io.EventDatum(time=4,
-#                                    type=types[2],
-#                                    specific_datum=(
-#         None, 'process' + str(3), None, None, 'process' + str(1), None, None)))
-# data.append(data_io.EventDatum(time=10,
-#                                    type=types[2],
-#                                    specific_datum=(
-#         None, 'process' + str(5), None, None, 'process' + str(4), None, None)))
-# data.append(data_io.EventDatum(time=15,
-#                                    type=types[1],
-#                                    specific_datum=(
-#         None, 'process' + str(5), None, None, 'process' + str(4), None, None)))
-
-for i in range(1, int(random.random() * 100)):
-    time = random.random() * 100
-    s = int(random.random() * 100)
-    d = int(random.random() * 100)
-    data.append(data_io.EventDatum(time=time,
-                                   type=types[random.randrange(0, 3)],
+data.append(data_io.EventDatum(time=1,
+                                   type=types[0],
                                    specific_datum=(
-        None, 'process' + str(s), None, None, 'process' + str(d), None, None)))
+        None, 'process' + str(1), None, None, 'process' + str(3), None, None)))
+data.append(data_io.EventDatum(time=2,
+                                   type=types[1],
+                                   specific_datum=(
+        None, 'process' + str(3), None, None, 'process' + str(1), None, None)))
+data.append(data_io.EventDatum(time=4,
+                                   type=types[2],
+                                   specific_datum=(
+        None, 'process' + str(3), None, None, 'process' + str(1), None, None)))
+data.append(data_io.EventDatum(time=10,
+                                   type=types[2],
+                                   specific_datum=(
+        None, 'process' + str(5), None, None, 'process' + str(4), None, None)))
+data.append(data_io.EventDatum(time=15,
+                                   type=types[1],
+                                   specific_datum=(
+        None, 'process' + str(5), None, None, 'process' + str(4), None, None)))
+
+# for i in range(1, int(random.random() * 100)):
+#     time = random.random() * 100
+#     s = int(random.random() * 100)
+#     d = int(random.random() * 100)
+#     data.append(data_io.EventDatum(time=time,
+#                                    type=types[random.randrange(0, 3)],
+#                                    specific_datum=(
+#         None, 'process' + str(s), None, None, 'process' + str(d), None, None)))
 
 plot = TCPPlotter(data)
 plot.show()
