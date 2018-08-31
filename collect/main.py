@@ -72,26 +72,39 @@ def main(argv, config_parser):
     # Save latest filename to temporary file for display module
     filename.export_filename()
 
+    # Get collecter interfaces
+    collecters = _get_collecters(args, config_parser)
+
     # Create event loop to collect and write data
     ioloop = asyncio.get_event_loop()
     # ioloop.set_debug(True)
 
-    # Get collecter interfaces
-    collecters = _get_collecters(args, config_parser)
+    # Create function to display loading bar when collecting
+    async def loading_bar():
+        bar_width = 70
+        print("[{}]\r".format(bar_width * " "), end='', flush=True)
+
+        time = args.time if args.time else config_parser.get_default_time()
+        for i in range(2 * time):
+            progress = int(((i + 1) / (2 * time)) * bar_width)
+            print("[{}]\r".format(
+                progress * "#" + (bar_width - progress) * " "),
+                end='', flush=True)
+            await asyncio.sleep(0.5)
 
     # Begin async collection
     futures = tuple(collecter.collect() for collecter in collecters)
     results = ioloop.run_until_complete(
-        asyncio.gather(*futures)
+        asyncio.gather(*futures, loading_bar())
     )
 
     # Write results
-    for result in results:
+    for result in results[:-1]:
         common.data_io.write(result, str(filename))
 
     # Cleanup
     ioloop.close()
-    output.print_("Done.")
+    output.print_("\nDone.")
 
 
 @util.log(logger)

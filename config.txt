@@ -2,7 +2,7 @@
 # TODO: it is corrupted
 [General]
     blocking:false
-    time:5
+    time:10
     frequency:99
     system_wide: -a
     warnings:true
@@ -27,16 +27,17 @@
     #                    * 'g2'
     #                    * 'heatmap'
     #                    * 'stackplot'
+    #                    * 'tcpplot'
     cpusched:g2
     disklat:heatmap
     mallocstacks:flamegraph
     memleak:treemap
     memtime:stackplot
     callstack:flamegraph
-    ipc:g2
     memevents:treemap
     diskblockrq:flamegraph
     perf_malloc:flamegraph
+    ipc:tcpplot
 
 # The following sections will set some options for the various display modes
 [heatmap]

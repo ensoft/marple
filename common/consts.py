@@ -24,6 +24,7 @@ class DisplayOptions(Enum):
     FLAMEGRAPH = "flamegraph"
     TREEMAP = "treemap"
     G2 = "g2"
+    TCPPLOT = "tcpplot"
 
 
 class InterfaceTypes(Enum):
@@ -48,7 +49,7 @@ class Datatypes(Enum):
 
 # Display modes for the interfaces
 display_dictionary = {
-    Datatypes.EVENT: [DisplayOptions.G2],
+    Datatypes.EVENT: [DisplayOptions.G2, DisplayOptions.TCPPLOT],
     Datatypes.STACK: [DisplayOptions.TREEMAP,
                       DisplayOptions.FLAMEGRAPH],
     Datatypes.POINT: [DisplayOptions.HEATMAP, DisplayOptions.STACKPLOT],

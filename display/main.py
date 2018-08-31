@@ -24,7 +24,14 @@ from common import (
     consts,
     data_io,
 )
-from display.interface import heatmap, treemap, g2, flamegraph, stackplot
+from display.interface import (
+    heatmap,
+    treemap,
+    g2,
+    flamegraph,
+    stackplot,
+    #tcpplotter
+)
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -140,6 +147,10 @@ def _get_display_options(display_option):
             consts.DisplayOptions.FLAMEGRAPH.value, "coloring")
         return flamegraph.Flamegraph.DisplayOptions(coloring=coloring)
 
+    elif display_option == consts.DisplayOptions.TCPPLOT:
+        # return tcpplotter.TCPPlotter.DisplayOptions()
+        pass
+
     else:
         raise ValueError("Invalid display mode")
 
@@ -249,6 +260,10 @@ def _display(args):
                                                        output_filename,
                                                        data_options,
                                                        display_options)
+            elif display_for_interface is consts.DisplayOptions.TCPPLOT:
+                # display_object = tcpplotter.TCPPlotter(
+                #     data, data_options,display_options)
+                pass
             else:
                 raise ValueError("Unexpected display mode {}!".
                                  format(display_for_interface))
@@ -308,6 +323,9 @@ def _args_parse(argv):
     event_display.add_argument("-g2", "--" +
                                consts.DisplayOptions.G2.value,
                                action="store_true", help="display as g2 image")
+    event_display.add_argument("-tcp", "--" +
+                               consts.DisplayOptions.TCPPLOT.value,
+                               action="store_true", help="display as TCP plot")
 
     # Group of the display options for displaying points
     point_display = parser.add_mutually_exclusive_group()
