@@ -132,7 +132,7 @@ def _args_parse(argv, config_parser):
             "Built-in interfaces are:\n"
             ">" + ", ".join(consts.interfaces_argnames) + "\n"
             "Current user-defined groups are:\n"
-            ">" + ", ".join(user_groups_help)
+            ">" + "\n>".join(user_groups_help)
     )
 
     line_length = 55

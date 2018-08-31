@@ -303,13 +303,6 @@ class WriterTest(unittest.TestCase):
          "data_options": {'option': 'opt_value'}}
     )
 
-    expected_event_header = json.dumps(
-        {"start": 'start',
-         "end": 'end',
-         "interface": 'test_enum',
-         "datatype": 'datatype'}
-    )
-
     def test_empty_data(self, open_mock):
         # Create mocks
         context_mock = open_mock.return_value
@@ -392,7 +385,7 @@ class WriterTest(unittest.TestCase):
         self.header_helper(data)
         expected = "{}\n1$$$type1$$$('track1', 'datum1')\n2$$$type2$$$" \
                    "('track2', 'datum2')\n3$$$type3$$$('track3', 'datum3')\n\n"\
-            .format(self.expected_event_header)
+            .format(self.expected_header)
 
         # Run test
         common.data_io.write(data, "test")

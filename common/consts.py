@@ -36,7 +36,7 @@ class InterfaceTypes(Enum):
     CALLSTACK = 'callstack'
     TCPTRACE = 'ipc'
     MEMEVENTS = 'memevents'
-    DISKBLOCK = 'diskblockeq'
+    DISKBLOCK = 'diskblockrq'
     PERF_MALLOC = 'perf_malloc'
     LIB = 'lib'
 

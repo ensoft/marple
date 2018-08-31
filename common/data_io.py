@@ -273,6 +273,7 @@ class EventData:
         self.end = end
         self.interface = interface
         self.datatype = "event"
+        self.data_options = {}
 
     def header_to_dict(self):
         """
@@ -284,6 +285,7 @@ class EventData:
             "end": str(self.end),
             "interface": self.interface.value,
             "datatype": self.datatype,
+            "data_options": self.data_options
         }
         return header_dict
 

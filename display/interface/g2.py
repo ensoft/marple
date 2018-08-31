@@ -19,7 +19,10 @@ import subprocess
 from typing import NamedTuple
 
 from common import (
-    file, util, data_io
+    file,
+    util,
+    data_io,
+    paths
 )
 from display.interface.generic_display import GenericDisplay
 from display.tools.g2.cpel_writer import CpelWriter
@@ -92,5 +95,6 @@ class G2(GenericDisplay):
         writer = CpelWriter(event_generator, self.display_options.track)
         writer.write(str(tmp_cpel))
 
-        subprocess.call(["vpp/build-root/install-native/g2/bin/g2",
+        subprocess.call([paths.MARPLE_DIR +
+                         "/vpp/build-root/install-native/g2/bin/g2",
                          "--cpel-input", str(tmp_cpel)])

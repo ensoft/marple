@@ -2,7 +2,7 @@
 # TODO: it is corrupted
 [General]
     blocking:false
-    time:10
+    time:5
     frequency:99
     system_wide: -a
     warnings:true
@@ -19,7 +19,7 @@
     #       * 'callstack';
     #       * 'ipc';
     #       * 'memevents';
-    #       * 'diskblockeq';
+    #       * 'diskblockrq';
     #       * 'perf_malloc';
     #       * 'lib';
     #   - Display modes: * 'flamegraph'
@@ -32,6 +32,11 @@
     mallocstacks:flamegraph
     memleak:treemap
     memtime:stackplot
+    callstack:flamegraph
+    ipc:g2
+    memevents:treemap
+    diskblockrq:flamegraph
+    perf_malloc:flamegraph
 
 # The following sections will set some options for the various display modes
 [heatmap]
