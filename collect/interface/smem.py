@@ -67,8 +67,20 @@ class MemoryGraph(collecter.Collecter):
         while current_time < self.time:
             if self.options.mode == "name":
                 out = subprocess.getoutput("smem -c \"name pss\" | tac")
+                # s = subprocess.Popen("smem -c \"name pss\" | tac",
+                #                      stdout=subprocess.PIPE,
+                #                      stderr=subprocess.PIPE)
+                # out, err = s.communicate()
+                # if err.decode():
+                #     logger.error(err.decode())
             elif self.options.mode == "command":
                 out = subprocess.getoutput("smem -c \"command pss\" | tac")
+                # s = subprocess.Popen("smem -c \"command pss\" | tac",
+                #                      stdout=subprocess.PIPE,
+                #                      stderr=subprocess.PIPE)
+                # out, err = s.communicate()
+                # if err.decode():
+                #     logger.error(err.decode())
             else:
                 raise ValueError(
                     "mode {} not supported.".format(self.options.mode))
@@ -87,14 +99,14 @@ class MemoryGraph(collecter.Collecter):
                         line))
 
                 label = match.group("label")
-                memory = int(match.group("memory"))
+                memory = float(match.group("memory"))
 
                 if label in datapoints[current_time]:
-                    memory += int(datapoints[current_time][label])
+                    memory += float(datapoints[current_time][label])
                 else:
                     index += 1
 
-                datapoints[current_time][label] = float(int(memory / 1024))
+                datapoints[current_time][label] = memory / 1024.0
 
             # Update the clock
             await asyncio.sleep(1.0 / self.options.frequency)
@@ -120,8 +132,8 @@ class MemoryGraph(collecter.Collecter):
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
         return data_io.PointData(data, self.start_time, self.end_time,
-                                 InterfaceTypes.MEMTIME, 'Time', 'Memory',
-                                   'seconds', 'megabytes')
+                                 InterfaceTypes.MEMTIME, 'Time', 'seconds',
+                                 'Memory', 'megabytes')
 
     @staticmethod
     def _insert_datapoint(memory):

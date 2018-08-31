@@ -65,11 +65,10 @@ class StackPlot(GenericDisplay):
         # Read the data into a dict
         datapoints = {}
         for line in data:
-            (x, y, label) = line.strip().split(",")
-            x, y = float(x), float(y)
-            if x not in datapoints:
-                datapoints[x] = []
-            datapoints[x].append((y, label))
+            dp = data_io.PointDatum.from_string(line)
+            if dp.x not in datapoints:
+                datapoints[dp.x] = []
+            datapoints[dp.x].append((dp.y, dp.info))
 
         # Collapse same labels at same x
         self._collapse_labels(datapoints)
