@@ -16,8 +16,14 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 MARPLE_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
 
+# Activate virtual environment
+source ${MARPLE_DIR}/marple_env/bin/activate
+
 # Set python path
-export PYTHONPATH={$MARPLE_DIR}/
+export PYTHONPATH=${MARPLE_DIR}/
 
 # Run marple
 sudo python3 ${MARPLE_DIR}/main.py "$@"
+
+# Deactivate virtual environment
+deactivate

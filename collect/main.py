@@ -82,13 +82,15 @@ def main(argv, config_parser):
     # Create function to display loading bar when collecting
     async def loading_bar():
         bar_width = 70
-        print("[{}]\r".format(bar_width * " "), end='', flush=True)
+        print("\rProgress: [{}] 0%".format(bar_width * " "),
+              end='', flush=True)
 
         time = args.time if args.time else config_parser.get_default_time()
         for i in range(2 * time):
             progress = int(((i + 1) / (2 * time)) * bar_width)
-            print("[{}]\r".format(
-                progress * "#" + (bar_width - progress) * " "),
+            print("\rProgress: [{}] {}%".format(
+                progress * "#" + (bar_width - progress) * " ",
+                int(progress * 100 / bar_width)),
                 end='', flush=True)
             await asyncio.sleep(0.5)
 

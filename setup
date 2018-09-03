@@ -7,6 +7,13 @@
 
 # TODO find better way of silencing commands than redirect to /dev/null
 
+if command -v python3 &>/dev/null; then
+    echo Python 3 is installed.
+else
+    echo Fatal error: Python 3 is not installed.
+    exit 1
+fi
+
 # Set up marple directory
 MARPLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
@@ -35,24 +42,28 @@ sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`una
 show_spinner
 printf "Done.\n"
 
-printf "Changing sudoers file... "
-echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo > /dev/null
-printf "Done.\n"
+# Setup alias for pip install
+alias pipi="sudo -H python3 -m pip install"
 
-printf "Removing old numpy libraries... "
-sudo -H pip3 uninstall -y numpy > /dev/null &
+printf "Installing venv... "
+sudo apt-get -qq install python3-venv > /dev/null &
 show_spinner
 printf "Done.\n"
 
-printf "Installing Numpy, Matplotlib... "
-sudo apt-get -qq install python3-numpy python3-matplotlib > /dev/null &
+printf "Creating virtual environment... "
+python3 -m venv marple_env
+source marple_env/bin/activate
+printf "Done.\n"
+
+printf "Installing Python requirements..."
+python3 -m pip install -U -q pip virtualenv > /dev/null &
+show_spinner
+python3 -m pip install -r ./requirements.txt > /dev/null &
 show_spinner
 printf "Done.\n"
 
-printf "Installing IPython, Pandas, TK... "
-sudo apt-get -qq install python3-ipython python3-tk python3-pandas > /dev/null &
-show_spinner
-printf "Done.\n"
+# Deactivate virtual environment
+deactivate
 
 printf "Installing dependencies for vpp/g2... "
 sudo apt-get -qq install libgtk2.0-dev > /dev/null &

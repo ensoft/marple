@@ -1,15 +1,17 @@
 .idea/
 __pycache__/
 *.pyc
-tmp/
-out/
-*.data*
+.cache*
+
+# Output files
+*marple_out*
 *.svg
 *.cpel
 *.html
-*.csv
-*out*
-venv/
-.cache*
+
+# Virtual environment
+marple_env/
+
+# Testing
 .coverage
 .pytest_cache
