@@ -20,10 +20,10 @@ MARPLE_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
 source ${MARPLE_DIR}/marple_env/bin/activate
 
 # Set python path
-export PYTHONPATH=${MARPLE_DIR}/
+export PYTHONPATH=${MARPLE_DIR}/:${PYTHONPATH}
 
 # Run marple
-sudo python3 ${MARPLE_DIR}/main.py "$@"
+sudo `which python3` ${MARPLE_DIR}/main.py "$@"
 
 # Deactivate virtual environment
 deactivate

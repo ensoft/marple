@@ -286,8 +286,8 @@ class WriterTest(unittest.TestCase):
 
     @staticmethod
     def header_helper(data):
-        data.start = 'start'
-        data.end = 'end'
+        data.start_time = 'start'
+        data.end_time = 'end'
         data.interface = WriterTest.TestEnum.TEST_ENUM
         data.datatype = 'datatype'
         try:

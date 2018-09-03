@@ -228,7 +228,38 @@ class StackDatum(typing.NamedTuple):
                 "('{}')".format(string)) from ve
 
 
-class StackData:
+class Data:
+    class DataOptions(typing.NamedTuple):
+        pass
+
+    DEFAULT_OPTIONS = DataOptions()
+
+    def __init__(self, datum_generator, start_time, end_time, interface):
+        self.datum_generator = datum_generator
+        self.start_time = start_time
+        self.end_time = end_time
+        self.interface = interface
+        self.datatype = None
+        self.data_options = {}
+
+    def header_dict(self):
+        header_dict = {
+            "start": str(self.start_time),
+            "end": str(self.end_time),
+            "interface": self.interface.value,
+            "datatype": self.datatype,
+            "data_options": self.data_options,
+        }
+        return header_dict
+
+    def to_string(self):
+        yield json.dumps(self.header_dict())
+
+        for datum in self.datum_generator:
+            yield str(datum)
+
+
+class StackData(Data):
     class DataOptions(typing.NamedTuple):
         """
         - weight_units: the units for the weight (calls, bytes etc)
@@ -237,60 +268,23 @@ class StackData:
         weight_units: str
     DEFAULT_OPTIONS = DataOptions("samples")
 
+    @util.Override(Data)
     def __init__(self, datum_generator, start, end, interface, weight_units):
-        self.datum_generator = datum_generator
-        self.start = start
-        self.end = end
-        self.interface = interface
+        super().__init__(datum_generator, start, end, interface)
         self.datatype = "stack"
         self.data_options = {
             'weight_units': weight_units,
         }
 
-    def header_to_dict(self):
-        """
-        :return: a dictionary containing the information associated with the
-                 header of a section
-        """
-        header_dict = {
-            "start": str(self.start),
-            "end": str(self.end),
-            "interface": self.interface.value,
-            "datatype": self.datatype,
-            "data_options": self.data_options,
-        }
-        return header_dict
 
-
-class EventData:
-    class DataOptions(typing.NamedTuple):
-        pass
-    DEFAULT_OPTIONS = DataOptions()
-
+class EventData(Data):
+    @util.Override(Data)
     def __init__(self, datum_generator, start, end, interface):
-        self.datum_generator = datum_generator
-        self.start = start
-        self.end = end
-        self.interface = interface
+        super().__init__(datum_generator, start, end, interface)
         self.datatype = "event"
-        self.data_options = {}
-
-    def header_to_dict(self):
-        """
-        :return: a dictionary containing the information associated with the
-                 header of a section
-        """
-        header_dict = {
-            "start": str(self.start),
-            "end": str(self.end),
-            "interface": self.interface.value,
-            "datatype": self.datatype,
-            "data_options": self.data_options
-        }
-        return header_dict
 
 
-class PointData:
+class PointData(Data):
     class DataOptions(typing.NamedTuple):
         """
         - x_label: label for the x axis;
@@ -306,10 +300,7 @@ class PointData:
 
     def __init__(self, datum_generator, start, end, interface, x_label,
                  x_units, y_label, y_units):
-        self.datum_generator = datum_generator
-        self.start = start
-        self.end = end
-        self.interface = interface
+        super().__init__(datum_generator, start, end, interface)
         self.datatype = "point"
         self.data_options = {
             'x_label': x_label,
@@ -317,20 +308,6 @@ class PointData:
             'y_label': y_label,
             'y_units': y_units,
         }
-
-    def header_to_dict(self):
-        """
-        :return: a dictionary containing the information associated with the
-                 header of a section
-        """
-        header_dict = {
-            "start": str(self.start),
-            "end": str(self.end),
-            "interface": self.interface.value,
-            "datatype": self.datatype,
-            "data_options": self.data_options
-        }
-        return header_dict
 
 
 @util.log(logger)
@@ -347,14 +324,8 @@ def write(data, filename):
 
     """
     with open(filename, "a") as out:
-        # Write the header of the file as the first line
-        out.write(json.dumps(data.header_to_dict()) + '\n')
-
-        # Write data
-        # out.writelines(data.datum_generator)
-        for datum in data.datum_generator:
-            out.write(str(datum) + "\n")
-
+        for line in data.to_string():
+            out.write(line + "\n")
         out.write(consts.data_separator)
 
 

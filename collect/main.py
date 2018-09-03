@@ -81,18 +81,17 @@ def main(argv, config_parser):
 
     # Create function to display loading bar when collecting
     async def loading_bar():
-        bar_width = 70
-        print("\rProgress: [{}] 0%".format(bar_width * " "),
-              end='', flush=True)
+        bar_width = 60
 
         time = args.time if args.time else config_parser.get_default_time()
-        for i in range(2 * time):
-            progress = int(((i + 1) / (2 * time)) * bar_width)
+        for i in range(2 * time + 1):
+            progress = int((i / (2 * time)) * bar_width)
             print("\rProgress: [{}] {}%".format(
                 progress * "#" + (bar_width - progress) * " ",
                 int(progress * 100 / bar_width)),
                 end='', flush=True)
             await asyncio.sleep(0.5)
+        print("")
 
     # Begin async collection
     futures = tuple(collecter.collect() for collecter in collecters)
@@ -106,7 +105,7 @@ def main(argv, config_parser):
 
     # Cleanup
     ioloop.close()
-    output.print_("\nDone.")
+    output.print_("Done.")
 
 
 @util.log(logger)
@@ -167,16 +166,32 @@ def _args_parse(argv, config_parser):
         help=wrapped
     )
 
+    filename_help = (
+        "specify the data output file.\n\n"
+        "By default this will create a "
+        "directory named 'marple_out' in the current working directory, "
+        "and files will be named by date and time.\n"
+        "Specifying a file name "
+        "will write to the 'marple_out' directory - pass in a path "
+        "to override the save location too."
+    )
+    wrapped = ""
+    for line in filename_help.split('\n'):
+        if len(line) > line_length:
+            line = '\n'.join(textwrap.wrap(line, width=line_length,
+                                           break_long_words=False))
+        wrapped = '\n'.join((wrapped, line)).lstrip()
+
     # Add flag and parameter for filename
     filename = parser.add_argument_group()
     filename.add_argument(
-        "-o", "--outfile", type=str, help="specify the data output file")
+        "-o", "--outfile", type=str, help=wrapped)
 
     # Add flag and parameter for time
     time = parser.add_argument_group()
     time.add_argument(
         "-t", "--time", type=int, help="specify the duration for data "
-                                       "collection (in seconds)")
+                                       "collection (in seconds).")
 
     return parser.parse_args(argv)
 

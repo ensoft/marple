@@ -42,9 +42,6 @@ sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`una
 show_spinner
 printf "Done.\n"
 
-# Setup alias for pip install
-alias pipi="sudo -H python3 -m pip install"
-
 printf "Installing venv... "
 sudo apt-get -qq install python3-venv > /dev/null &
 show_spinner
@@ -56,7 +53,9 @@ source marple_env/bin/activate
 printf "Done.\n"
 
 printf "Installing Python requirements..."
-python3 -m pip install -U -q pip virtualenv > /dev/null &
+python3 -m pip install -U -q pip > /dev/null &
+show_spinner
+sudo apt-get install python3-tk > /dev/null &
 show_spinner
 python3 -m pip install -r ./requirements.txt > /dev/null &
 show_spinner

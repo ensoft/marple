@@ -47,7 +47,7 @@ except ImportError:
     if warn:
         msg = ("No data collection package detected - "
                "only data display package (marple -d/--display) may be used."
-               "To suppress this warning, edit config.txt.")
+               " To suppress this warning, edit config.txt.")
         warnings.warn(RuntimeWarning(msg))
         logger.error(msg)
     collect_exists = False
@@ -59,7 +59,7 @@ except ImportError:
     if warn:
         msg = ("No data display package detected - "
                "only data collection package (marple -c/--collect) may be used."
-               "To suppress this warning, edit config.txt")
+               " To suppress this warning, edit config.txt")
         warnings.warn(RuntimeWarning(msg))
         logger.error(msg)
     display_exists = False
