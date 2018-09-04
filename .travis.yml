@@ -15,6 +15,7 @@ before_script:
   - export PYTHONPATH=${PWD} # Set PYTHONPATH
 script:
   - set -o pipefail # ensure single failure causes whole pipe to fail
+  - cd marple # navigate to source dir
   - python -m pytest --cov=. collect display common |& tee pytest.txt # Run tests - build fails if any test fails
   - pylint -E collect display common --rcfile=pylintrc.txt --ignore=tools # Check for Pylint errors
 after_success:

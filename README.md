@@ -84,7 +84,7 @@ The subommands are listed below. Each one collects either event-based, stack-bas
 * `perf_malloc`: collect `malloc()` call information (including call graph data) as stack-based data.
 * `lib`: Not yet implemented.
 
-MARPLE allows simultaneous collection using multiple subcommands at once - they are simply passed as multiple arguments, or as a custom collection group. Users can define custom collection groups by using the [config file](./config.txt). When using many subcommands, all data will be written to a single file.
+MARPLE allows simultaneous collection using multiple subcommands at once - they are simply passed as multiple arguments, or as a custom collection group. Users can define custom collection groups by using the [config file](marple/config.txt). When using many subcommands, all data will be written to a single file.
 
 ### Displaying data
 ~~~~
@@ -110,7 +110,7 @@ optional arguments:
 ~~~~
 Tree maps and flame graphs can be used to display stack-based data. G2 and TCP plots can be used to display event-based data. Heat maps and stack plots can be used to display 2D point-based data.
 
-In general, MARPLE will not require specification of the display mode - it will determine this itself using defaults in the [config file](./config.txt). These can be overriden on a case-by-case basis using the command-line arguments. In particular, if displaying a data file with many data sets, overriding stack-based plots to display as flame graphs by using `-fg` will result in all stack-based data in that file being displayed as a flame graph for example.
+In general, MARPLE will not require specification of the display mode - it will determine this itself using defaults in the [config file](marple/config.txt). These can be overriden on a case-by-case basis using the command-line arguments. In particular, if displaying a data file with many data sets, overriding stack-based plots to display as flame graphs by using `-fg` will result in all stack-based data in that file being displayed as a flame graph for example.
 
 Note that if collecting and displaying data on the same machine, MARPLE remembers the last data file written - in this case, no display options are necessary and simply invoking `marple -d` will give the correct display.
 
@@ -190,7 +190,7 @@ The tool has a very high latency - it was initially used as it helpfully sorts t
 [Brendan Gregg's flame graphs](http://www.brendangregg.com/flamegraphs.html) are a useful visualisation for profiled software, as they show call stack data. An example taken from Brendan Gregg's website is [below](#flame_graph). Flame graphs are interactive, allowing the user to zoom in to a certain process.
 
 <a name="flame_graph"></a>
-![flamegraph](./res/flamegraph.svg)
+![flamegraph](./marple/res/flamegraph.svg)
 
 **Figure:** An example flame graph, showing CPU usage for a MySQL program.
 
@@ -205,7 +205,7 @@ In general any form of stack data is easily viewed as a flame graph.
 Heat maps allow three-dimensional data to be visualised, using colour as a third dimension. In MARPLE, heat maps are used as histograms - data is grouped into buckets, and colour is used to represent the amount of data falling in each bucket.
 
 <a name="example_heatmap"></a>
-![heatmap](./res/heatmap.png)
+![heatmap](./marple/res/heatmap.png)
 
 **Figure:** An example heat map, showing disk latency data.
 
@@ -216,7 +216,7 @@ Heat maps allow three-dimensional data to be visualised, using colour as a third
 See [below](#g2_example) for an example G2 window.
 
 <a name="g2_example"></a>
-![g2](./res/g2.png)
+![g2](./marple/res/g2.png)
 
 **Figure:** An example G2 window, showing scheduling event data.
 
@@ -234,7 +234,7 @@ G2 has many display features, a few of these are listed below.
 Stack plots (also known as stacked graphs or stacked charts) show 'parts to the whole'. They are effectively line graphs subdivided to show the various components that make up the overall line value. They can be seen as a form of pie chart, but one that changes with respect to another dimension (usually time). An example stack plot is shown [below](#stackplot_example).
 
 <a name="stackplot_example"></a>
-![stackplot](./res/stackplot.png)
+![stackplot](./marple/res/stackplot.png)
 
 **Figure:** An example stack plot, showing memory usage by process over time.
 

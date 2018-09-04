@@ -12,6 +12,11 @@ __pycache__/
 # Virtual environment
 marple_env/
 
+# Package
+dist/*
+build/*
+*egg-info*
+
 # Testing
 .coverage
 .pytest_cache
