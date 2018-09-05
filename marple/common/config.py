@@ -14,18 +14,23 @@ __all__ = ["Parser"]
 import os
 import configparser
 import logging
+from shutil import copyfile
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
 
 class Parser:
-    DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
-                      __file__)))) + "/"
+    CONFIG_FILE = os.path.expanduser('~/.marpleconfig')
 
     def __init__(self):
+        if not os.path.exists(self.CONFIG_FILE):
+            DEFAULTS_FILE = os.path.dirname(os.path.dirname(__file__)) + \
+                            "/config.txt"
+            copyfile(DEFAULTS_FILE, self.CONFIG_FILE)
+
         self.config = configparser.ConfigParser()
-        self.config.read(self.DISPLAY_DIR + "config.txt")
+        self.config.read(self.CONFIG_FILE)
 
     def get_option_from_section(self, sec, opt, typ="string"):
         """

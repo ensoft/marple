@@ -13,10 +13,10 @@ __pycache__/
 marple_env/
 
 # Package
-dist/*
-build/*
+*dist/*
+*build/*
 *egg-info*
 
 # Testing
-.coverage
-.pytest_cache
+*.coverage
+*.pytest_cache

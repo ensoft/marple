@@ -22,7 +22,7 @@ from marple.common import (
     file,
     util,
     data_io,
-    paths
+    config
 )
 from marple.display.interface.generic_display import GenericDisplay
 from marple.display.tools.g2.cpel_writer import CpelWriter
@@ -30,9 +30,6 @@ from marple.display.tools.g2.cpel_writer import CpelWriter
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 logger.setLevel(logging.DEBUG)
-
-DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
-              __file__)))) + "/"
 
 
 class G2(GenericDisplay):
@@ -88,6 +85,9 @@ class G2(GenericDisplay):
 
         """
         tmp_cpel = file.TempFileName()
+        g2_path = config.Parser().get_option_from_section('g2', 'path')
+        g2_path = os.path.expanduser(g2_path)
+        logger.info("G2 path: " + g2_path)
 
         # We create a generator that yields EventDatum from
         event_generator = self._generate_events_from_file()
@@ -95,6 +95,4 @@ class G2(GenericDisplay):
         writer = CpelWriter(event_generator, self.display_options.track)
         writer.write(str(tmp_cpel))
 
-        subprocess.call([paths.MARPLE_DIR +
-                         "/vpp/build-root/install-native/g2/bin/g2",
-                         "--cpel-input", str(tmp_cpel)])
+        subprocess.call([g2_path, "--cpel-input", str(tmp_cpel)])

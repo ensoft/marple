@@ -3,6 +3,11 @@ import setuptools
 with open('README.md', 'r') as f:
     long_description = f.read()
 
+with open('requirements.txt', 'r') as f:
+    requirements = f.read()
+    requirements = requirements.split()
+
+
 setuptools.setup(
     name='marple',
     version='0.1dev2',
@@ -32,25 +37,12 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
     ],
     python_requires='~=3.6',
+    scripts = ['marple/marple_setup'],
     entry_points={
         'console_scripts': [
-            'marple=marple.main:main',
+            'marple=marple.__main__:main',
             'marple_test=marple.test:main'
         ]
     },
-    install_requires=[
-        'asynctest>=0.12.2',
-        'ipython>=6.5.0',
-        'ipython-genutils>=0.2.0',
-        'matplotlib>=2.2.2',
-        'numpy>=1.13.3',
-        'pandas>=0.23.4',
-        'pylint>=2.1.1',
-        'PyQt5>=5.11.2',
-        'PyQt5-sip>=4.19.12',
-        'pyqtgraph>=0.10.0',
-        'pytest>=3.7.1',
-        'pytest-cov>=2.5.1',
-        'scipy>=0.19.1',
-    ]
+    install_requires=requirements
 )

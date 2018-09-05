@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # -------------------------------------------------------------
-# main.py - Initiates the program
+# __main__.py - Initiates the program
 # June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
 # -------------------------------------------------------------
 
@@ -110,14 +110,14 @@ def main():
                 collect.main(rest, config_parser)
             else:
                 raise ModuleNotFoundError(
-                    name='common', path=(paths.MARPLE_DIR + '/main.py'))
+                    name='common', path=(paths.MARPLE_DIR + '/__main__.py'))
         else:
             assert parsed.display
             if display_exists:
                 display.main(rest)
             else:
                 raise ModuleNotFoundError(
-                    name='display', path=(paths.MARPLE_DIR + '/main.py'))
+                    name='display', path=(paths.MARPLE_DIR + '/__main__.py'))
 
     except ModuleNotFoundError as mnfe:
         output.error_("Package {} does not exists on this system!"

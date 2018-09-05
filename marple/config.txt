@@ -49,6 +49,8 @@
 [g2]
     # pid or cpu
     track: pid
+    # Path to g2 executable
+    path: ~/vpp/build-root/install-native/g2/bin/g2
 
 [stackplot]
     top: 5

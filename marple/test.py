@@ -35,7 +35,7 @@ def main():
     pylint_args = [
         collect_dir, display_dir, common_dir,
         '--rcfile={}pylintrc.txt'.format(marple_dir),
-        '--ignore=tools', '-E'
+        '--ignore=tools'
     ]
 
     if not parsed.warn:

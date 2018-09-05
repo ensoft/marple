@@ -5,10 +5,7 @@ include =
     display/*
     common/*
 omit =
-    collect/tools/*
-    collect/test/*
-    display/tools/*
-    display/test/*
-    common/test/*
-    test.py
+    */tools/*
+    */test/*
+    *test.py
     *__init__*
