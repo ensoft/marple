@@ -190,7 +190,7 @@ The tool has a very high latency - it was initially used as it helpfully sorts t
 [Brendan Gregg's flame graphs](http://www.brendangregg.com/flamegraphs.html) are a useful visualisation for profiled software, as they show call stack data. An example taken from Brendan Gregg's website is [below](#flame_graph). Flame graphs are interactive, allowing the user to zoom in to a certain process.
 
 <a name="flame_graph"></a>
-![flamegraph](./marple/res/flamegraph.svg)
+![flamegraph](./res/flamegraph.svg)
 
 **Figure:** An example flame graph, showing CPU usage for a MySQL program.
 
@@ -205,7 +205,7 @@ In general any form of stack data is easily viewed as a flame graph.
 Heat maps allow three-dimensional data to be visualised, using colour as a third dimension. In MARPLE, heat maps are used as histograms - data is grouped into buckets, and colour is used to represent the amount of data falling in each bucket.
 
 <a name="example_heatmap"></a>
-![heatmap](./marple/res/heatmap.png)
+![heatmap](./res/heatmap.png)
 
 **Figure:** An example heat map, showing disk latency data.
 
@@ -216,7 +216,7 @@ Heat maps allow three-dimensional data to be visualised, using colour as a third
 See [below](#g2_example) for an example G2 window.
 
 <a name="g2_example"></a>
-![g2](./marple/res/g2.png)
+![g2](./res/g2.png)
 
 **Figure:** An example G2 window, showing scheduling event data.
 
@@ -234,7 +234,7 @@ G2 has many display features, a few of these are listed below.
 Stack plots (also known as stacked graphs or stacked charts) show 'parts to the whole'. They are effectively line graphs subdivided to show the various components that make up the overall line value. They can be seen as a form of pie chart, but one that changes with respect to another dimension (usually time). An example stack plot is shown [below](#stackplot_example).
 
 <a name="stackplot_example"></a>
-![stackplot](./marple/res/stackplot.png)
+![stackplot](./res/stackplot.png)
 
 **Figure:** An example stack plot, showing memory usage by process over time.
 

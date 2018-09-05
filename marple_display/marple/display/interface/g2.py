@@ -33,6 +33,7 @@ logger.setLevel(logging.DEBUG)
 
 DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
               __file__)))) + "/"
+G2_PATH = os.path.expanduser('~/vpp/build-root/install-native/g2/bin/g2')
 
 
 class G2(GenericDisplay):
@@ -94,7 +95,5 @@ class G2(GenericDisplay):
 
         writer = CpelWriter(event_generator, self.display_options.track)
         writer.write(str(tmp_cpel))
-
-        subprocess.call([paths.MARPLE_DIR +
-                         "/vpp/build-root/install-native/g2/bin/g2",
+        subprocess.call([G2_PATH,
                          "--cpel-input", str(tmp_cpel)])

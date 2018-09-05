@@ -1,2 +1,2 @@
-res/* linguist-vendored
-util/* linguist-vendored
+marple/res/* linguist-vendored
+marple/*/tools/* linguist-vendored

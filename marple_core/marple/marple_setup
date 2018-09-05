@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# -------------------------------------------------------------
+# setup - Sets up marple
+# July-Aug 2018 - Hrutvik Kanabar, Franz Nowak
+# -------------------------------------------------------------
+
+# TODO find better way of silencing commands than redirect to /dev/null
+
+if command -v python3 &>/dev/null; then
+    echo Python 3 is installed.
+else
+    echo Fatal error: Python 3 is not installed.
+    exit 1
+fi
+
+# Set up spinner so user knows script is not frozen
+show_spinner()
+{
+    PID=$!
+    i=1
+    sp="/-\|"
+    echo -n ' '
+    while [ -d /proc/$PID ]
+    do
+        printf "\b${sp:i++%${#sp}:1}"
+    sleep 1
+    done
+    echo -ne '\b'
+}
+
+printf "Updating... "
+sudo apt-get -qq update > /dev/null &
+show_spinner
+python3 -m pip install -U -q pip > /dev/null &
+show_spinner
+printf "Done.\n"
+
+printf "Installing linux-tools... "
+sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r` > /dev/null &
+show_spinner
+printf "Done.\n"
+
+printf "Installing Python TK... "
+sudo apt-get install python3-tk > /dev/null &
+show_spinner
+printf "Done.\n"
+
+printf "Installing BCC... "
+codename=`lsb_release -cs`
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys D4284CDD
+echo "deb https://repo.iovisor.org/apt/${codename} ${codename} main" | sudo tee /etc/apt/sources.list.d/iovisor.list
+sudo apt-get update
+sudo apt-get install bcc-tools libbcc-examples linux-headers-$(uname -r)
+printf "Done.\n"
+
+printf "Installing dependencies for vpp/g2... "
+sudo apt-get -qq install libgtk2.0-dev > /dev/null &
+show_spinner
+printf "Done.\n"
+
+#printf "Configuring vpp/g2... "
+#cd ~
+#git clone https://gerrit.fd.io/r/vpp &
+#show_spinner
+#cd vpp/src
+#libtoolize --quiet > /dev/null &
+#show_spinner
+#aclocal > /dev/null &
+#show_spinner
+#autoconf > /dev/null &
+#show_spinner
+#automake --add-missing > /dev/null &
+#show_spinner
+#autoreconf > /dev/null &
+#show_spinner
+#printf "Done.\n"
+
+#printf "Installing vpp/g2... "
+# install g2
+#cd ../build-root
+#make --silent g2-install > /dev/null &
+#show_spinner
+#printf "Done.\n"
+
+# Create config file
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+cat ${THIS_DIR}/config.txt > ~/.marpleconfig

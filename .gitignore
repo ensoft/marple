@@ -18,5 +18,5 @@ build/*
 *egg-info*
 
 # Testing
-.coverage
-.pytest_cache
+*.coverage
+*.pytest_cache

@@ -20,12 +20,10 @@ logger.debug('Entered module: %s', __name__)
 
 
 class Parser:
-    DISPLAY_DIR = str(os.path.dirname(os.path.dirname(os.path.realpath(
-                      __file__)))) + "/"
 
     def __init__(self):
         self.config = configparser.ConfigParser()
-        self.config.read(self.DISPLAY_DIR + "config.txt")
+        self.config.read(os.path.expanduser('~/.marpleconfig'))
 
     def get_option_from_section(self, sec, opt, typ="string"):
         """
