@@ -30,7 +30,7 @@ from marple.display.interface import (
     g2,
     flamegraph,
     stackplot,
-    #tcpplotter
+    tcpplotter
 )
 
 logger = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ def _get_display_options(display_option):
         return flamegraph.Flamegraph.DisplayOptions(coloring=coloring)
 
     elif display_option == consts.DisplayOptions.TCPPLOT:
-        # return tcpplotter.TCPPlotter.DisplayOptions()
+        return tcpplotter.TCPPlotter.DisplayOptions()
         pass
 
     else:
@@ -261,9 +261,8 @@ def _display(args):
                                                        data_options,
                                                        display_options)
             elif display_for_interface is consts.DisplayOptions.TCPPLOT:
-                # display_object = tcpplotter.TCPPlotter(
-                #     data, data_options,display_options)
-                pass
+                display_object = tcpplotter.TCPPlotter(
+                    data, data_options, display_options)
             else:
                 raise ValueError("Unexpected display mode {}!".
                                  format(display_for_interface))

@@ -15,8 +15,8 @@ import re
 import typing
 import enum
 
-from common import data_io
-from display.interface import generic_display
+from marple.common import data_io
+from marple.display.interface import generic_display
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
