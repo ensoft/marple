@@ -1,0 +1,65 @@
+# TODO: Verifier + create config from file at startup if it doesn not exist or
+# TODO: it is corrupted
+[General]
+    blocking:false
+    time:10
+    frequency:99
+    system_wide: -a
+    warnings:true
+
+[DisplayInterfaces]
+    # Used to set the default display mode for the interfaces
+    # Respect the following conventions:
+    #   - Interface types are as in the arguments to `marple --collect`:
+    #       * 'cpusched';
+    #       * 'disklat';
+    #       * 'mallocstacks';
+    #       * 'memleak';
+    #       * 'memtime';
+    #       * 'callstack';
+    #       * 'ipc';
+    #       * 'memevents';
+    #       * 'diskblockrq';
+    #       * 'perf_malloc';
+    #       * 'lib';
+    #   - Display modes: * 'flamegraph'
+    #                    * 'treemap'
+    #                    * 'g2'
+    #                    * 'heatmap'
+    #                    * 'stackplot'
+    #                    * 'tcpplot'
+    cpusched:g2
+    disklat:heatmap
+    mallocstacks:flamegraph
+    memleak:treemap
+    memtime:stackplot
+    callstack:flamegraph
+    memevents:treemap
+    diskblockrq:flamegraph
+    perf_malloc:flamegraph
+    ipc:tcpplot
+
+# The following sections will set some options for the various display modes
+[heatmap]
+    figure_size: 10.0
+    scale: 5.0
+    y_res: 10.0
+    normalised: true
+
+[g2]
+    # pid or cpu
+    track: pid
+    # Path to g2 executable
+    path: ~/vpp/build-root/install-native/g2/bin/g2
+
+[stackplot]
+    top: 5
+
+[treemap]
+    depth: 25
+
+[flamegraph]
+    coloring: hot
+
+[Aliases]
+    boot: memleak,cpusched,disklat

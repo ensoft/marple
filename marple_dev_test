@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# -------------------------------------------------------------
+# marple_dev_test - Runs marple tests for development
+# Sep 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
+MARPLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+COLLECT_DIR=${MARPLE_DIR}/marple/collect
+COMMON_DIR=${MARPLE_DIR}/marple/common
+DISPLAY_DIR=${MARPLE_DIR}/marple/display
+
+pytest_args="--cov=${MARPLE_DIR}/marple --cov-config=${MARPLE_DIR}/marple/.coveragerc ${COLLECT_DIR} ${DISPLAY_DIR} ${COMMON_DIR}"
+pylint_args="${COLLECT_DIR} ${DISPLAY_DIR} ${COMMON_DIR} --rcfile=${MARPLE_DIR}/marple/pylintrc.txt --ignore=tools"
+
+# Activate virtual environment
+source ${MARPLE_DIR}/marple_env/bin/activate
+
+# Set python path
+export PYTHONPATH=${MARPLE_DIR}/:${PYTHONPATH}
+
+# Run tests
+python3 -m pytest $pytest_args
+python3 -m pylint $pylint_args
+
+# Deactivate virtual environment
+deactivate

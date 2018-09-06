@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# -------------------------------------------------------------
+# setup - Sets up marple
+# July-Aug 2018 - Hrutvik Kanabar, Franz Nowak
+# -------------------------------------------------------------
+
+echo $PWD
+LOG=${PWD}/marple_setup.log
+if command -v python3 &> /dev/null; then
+    echo Python 3 is installed.
+else
+    echo Fatal error: Python 3 is not installed.
+    exit 1
+fi
+if command -v git &> /dev/null; then
+    echo Git is installed.
+else
+    echo Fatal error: git is not installed.
+    exit 1
+fi
+
+# Set up spinner so user knows script is not frozen
+show_spinner()
+{
+    PID=$!
+    i=1
+    sp="/-\|"
+    echo -n ' '
+    while [ -d /proc/$PID ]
+    do
+        printf "\b${sp:i++%${#sp}:1}"
+    sleep 1
+    done
+    echo -ne '\b'
+}
+
+#BEGIN="\033[36m\033[1m\033[4m"
+#END="\033[0m\033[0m\033[0m"
+
+
+printf "Updating... " | tee -a $LOG
+sudo apt-get -qq update &>> $LOG &
+show_spinner
+printf "Done.\n\n\n" | tee -a $LOG
+
+printf "Installing linux-tools... " | tee -a $LOG
+sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r` smem &>> $LOG &
+show_spinner
+printf "Done.\n\n\n" | tee -a $LOG
+
+printf "Installing Perl... " | tee -a $LOG
+sudo apt-get -qq install perl &>> $LOG &
+show_spinner
+printf "Done.\n\n\n" | tee -a $LOG
+
+printf "Installing Python TK... " | tee -a $LOG
+sudo apt-get -qq install python3-tk &>> $LOG &
+show_spinner
+printf "Done.\n\n\n" | tee -a $LOG
+
+printf "Installing BCC... " | tee -a $LOG
+codename=`lsb_release -cs`
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys D4284CDD &>> $LOG &
+show_spinner
+echo "deb https://repo.iovisor.org/apt/${codename} ${codename} main" | sudo tee /etc/apt/sources.list.d/iovisor.list &>> $LOG &
+show_spinner
+sudo apt-get update &>> $LOG &
+show_spinner
+sudo apt-get -qq --allow-unauthenticated install bcc-tools libbcc-examples linux-headers-$(uname -r) &>> $LOG &
+show_spinner
+printf "Done.\n\n\n" | tee -a $LOG
+
+printf "Installing dependencies for vpp/g2... " | tee -a $LOG
+sudo apt-get -qq install libgtk2.0-dev &>> $LOG &
+show_spinner
+printf "Done.\n\n\n" | tee -a $LOG
+
+printf "Configuring vpp/g2... " | tee -a $LOG
+cd ~
+git clone https://gerrit.fd.io/r/vpp &>> $LOG &
+show_spinner
+cd vpp
+git reset --hard 4146c65f0dd0b5412746064f230b70ec894d2980 &>> $LOG &
+cd src
+libtoolize --quiet &>> $LOG &
+show_spinner
+aclocal &>> $LOG &
+show_spinner
+autoconf &>> $LOG &
+show_spinner
+automake --add-missing &>> $LOG &
+show_spinner
+autoreconf &>> $LOG &
+show_spinner
+printf "Done.\n\n\n" | tee -a $LOG
+
+printf "Installing vpp/g2... " | tee -a $LOG
+cd ../build-root
+make --silent g2-install &>> $LOG &
+show_spinner
+printf "Done.\n\n\n" | tee -a $LOG

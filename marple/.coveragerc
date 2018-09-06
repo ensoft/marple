@@ -1,0 +1,11 @@
+[run]
+branch = true
+include =
+    collect/*
+    display/*
+    common/*
+omit =
+    */tools/*
+    */test/*
+    *test.py
+    *__init__*
