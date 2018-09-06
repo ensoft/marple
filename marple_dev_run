@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # -------------------------------------------------------------
-# marple - Runs marple
-# July 2018 - Hrutvik Kanabar
+# marple_dev_run - Runs marple for development
+# Sep 2018 - Hrutvik Kanabar
 # -------------------------------------------------------------
 
 # Resolve symlinks to get true marple dir
@@ -23,7 +23,7 @@ source ${MARPLE_DIR}/marple_env/bin/activate
 export PYTHONPATH=${MARPLE_DIR}/:${PYTHONPATH}
 
 # Run marple
-sudo `which python3` ${MARPLE_DIR}/main.py "$@"
+sudo `which python3` ${MARPLE_DIR}/marple/__main__.py "$@"
 
 # Deactivate virtual environment
 deactivate

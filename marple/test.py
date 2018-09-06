@@ -1,3 +1,8 @@
+# -------------------------------------------------------------
+# test.py - Runs marple tests
+# Sep 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
 import pytest
 from pylint import epylint as lint
 import argparse
@@ -51,21 +56,21 @@ def main():
         common_dir,
     ]
 
-    print(color.BOLD + color.RED + 'Starting Pytest:' + color.END + color.END)
+    print(color.BOLD + color.PURPLE + 'Starting Pytest:' + color.END + color.END)
     pytest_ret = pytest.main(pytest_args)
     if pytest_ret:
         exit(pytest_ret)
 
-    print(color.BOLD + color.RED + 'Finished Pytest.' + color.END + color.END)
+    print(color.BOLD + color.PURPLE + 'Finished Pytest.' + color.END + color.END)
     print("")
 
-    print(color.BOLD + color.RED +
+    print(color.BOLD + color.PURPLE +
           'Starting Pylint: warnings are ' + ('on' if parsed.warn else 'off') +
           color.END + color.END)
     pylint_ret = lint.py_run(pylint_args_string)
     if pylint_ret and not parsed.warn:
         exit(pylint_ret)
-    print(color.BOLD + color.RED + 'Finished Pylint.' + color.END + color.END)
+    print(color.BOLD + color.PURPLE + 'Finished Pylint.' + color.END + color.END)
 
 
 if __name__ == "__main__":

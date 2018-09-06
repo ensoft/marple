@@ -1,6 +1,11 @@
+# -------------------------------------------------------------
+# setup.py - setuptools for packaging MARPLE
+# July-Aug 2018 - Hrutvik Kanabar
+# -------------------------------------------------------------
+
 import setuptools
 
-with open('README.md', 'r') as f:
+with open('docs/README.md', 'r') as f:
     long_description = f.read()
 
 with open('requirements.txt', 'r') as f:
@@ -10,7 +15,7 @@ with open('requirements.txt', 'r') as f:
 
 setuptools.setup(
     name='marple',
-    version='0.1dev2',
+    version='0.1dev1',
     packages=setuptools.find_packages(),
     author='Ensoft Ltd',
     author_email='ensoft@ensoft.co.uk',

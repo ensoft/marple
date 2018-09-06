@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # flamegraph.py - interacts with the flame g2 tool
-# June-July 2018 - Franz Nowak
+# June-July 2018 - Franz Nowak, Hrutvik Kanabar
 # -------------------------------------------------------------
 """
 Class that interacts with the g2 tool.
@@ -22,7 +22,8 @@ from marple.common import (
     file,
     util,
     data_io,
-    config
+    config,
+    output
 )
 from marple.display.interface.generic_display import GenericDisplay
 from marple.display.tools.g2.cpel_writer import CpelWriter
@@ -95,4 +96,11 @@ class G2(GenericDisplay):
         writer = CpelWriter(event_generator, self.display_options.track)
         writer.write(str(tmp_cpel))
 
-        subprocess.call([g2_path, "--cpel-input", str(tmp_cpel)])
+        try:
+            subprocess.call([g2_path, "--cpel-input", str(tmp_cpel)])
+        except FileNotFoundError as fnfe:
+            output.error_("G2 not found at {}. Check your config file?"
+                          .format(fnfe.filename),
+                          "Could not find G2 at {}, FileNotFoundError raised. "
+                          "Change your config file to show the correct G2 path."
+                          .format(fnfe.filename))

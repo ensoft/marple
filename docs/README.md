@@ -7,36 +7,81 @@
 MARPLE is a performance analysis and visualisation tool for Linux. It unifies a wide variety of pre-existing Linux tools such as perf and eBPF into one, simple user interface. MARPLE uses these Linux tools to collect data and write it to disk, and provides a variety of visualisation tools to display the data.
 
 ## Installation
-1. Install Python 3 and Perl.
-~~~~
-$ sudo apt-get update
-$ sudo apt-get install python3 perl
-~~~~
-2. Clone the MARPLE Git repository.
-~~~~
-$ git clone https://github.com/ensoft/marple
-~~~~
-3. Run the MARPLE setup script.
-~~~~
-$ cd marple
-$ sudo ./setup
-~~~~
-4. MARPLE is now installed, and can be run by invoking the `marple` command, as described in [the usage section.](#usage)
+1. Install Python 3 and Git.
+    ~~~~
+    $ sudo apt-get update
+    $ sudo apt-get install python3 git
+    ~~~~
+2. Install MARPLE.
+    ~~~~
+    $ sudo python3 -m pip install marple
+    ~~~~
+    Note that `sudo` is not necessary. However, without it `pip` will by default
+    install MARPLE scripts at `~/.local/bin`, which is not usually included in the
+    `PATH` variable. Ensure it is before proceeding.
 
+3. Setup MARPLE - either manually or automatically.
+   1. Automatic setup (***beta***)
+       ~~~~
+       $ marple_setup
+       ~~~~
+       This will install the various dependencies required by MARPLE (see below).
+       Note in particular that the [FD.io VPP repository](https://wiki.fd.io/view/VPP/g2)
+       will be installed into your home directory.
+
+   2. Manual setup
+      1. Install `apt` packages
+          ~~~
+          $ sudo apt-get install perl python3-tkinter libgtk2.0-dev linux-tools-generic linux-tools-common linux-tools-`uname -r`
+          ~~~
+      2. Install BCC (see [instructions](https://github.com/iovisor/bcc/blob/master/INSTALL.md))
+      3. Install G2
+          ~~~
+          # Clone repository
+          git clone https://gerrit.fd.io/r/vpp
+          cd vpp
+          git reset --hard 4146c65f0dd0b5412746064f230b70ec894d2980
+
+          # Setup
+          cd src
+          libtoolize
+          aclocal
+          autoconf
+          automake --add-missing
+          autoreconf
+
+          # Install
+          cd ../build-root
+          make --silent g2-install
+          ~~~
+
+4. MARPLE is now installed, and can be run by invoking the `marple` command, as
+described in [the usage section.](#usage). When you first use MARPLE, it will
+create a config file at `~/.marpleconfig`. If you have installed G2 manually,
+ensure that the config file has the correct path to your G2 executable.
+
+5. You can also run MARPLE unit tests:
+    ~~~~
+    $ marple_test
+    ~~~~
 ## Usage
 MARPLE can be separately invoked to either collect or display data.
 ~~~~
-usage: marple (--collect | --display) [-h] [options]
+usage: sudo marple (--collect | --display) [-h] [options]
 ~~~~
 Or alternatively:
 ~~~~
-usage: marple (-c | -d) [-h] [options]
+usage: sudo marple (-c | -d) [-h] [options]
+~~~~
+You may wish to set an alias in your `~/.bashrc`:
+~~~~
+alias marple="sudo `which marple`"
 ~~~~
 
 ### Collecting data
 ~~~~
-usage: marple --collect [-h] [-o OUTFILE] [-t TIME]
-                        subcommand [subcommand ...]
+usage: sudo marple --collect [-h] [-o OUTFILE] [-t TIME]
+                             subcommand [subcommand ...]
 
 Collect performance data.
 
@@ -88,8 +133,8 @@ MARPLE allows simultaneous collection using multiple subcommands at once - they 
 
 ### Displaying data
 ~~~~
-usage: marple --display [-h] [-fg | -tm] [-g2 | -tcp] [-hm | -sp] [-i INFILE]
-                        [-o OUTFILE]
+usage: sudo marple --display [-h] [-fg | -tm] [-g2 | -tcp] [-hm | -sp] [-i INFILE]
+                             [-o OUTFILE]
 
 Display collected data in required format
 
@@ -123,7 +168,7 @@ MARPLE consists of two core packages: [data collection](#the-data-collection pac
 
 The workflow for using MARPLE is as follows:
 
- 1. **Collect data** - specify areas of interest and duration of collection as [[#Collecting data | command line arguments], and MARPLE will collect data and write it to disk.
+ 1. **Collect data** - specify areas of interest and duration of collection as [command line arguments](#collecting-data), and MARPLE will collect data and write it to disk.
 
  2. *(optional)* **Transfer collected data to another machine** - the data can be moved to another machine and still viewed.
 
@@ -190,7 +235,7 @@ The tool has a very high latency - it was initially used as it helpfully sorts t
 [Brendan Gregg's flame graphs](http://www.brendangregg.com/flamegraphs.html) are a useful visualisation for profiled software, as they show call stack data. An example taken from Brendan Gregg's website is [below](#flame_graph). Flame graphs are interactive, allowing the user to zoom in to a certain process.
 
 <a name="flame_graph"></a>
-![flamegraph](./marple/res/flamegraph.svg)
+![flamegraph](./res/flamegraph.svg)
 
 **Figure:** An example flame graph, showing CPU usage for a MySQL program.
 
@@ -205,7 +250,7 @@ In general any form of stack data is easily viewed as a flame graph.
 Heat maps allow three-dimensional data to be visualised, using colour as a third dimension. In MARPLE, heat maps are used as histograms - data is grouped into buckets, and colour is used to represent the amount of data falling in each bucket.
 
 <a name="example_heatmap"></a>
-![heatmap](./marple/res/heatmap.png)
+![heatmap](./res/heatmap.png)
 
 **Figure:** An example heat map, showing disk latency data.
 
@@ -216,7 +261,7 @@ Heat maps allow three-dimensional data to be visualised, using colour as a third
 See [below](#g2_example) for an example G2 window.
 
 <a name="g2_example"></a>
-![g2](./marple/res/g2.png)
+![g2](./res/g2.png)
 
 **Figure:** An example G2 window, showing scheduling event data.
 
@@ -234,7 +279,7 @@ G2 has many display features, a few of these are listed below.
 Stack plots (also known as stacked graphs or stacked charts) show 'parts to the whole'. They are effectively line graphs subdivided to show the various components that make up the overall line value. They can be seen as a form of pie chart, but one that changes with respect to another dimension (usually time). An example stack plot is shown [below](#stackplot_example).
 
 <a name="stackplot_example"></a>
-![stackplot](./marple/res/stackplot.png)
+![stackplot](./res/stackplot.png)
 
 **Figure:** An example stack plot, showing memory usage by process over time.
 

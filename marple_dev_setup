@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# -------------------------------------------------------------
+# marple_dev_setup - Sets up marple for development
+# July-Sep 2018 - Hrutvik Kanabar, Franz Nowak
+# -------------------------------------------------------------
+
+if command -v python3 &> /dev/null; then
+    echo Python 3 is installed.
+else
+    echo Fatal error: Python 3 is not installed.
+    exit 1
+fi
+if command -v git &> /dev/null; then
+    echo Git is installed.
+else
+    echo Fatal error: git is not installed.
+    exit 1
+fi
+
+# Setup colours
+BEGIN="\033[36m\033[1m\033[4m"
+END="\033[0m\033[0m\033[0m\n"
+
+# Set up marple directory
+MARPLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
+printf "${BEGIN}Updating...${END}"
+sudo apt-get update
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Installing linux-tools... ${END}"
+sudo apt-get -y install linux-tools-generic linux-tools-common linux-tools-`uname -r` smem
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Installing venv... ${END}"
+sudo apt-get -y install python3-venv
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Creating virtual environment... ${END}"
+python3 -m venv marple_env
+source marple_env/bin/activate
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Installing Python requirements... ${END}"
+python3 -m pip install -U pip
+sudo apt-get -y install python3-tk
+python3 -m pip install -r ./requirements.txt
+printf "${BEGIN}Done.${END}\n\n\n"
+
+# Deactivate virtual environment
+deactivate
+
+printf "${BEGIN}Changing sudoers file... ${END}"
+echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo > /dev/null
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Installing BCC... ${END}"
+codename=`lsb_release -cs`
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys D4284CDD
+echo "deb https://repo.iovisor.org/apt/${codename} ${codename} main" | sudo tee /etc/apt/sources.list.d/iovisor.list
+sudo apt-get update
+sudo apt-get -y --allow-unauthenticated install bcc-tools libbcc-examples linux-headers-$(uname -r)
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Installing dependencies for vpp/g2... ${END}"
+sudo apt-get -y install libgtk2.0-dev
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Adding vpp/g2 submodule... ${END}"
+# initialise the submodule
+git submodule init
+git submodule update
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Configuring vpp/g2... ${END}"
+# do some config
+cd vpp/src
+libtoolize
+aclocal
+autoconf
+automake --add-missing
+autoreconf
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Installing vpp/g2... ${END}"
+# install g2
+cd ../build-root
+make g2-install
+printf "${BEGIN}Done.${END}\n\n\n"
+
+printf "${BEGIN}Creating symlink... ${END}"
+cd /usr/bin
+sudo ln -s ${MARPLE_DIR}/marple_dev_run marple
+source ~/.bashrc
+printf "${BEGIN}Done.${END}\n\n\n"
