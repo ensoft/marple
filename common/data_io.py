@@ -73,7 +73,10 @@ class EventDatum(typing.NamedTuple):
     """
     time: int
     type: str
-    specific_datum: tuple
+    specific_datum: dict
+    connected: list
+    # of touples of same length, connected[i][0] is the
+    # source and connected[i][1] is its destionation
 
     def __str__(self):
         """
