@@ -180,14 +180,6 @@ class _PlotterContainer:
         # Add legend
         _add_legend()
 
-        # We create the symbol and the symbol brushes lists so that we do not
-        # have to create them everytime we redraw
-        no_events = len(self.processed_data.get_all_events())
-        self.symbols_pairs = ['s', 'o'] * no_events
-        self.symbol_brushes_pairs = [self.source_brush,
-                                     self.destination_brush] * no_events
-        self.symbols_single = ['t2'] * no_events
-
     def get_plot_container(self):
         return self.plot_container
 
@@ -262,14 +254,15 @@ class _PlotterContainer:
         if partition[0].connected is not None:
             connect = "pairs"
             pen = self.line_colors[event_type]
-            symbol = self.symbols_pairs[0:num_points]
-            symbol_brushes = self.symbol_brushes_pairs[0:num_points]
+            symbol = ['s' if i % 2 == 0 else 'o' for i in range(num_points)]
+            symbol_brushes = [self.source_brush if i % 2 == 0 else
+                              self.destination_brush for i in range(num_points)]
         else:
             connect = None
             pen = None
-            symbol = self.symbols_single[0:num_points]
+            symbol = ['t2'] * num_points
             symbol_brushes = [pg.mkBrush(self.line_colors[event_type])] * \
-                              num_points
+                             num_points
         # Now we draw the markers and lines
         # The symbols and symbol brushes need to be lists, the i-th point's
         # style being defined by symbol[i] and symbolBrush[i]; the length
@@ -287,7 +280,8 @@ class _PlotterContainer:
             symbol=symbol,
             pen=pen,
             symbolBrush=symbol_brushes,
-            connect=connect
+            connect=connect,
+            symbolSize=7
         )
 
 
@@ -542,14 +536,21 @@ class _PlotterWindow(pg.GraphicsWindow):
             "scroll_filter"
         ))
 
+    def _hide_unused_checkoxes(self):
+        for event_type in self.processed_data.get_event_types():
+            if event_type in self.current_displayed_data.get_event_types():
+                hidden = False
+            else:
+                hidden = True
+            self.ui_manager.get_ui_elem(event_type + "_check").setHidden(hidden)
+
     def new_graph_from_filter(self, property, filters):
         """
         Highlights the selected processes and displays only the markers
         for lines which have at least one end on a highlighted lines (easier
         for tracking)
-        :param wanted_processes: the regex patterns used to find the wanted
-                                 processes as alist of the form:
-                                 regex1, regex2, ... (tolerant to whitespaces)
+        :param property:
+        :param filters:
 
         """
         def check_regex(to_match, regex_list):
@@ -601,6 +602,9 @@ class _PlotterWindow(pg.GraphicsWindow):
                         filtered_events.append(event)
         # If the filter finds nothing, do nothing
         if len(filtered_events) == 0:
+            QtGui.QMessageBox.warning(self, 'PyQt5 message',
+                                      "No events found! No filtering applied "
+                                      "(the data remained the same)")
             return
 
         filtered_data = _EventDataProcessor(filtered_events)
@@ -610,6 +614,8 @@ class _PlotterWindow(pg.GraphicsWindow):
         self.plot_layout.removeItem(self.current_plot.plot_container)
         self.plot_layout.addItem(new_plot_container.plot_container)
         self.current_plot = new_plot_container
+        self.current_displayed_data = filtered_data
+        self._hide_unused_checkoxes()
 
 
 class TCPPlotter(generic_display.GenericDisplay):
