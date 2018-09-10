@@ -13,7 +13,7 @@ from pyqtgraph.Qt import QtGui, QtWidgets
 import logging
 import re
 import typing
-import enum
+import functools
 
 from marple.common import data_io
 from marple.display.interface import generic_display
@@ -40,115 +40,129 @@ class _TCPMessage(typing.NamedTuple):
     type: str
 
 
-# class _MessageTypes(enum.Enum):
-#     ACCEPT = 'A'
-#     CONNECT = 'C'
-#     CLOSE = 'X'
+# TODO: more general x axis
+class _PlotterContainer:
+    """
+    Class that wraps the plot container, together with all its plots; makes it
+    easier and more readable when we overwrite plots
 
-
-# TODO: Make wrapper class for drawing functions so you can modularize the
-# TODO: radio button callbacks
-class _TCPDDrawWidget(pg.GraphicsWindow):
+    """
     source_brush = pg.mkBrush('w')
     destination_brush = pg.mkBrush('w')
-    color_dict = {
-        'A': 'g',
-        'C': 'b',
-        'X': 'r'
-    }
+    line_colors = [
+        (0, 117, 220),
+        (255, 0, 16),
+        (43, 206, 72),
+        (255, 164, 5),
+        (148, 255, 181),
+        (224, 255, 102),
+        (240, 163, 255),
+        (255, 255, 255)
+    ]
 
-    def __init__(self, messages_gen, parent=None):
+    def __init__(self, processed_data, y_axis_ticks):
         """
-        Initialises the window
+        Initialises the class
 
-        :param messages_gen: A generator that gives the TCP messages that we use
-                             to populate the graph
-        :param parent: parent of the window, should be left None
-
+        :param processed_data:
+        :param y_axis_ticks:
         """
-        # Initialise superclass
-        super().__init__(parent=parent)
+        def _create_map():
+            ymap = {}
+            unique_tracks = 0
+            for event_type in processed_data.get_event_types():
+                partition = processed_data.get_specific_partition(event_type)
+                for event in partition:
+                    if event.connected is not None:
+                        for sd_pair in event.connected:
+                            source_track = self._compose_track(event,
+                                                               sd_pair[0])
+                            dest_track = self._compose_track(event, sd_pair[1])
+                            if source_track not in ymap.keys():
+                                ymap[source_track] = unique_tracks
+                                unique_tracks += 1
 
-        # We get the mapping form process names to values on the Y axis and
-        # we partition the messages based on their type;
-        # A dictionary of the form {'accept': (list_of_x, list_of_y), ...} is
-        # produced, which is used when we need to redraw only particular types
-        self.conn_partition_data, self.comm_to_y_map = \
-            self._create_ymap_and_partition(messages_gen)
+                            if dest_track not in ymap.keys():
+                                ymap[dest_track] = unique_tracks
+                                unique_tracks += 1
+                    else:
+                        track = self._compose_track(event, "")
+                        if track not in ymap.keys():
+                            ymap[track] = unique_tracks
+                            unique_tracks += 1
+            return ymap
 
-        # Max dimension for the x and y axes
-        self.max_y = max(self.comm_to_y_map.values())
-        all_messages = self.concat(self.conn_partition_data.values())
-        self.max_x = max([message.time for message in all_messages])
+        def _assign_colors():
+            colors = {}
+            color_idx = 0
+            for event_type in processed_data.get_event_types():
+                if event_type not in colors:
+                    colors[event_type] = self.line_colors[color_idx]
+                    if color_idx < len(self.line_colors):
+                        color_idx += 1
 
-        # Initial setup for the graph (draw the y axis, support lines), the
-        # legend and the UI
-        self._setup_graph()
-        self._add_legend()
-        self._add_UI()
+            return colors
 
-        # We create the symbol and the symbol brushes lists so that we do not
-        # have to create them everytime we redraw
-        self.symbols = ['s', 'o'] * len(all_messages)
-        self.symbol_brushes = [self.source_brush,
-                               self.destination_brush] * len(all_messages)
+        def _create_container_and_plots(ticks):
+            plot_container = pg.PlotItem(title="IPC (TCP Messages)",
+                                         labels={
+                                             'left': ','.join(
+                                                 self.y_axis_ticks),
+                                             'bottom': 'time'},
+                                         axisItems={'left': ticks})
 
-    def _add_UI(self):
-        """
-        Function used during init that draws the UI elements (graph, buttons,
-        text fields) the user interacts with
+            # Event specific plots
+            event_plots = {}
+            for event_type in self.processed_data.get_event_types():
+                event_plots[event_type] = plot_container.plot([], [])
 
-        """
-        # We save the UI elements in a dictionary so that we can reference them
-        # later (for example load text from a text filed)
-        self.UI_dict = {}
+            # Support plots
+            helper_plots = {
+                'lines': plot_container.plot([], []),
+                'highlight': plot_container.plot([], [])
+            }
+            return plot_container, event_plots, helper_plots
 
-        # Draw the UI elements in a resizable grid
-        self.UI_elems_factory("check", "acc_check", "Show accept", 1, 0,
-                              callback_function=lambda state: self.draw('A') if
-                              state == 2 else self.empty_plot('A'))
-        self.UI_elems_factory("check", "cls_check", "Show close", 1, 1,
-                              callback_function=lambda state: self.draw('X') if
-                              state == 2 else self.empty_plot('X'))
-        self.UI_elems_factory("check", "con_check", "Show connect", 1, 2,
-                              callback_function=lambda state: self.draw('C') if
-                              state == 2 else self.empty_plot('C'))
+        def _create_ticks():
+            ticks = pg.AxisItem(orientation='left')
+            ticks.setTicks([dict(enumerate(self.tracks_ymap.keys())).items()])
+            return ticks
 
-        self.UI_elems_factory("text", "choices", "", 2, 0)
-        self.UI_elems_factory("button", "display_choices", "Display Choices ("
-                                                           "prefix match)",
-                              2, 1,
-                              callback_function=lambda: self.draw_selected_only(
-                                  self.UI_dict['choices'].text()))
-        self.UI_elems_factory("button", "clear_highlight",
-                              "Clear highlight", 2, 2,
-                              callback_function=lambda: self.empty_plot('H'))
+        def _add_legend():
+            """
+            Function used during init that adds a legend in the top right corner
+            for the graph lines and symbols
 
-    def _setup_graph(self):
-        """
-        Function used during init that sets up the actual graph
+            """
+            legend = pg.LegendItem((0, 0), (0, 1))
+            legend.setParentItem(self.plot_container)
+            legend.addItem(pg.PlotDataItem(symbol='s'),
+                           "Source")
+            legend.addItem(pg.PlotDataItem(symbol='o'),
+                           "Destination")
 
-        We create the axis here, plots for each type of message + the plots
-        for the support lines and the highlighted lines
+            for event_type in self.processed_data.get_event_types():
+                legend.addItem(pg.PlotDataItem(
+                    pen=pg.mkPen(color=self.line_colors[event_type], width=2)),
+                    event_type)
 
-        """
-        graph_layout = self.addLayout(row=0, col=0, colspan=3)
+            legend.addItem(pg.PlotDataItem(pen=pg.mkPen('y', width=2)),
+                           "Selected process")
 
-        # Setup the plot container and the Y axis labels
-        comm_axis = pg.AxisItem(orientation='left')
-        comm_axis.setTicks([dict(enumerate(self.comm_to_y_map.keys())).items()])
-        self.plot_container = self.addPlot(title="IPC (TCP Messages)",
-                                           axisItems={'left': comm_axis})
+        self.processed_data = processed_data
+        self.y_axis_ticks = y_axis_ticks
+        self.tracks_ymap = _create_map()
+        self.line_colors = _assign_colors()
 
-        # The plots described above
-        self.plots = {
-            'A': self.plot_container.plot([], []),
-            'X': self.plot_container.plot([], []),
-            'C': self.plot_container.plot([], []),
-            'lines': self.plot_container.plot([], []),
-            'highlighted': self.plot_container.plot([], [])
-        }
-        graph_layout.addItem(self.plot_container)
+        # Create ticks
+        self.tick = _create_ticks()
+
+        self.plot_container, self.event_plots, self.helper_plots = \
+            _create_container_and_plots(self.tick)
+
+        self.max_y = max(self.tracks_ymap.values())
+        self.max_x = max(map(lambda event: event.time,
+                             self.processed_data.get_all_events()))
 
         # We set the limits for the dispay viewbox (so we only have positive xs
         # and ys); we add one to add (or subtract) one so things don't get
@@ -157,47 +171,36 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
                                          yMin=-1, yMax=self.max_y + 1)
 
         # We draw the support lines
-        ys = self.concat([[y, y] for y in range(0, self.max_y + 1)])
+        ys = list(self._concat([[y, y] for y in range(0, self.max_y + 1)]))
         xs = [0, self.max_x] * (self.max_y + 1)
-        self.plots['lines'].setData(xs, ys,
-                                    pen=pg.mkPen(255, 255, 255, 32),
-                                    connect="pairs")
+        self.helper_plots['lines'].setData(xs, ys,
+                                           pen=pg.mkPen(255, 255, 255, 32),
+                                           connect="pairs")
 
-    def _add_legend(self):
-        """
-        Function used during init that adds a legend in the top right corner
-        for the graph lines and symbols
+        # Add legend
+        _add_legend()
 
-        """
-        legend = pg.LegendItem((0, 0), (0, 1))
-        legend.setParentItem(self.plot_container)
-        legend.addItem(pg.PlotDataItem(symbol='s'),
-                       "Source")
-        legend.addItem(pg.PlotDataItem(symbol='o'),
-                       "Destination")
-        legend.addItem(pg.PlotDataItem(pen=self.color_dict['A']),
-                       "Accept")
-        legend.addItem(pg.PlotDataItem(pen=self.color_dict['C']),
-                       "Connect")
-        legend.addItem(pg.PlotDataItem(pen=self.color_dict['X']),
-                       "Close")
-        legend.addItem(pg.PlotDataItem(pen='y'),
-                       "Selected process")
+    def get_plot_container(self):
+        return self.plot_container
+
+    def get_plot_from_container(self, name):
+        return self.plot_container[name]
 
     @staticmethod
-    def concat(ll):
+    def _concat(ll):
         """
         Helper function that converts a list of lists into a single list,
         perserving order
         :param ll: the list of lists to be concat'ed
         :return: a single list produced from the input
         """
-
-        res = []
         for l in ll:
             for item in l:
-                res.append(item)
-        return res
+                yield item
+
+    def _compose_track(self, event, prefix=""):
+        return ','.join([str(event.specific_datum[prefix + tick_track])
+                         for tick_track in self.y_axis_ticks])
 
     def empty_plot(self, plot_name):
         """
@@ -205,26 +208,170 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
         :param plot_name: name of the plot to be emptied
 
         """
-        if plot_name == 'A':
-            self.plots['A'].setData([], [], symbol=[], symbolBrush=[])
-        if plot_name == 'C':
-            self.plots['C'].setData([], [], symbol=[], symbolBrush=[])
-        if plot_name == 'X':
-            self.plots['X'].setData([], [], symbol=[], symbolBrush=[])
-        if plot_name == 'H':
-            self.plots['highlighted'].setData([], [])
+        if plot_name == 'highlight':
+            self.helper_plots['highlight'].setData([], [])
+        else:
+            self.event_plots[plot_name].setData([], [], symbol=[],
+                                                symbolBrush=[])
 
     def empty_all_plots(self):
         """
         Empties all plots (doesn't empty the support lines)
 
         """
-        self.empty_plot('A')
-        self.empty_plot('C')
-        self.empty_plot('X')
-        self.empty_plot('H')
+        self.empty_plot('highlight')
 
-    def UI_elems_factory(self, ui_elem, name, text, row, col, **kwargs):
+        for event_type in self.processed_data.get_event_types():
+            self.empty_plot(event_type)
+
+    def draw(self, event_type):
+        """
+        Draws all the messages of the provided type
+
+        :param event_type: the type of the messages to be drawn
+
+        """
+        self.empty_plot('highlight')
+
+        partition = self.processed_data.get_specific_partition(event_type)
+        processes, times = [], []
+
+        for event in partition:
+            if event.connected is not None:
+                for sd_pair in event.connected:
+                    source_track = self._compose_track(event, sd_pair[0])
+                    dest_track = self._compose_track(event, sd_pair[1])
+                    processes.extend([source_track, dest_track])
+                    times.extend([event.time, event.time])
+            else:
+                track = self._compose_track(event)
+                processes.append(track)
+                times.append(event.time)
+        num_points = len(times)
+
+        # We look at the first event to check if we have a partition that
+        # needs connections
+        if partition[0].connected is not None:
+            connect = "pairs"
+            pen = self.line_colors[event_type]
+            symbol = ['s' if i % 2 == 0 else 'o' for i in range(num_points)]
+            symbol_brushes = [self.source_brush if i % 2 == 0 else
+                              self.destination_brush for i in range(num_points)]
+        else:
+            connect = None
+            pen = None
+            symbol = ['t2'] * num_points
+            symbol_brushes = [pg.mkBrush(self.line_colors[event_type])] * \
+                             num_points
+        # Now we draw the markers and lines
+        # The symbols and symbol brushes need to be lists, the i-th point's
+        # style being defined by symbol[i] and symbolBrush[i]; the length
+        # of both needs to be exactly the number of selected points
+        # The connect keyword arg signals that point 2*i and 2*i+1 should be
+        # connected
+        self.event_plots[event_type].setData(
+            {
+                'x': times,
+                # With the ys we need to convert from process names to numbers
+                # on the y axis
+                'y': list(map(lambda process: self.tracks_ymap[process],
+                              processes))
+            },
+            symbol=symbol,
+            pen=pen,
+            symbolBrush=symbol_brushes,
+            connect=connect,
+            symbolSize=7
+        )
+
+
+class _EventDataProcessor:
+    """
+    Class that deal with the various properties of the event data
+
+    Provides different getters, for various fields
+    """
+    def __init__(self, events):
+        """
+        Initialises the class
+
+        :param events: Events that we want processed
+        """
+
+        def process_data(events):
+            """
+            Helper method that partitions the events based on their type and gets
+            all the properties present in them (so they can be filtered later)
+            Properties will get their source - destination prefixed stripped so we
+            can treat 'pid', 'source1_pid', 'dest1_pid' the same
+
+            :param: the event we want to process
+            :returns: a dictionary representing the partition and a set for the
+                      properties
+            """
+            properties_set = set()
+            event_partition = {}
+
+            for event in events:
+                # Extract info
+                connected = event.connected
+
+                if connected is not None:
+                    for prop in event.specific_datum.keys():
+                        for pair in connected:
+                            source_prefix, dest_prefix = pair[0], pair[1]
+                            match_src = re.match(source_prefix, prop)
+                            match_dst = re.match(dest_prefix, prop)
+                            if match_src is not None:
+                                prop = prop[match_src.end():]
+                            elif match_dst is not None:
+                                prop = prop[match_dst.end():]
+                            properties_set.add(prop)
+                else:
+                    for prop in event.specific_datum.keys():
+                        properties_set.add(prop)
+
+                if event.type not in event_partition:
+                    event_partition[event.type] = [event]
+                else:
+                    event_partition[event.type].append(event)
+
+            return event_partition, properties_set
+
+        # Process the data using the above function
+        self.event_partition, self.properties_set = process_data(events)
+
+    # The following getter functions make it easier to interact with the
+    # process data
+    def get_specific_partition(self, event_type):
+        return self.event_partition[event_type]
+
+    def get_all_events(self):
+        events = []
+        for event_subset in self.event_partition.values():
+            for event in event_subset:
+                events.append(event)
+        return events
+
+    def get_properties(self):
+        return self.properties_set
+
+    def get_event_types(self):
+        return self.event_partition.keys()
+
+    @staticmethod
+    def get_property_value(event, property, prefix=""):
+        if prefix + property in event.specific_datum:
+            return str(event.specific_datum[prefix + property])
+        else:
+            return None
+
+
+class _UIElementManager:
+    def __init__(self):
+        self.ui_dict = {}
+
+    def new_ui_elem(self, ui_elem, name, text, **kwargs):
         """
         Factory function that creates UI elements and puts them in the UI
         dictionary (used for referencing them later)
@@ -232,15 +379,10 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
         :param ui_elem: type of the UI element to be added
         :param name: name of the UI element, used as key for the dictionary
         :param text: text to be displayed on the UI element
-        :param row: the row in the grid where the UI element is to be placed
-        :param col: the col in the grid where the UI element is to be placed
         :param kwargs: additional parameters that are required by the UI,
                        such as callback functions
 
         """
-        # Proxy that alows QT widgets to be put inside a graphics window
-        proxy_elem = QtGui.QGraphicsProxyWidget()
-
         if ui_elem == 'check':
             new_elem = QtGui.QCheckBox(text)
             new_elem.stateChanged.connect(kwargs["callback_function"])
@@ -249,19 +391,166 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
         elif ui_elem == 'button':
             new_elem = QtGui.QPushButton(text)
             new_elem.clicked.connect(kwargs["callback_function"])
-        proxy_elem.setWidget(new_elem)
-        layout = self.addLayout(row=row, col=col)
-        layout.addItem(proxy_elem)
-        self.UI_dict[name] = new_elem
+        elif ui_elem == 'group_box':
+            new_elem = QtGui.QGroupBox(text)
+            new_elem.setLayout(QtGui.QFormLayout())
+        elif ui_elem == 'scroll_area':
+            # Needs to be wrapped in a proxy object since this is the
+            # element that actually gets put on the window, and the window does
+            # not accept elements
+            scroll_check = QtGui.QScrollArea()
+            scroll_check.setWidget(kwargs['widget'])
+            scroll_check.setWidgetResizable(True)
+            scroll_check.setFixedHeight(kwargs['height'])
+            new_elem = QtGui.QGraphicsProxyWidget()
+            new_elem.setWidget(scroll_check)
+        else:
+            raise ValueError('Invalid ui elem type')
 
-    def draw_selected_only(self, wanted_processes):
+        # We save the element in the dictionary so we can reference it later
+        self.ui_dict[name] = new_elem
+
+    def get_ui_elem(self, name):
+        if name in self.ui_dict:
+            return self.ui_dict[name]
+        else:
+            raise KeyError("No element with the supplied name found")
+
+
+class _PlotterWindow(pg.GraphicsWindow):
+    """
+    Class that only deals with the plotter window, creates layouts and puts
+    things in them (not created here, external classes)
+
+    """
+
+    def __init__(self, generator_list, parent=None):
+        """
+        Initialises the window
+
+        :param messages_gen: A generator that gives the TCP messages that we use
+                             to populate the graph
+        :param parent: parent of the window, should be left None
+
+        """
+        def events_from_generator_list():
+            for generator in generator_list:
+                for event in generator:
+                    yield event
+
+        # Initialise superclass
+        super().__init__(parent=parent)
+
+        # Process data, this data will remain unchanged (so we can filter
+        # things from it)
+        self.processed_data = _EventDataProcessor(events_from_generator_list())
+        # We store the currently displayed data (which will change once we
+        # filter)
+        self.current_displayed_data = self.processed_data
+
+        # Setup current graph
+        self.current_plot = _PlotterContainer(self.current_displayed_data,
+                                              ['comm', 'pid'])
+
+        # Setup UI
+        self.ui_manager = _UIElementManager()
+        self._add_ui()
+
+        # Manage the layout now that we have both the plot container and the
+        # UI
+        self._manage_layout()
+
+    def _add_ui(self):
+        """
+        Function used during init that draws the UI elements (graph, buttons,
+        text fields) the user interacts with
+
+        """
+        def callback_check(state, event_type):
+            return self.current_plot.draw(event_type) if state == 2 \
+                else self.current_plot.empty_plot(event_type)
+
+        def callback_filter(prop):
+            return self.new_graph_from_filter(prop,
+                                              self.ui_manager
+                                              .get_ui_elem('regex_' + prop)
+                                              .text())
+
+        self.ui_manager.new_ui_elem("group_box", "cb_select",
+                                    "Display / hide event types")
+        self.ui_manager.new_ui_elem("group_box", "cb_filter", "Filtering")
+
+        # First draw the checkboxes
+        for event_type in self.current_displayed_data.get_event_types():
+            callback = functools.partial(callback_check, event_type=event_type)
+            self.ui_manager.new_ui_elem("check", event_type + "_check",
+                                        "Show " + event_type,
+                                        callback_function=callback)
+            self.ui_manager.get_ui_elem("cb_select").layout().addRow(
+                self.ui_manager.get_ui_elem(event_type + "_check"))
+
+        # Now the filters
+        for prop in self.current_displayed_data.get_properties():
+            callback = functools.partial(callback_filter, prop)
+            self.ui_manager.new_ui_elem("text", "regex_" + prop, "")
+            self.ui_manager.new_ui_elem("button", "filter_" + prop,
+                                        "Filter by {} (prefix match)"
+                                            .format(prop),
+                                        callback_function=callback)
+            self.ui_manager.get_ui_elem("cb_filter").layout().addRow(
+                self.ui_manager.get_ui_elem("regex_" + prop),
+                self.ui_manager.get_ui_elem("filter_" + prop))
+
+        # A clear highlight button
+        self.ui_manager.new_ui_elem("button", "clear_highlight",
+                                    "Clear highlight",
+                                    callback_function=lambda:
+                                        self.empty_plot('highlight'))
+        self.ui_manager.get_ui_elem("cb_filter").layout().addRow(
+            self.ui_manager.get_ui_elem("clear_highlight"))
+
+        self.ui_manager.new_ui_elem("scroll_area", "scroll_select", "",
+                                    widget=self.ui_manager.get_ui_elem(
+                                        "cb_select"),
+                                    height=200)
+
+        self.ui_manager.new_ui_elem("scroll_area", "scroll_filter", "",
+                                    widget=self.ui_manager.get_ui_elem(
+                                        "cb_filter"),
+                                    height=200)
+
+    def _manage_layout(self):
+        """
+
+        """
+        self.plot_layout = self.addLayout(row=0, col=0, colspan=2)
+        self.plot_layout.addItem(self.current_plot.plot_container)
+
+        self.select_layout = self.addLayout(row=1, col=0)
+        self.select_layout.addItem(self.ui_manager.get_ui_elem(
+            "scroll_select"
+        ))
+
+        self.filter_layout = self.addLayout(row=1, col=1)
+        self.filter_layout.addItem(self.ui_manager.get_ui_elem(
+            "scroll_filter"
+        ))
+
+    def _hide_unused_checkoxes(self):
+        for event_type in self.processed_data.get_event_types():
+            if event_type in self.current_displayed_data.get_event_types():
+                hidden = False
+            else:
+                hidden = True
+            self.ui_manager.get_ui_elem(event_type + "_check").setHidden(hidden)
+
+    def new_graph_from_filter(self, property, filters):
         """
         Highlights the selected processes and displays only the markers
         for lines which have at least one end on a highlighted lines (easier
         for tracking)
-        :param wanted_processes: the regex patterns used to find the wanted
-                                 processes as alist of the form:
-                                 regex1, regex2, ... (tolerant to whitespaces)
+        :param property:
+        :param filters:
 
         """
         def check_regex(to_match, regex_list):
@@ -277,157 +566,56 @@ class _TCPDDrawWidget(pg.GraphicsWindow):
                     return True
             return False
 
-        self.empty_all_plots()
-        self.UI_dict["acc_check"].setChecked(True)
-        self.UI_dict["cls_check"].setChecked(True)
-        self.UI_dict["con_check"].setChecked(True)
+        for event_type in self.processed_data.get_event_types():
+            self.ui_manager.get_ui_elem(event_type + "_check").setChecked(False)
 
         # Parse the input into a list of regex patterns
-        wanted_processes = wanted_processes.replace(' ', '').split(',')
+        filters = filters.replace(' ', '').split(',')
 
-        ys = []
         # Now for each type of message, select points that need to be displayed
-        for mess_type in 'AXC':
-            partition = self.conn_partition_data[mess_type]
-            times = self.concat([[message.time] * 2 for message in partition])
-            processes = self.concat([[message.source.comm,
-                                      message.destination.comm]
-                                     for message in partition])
-            # 2 lists which when zipped they represent the points that need
-            # to be drawn after the selection
-            selected_times = []
-            selected_processes = []
-
+        filtered_events = []
+        for partition in self.processed_data.event_partition.values():
             # Now we go through all the points, two at a time since adjacent
             # points form lines (pairs source - destination), and chech if any
             # of them lie on a selected line; if this is true, then we draw
             # both of them
-            for idx in range(0, len(times), 2):
-                if check_regex(processes[idx], wanted_processes) or \
-                   check_regex(processes[idx + 1], wanted_processes):
-                    selected_times.extend(times[idx:idx+2])
-                    selected_processes.extend(processes[idx:idx+2])
-            num_selected_points = len(selected_times)
+            for event in partition:
+                if event.connected is not None:
+                    for sd_pair in event.connected:
+                        s_value = _EventDataProcessor.get_property_value(
+                                    event,
+                                    property,
+                                    prefix=sd_pair[0])
+                        d_value = _EventDataProcessor.get_property_value(
+                                    event,
+                                    property,
+                                    prefix=sd_pair[1])
+                        if s_value is not None and \
+                                check_regex(s_value, filters) or d_value is \
+                                not None and check_regex(d_value, filters):
+                            filtered_events.append(event)
 
-            # We need to save the ys of the lines to be highlighted
-            # We do this by going only though the processes that matched (we
-            # must create this list since selected_processes contains processes
-            # that are there just because they are connected to a process that
-            # matched)
+                else:
+                    value = _EventDataProcessor.get_property_value(
+                                event, property)
+                    if value is not None and check_regex(value, filters):
+                        filtered_events.append(event)
+        # If the filter finds nothing, do nothing
+        if len(filtered_events) == 0:
+            QtGui.QMessageBox.warning(self, 'PyQt5 message',
+                                      "No events found! No filtering applied "
+                                      "(the data remained the same)")
+            return
 
-            for y in list(
-                filter(lambda proc: check_regex(proc, wanted_processes),
-                       selected_processes)):
-                ys.extend([self.comm_to_y_map[y], self.comm_to_y_map[y]])
+        filtered_data = _EventDataProcessor(filtered_events)
+        new_plot_container = _PlotterContainer(filtered_data,
+                                               ['comm', 'pid'])
 
-            # Now we draw the markers and lines
-            # The symbols and symbol brushes need to be lists, the i-th point's
-            # style being defined by symbol[i] and symbolBrush[i]; the length
-            # of both needs to be exactly the number of selected points
-            # The connect keyword arg signals that point 2*i and 2*i+1 should be
-            # connected
-            self.plots[mess_type].setData(
-                {'x': selected_times,
-                 # With the ys we need to convert from process names to numbers
-                 # on the y axis
-                 'y': list(map(lambda process: self.comm_to_y_map[process],
-                               selected_processes))},
-                symbol=self.symbols[0:num_selected_points],
-                pen=self.color_dict[mess_type],
-                symbolBrush=self.symbol_brushes[0:num_selected_points],
-                connect="pairs"
-            )
-
-        # In the end we draw the highlighted yellow lines
-        self.plots['highlighted'].setData([0, self.max_x] * int(len(ys) / 2),
-                                          ys, pen='y', connect="pairs")
-
-    def draw(self, mess_type):
-        """
-        Draws all the messages of the provided type
-
-        :param mess_type: the type of the messages to be drawn
-
-        """
-        self.empty_plot('H')
-
-        partition = self.conn_partition_data[mess_type]
-        times = self.concat([[message.time] * 2 for message in partition])
-        processes = self.concat([[message.source.comm,
-                                  message.destination.comm]
-                                 for message in partition])
-        num_points = len(times)
-
-        # Now we draw the markers and lines
-        # The symbols and symbol brushes need to be lists, the i-th point's
-        # style being defined by symbol[i] and symbolBrush[i]; the length
-        # of both needs to be exactly the number of selected points
-        # The connect keyword arg signals that point 2*i and 2*i+1 should be
-        # connected
-        self.plots[mess_type].setData(
-            {'x': times,
-             # With the ys we need to convert from process names to numbers on
-             # the y axis
-             'y': list(map(lambda process: self.comm_to_y_map[process],
-                           processes))},
-            symbol=self.symbols[0:num_points],
-            pen=self.color_dict[mess_type],
-            symbolBrush=self.symbol_brushes[0:num_points],
-            connect="pairs"
-        )
-
-    @staticmethod
-    def _create_ymap_and_partition(messages_gen):
-        """
-        Method that returns a dictionary that represents the partition of
-        the messages and the mapping between processes' names and y axis coords
-
-        :param: messages_gen: generator that contains the TCP info
-        :returns: a pair of dictionaries, as described above
-        """
-        comm_to_y_map = {}
-        unique_ys = 0
-        messages_partition = {'A': [],
-                              'C': [],
-                              'X': []}
-
-        for event_datum in messages_gen:
-            # Extract info
-            msgtime = event_datum[0]
-            msgtype = event_datum[1]
-            source_pid = event_datum[2][0]
-            source_comm = event_datum[2][1]
-            source_port = event_datum[2][2]
-            dest_pid = event_datum[2][3]
-            dest_comm = event_datum[2][4]
-            dest_port = event_datum[2][5]
-            net_ns = event_datum[2][6]
-
-            # Convert info to _TCPMessage
-            source = _TCPPoint(source_pid, source_comm, source_port, net_ns)
-            dest = _TCPPoint(dest_pid, dest_comm, dest_port, net_ns)
-            message = _TCPMessage(source, dest, msgtime, msgtype)
-
-            # Map source and dest if they have not been encountered
-            # When we encounter a new process, we assign it an y coord equal to
-            # the last one used + 1, so we only draw used lines (which will be
-            # all the y lines between 0 and total number of unique processes)
-            if source.comm not in comm_to_y_map.keys():
-                comm_to_y_map[source.comm] = unique_ys
-                unique_ys += 1
-
-            if dest.comm not in comm_to_y_map.keys():
-                comm_to_y_map[dest.comm] = unique_ys
-                unique_ys += 1
-
-            # Put message in the right partition
-            if message.type == 'A':
-                messages_partition['A'].append(message)
-            elif message.type == 'C':
-                messages_partition['C'].append(message)
-            else:
-                messages_partition['X'].append(message)
-        return messages_partition, comm_to_y_map
+        self.plot_layout.removeItem(self.current_plot.plot_container)
+        self.plot_layout.addItem(new_plot_container.plot_container)
+        self.current_plot = new_plot_container
+        self.current_displayed_data = filtered_data
+        self._hide_unused_checkoxes()
 
 
 class TCPPlotter(generic_display.GenericDisplay):
@@ -467,46 +655,48 @@ class TCPPlotter(generic_display.GenericDisplay):
         """
         app = QtWidgets.QApplication([])
 
-        renderer = _TCPDDrawWidget(self.data_gen)
+        renderer = _PlotterWindow(self.data_gen)
         pg.setConfigOptions(antialias=False)
         renderer.showMaximized()
         renderer.raise_()
         app.exec_()
 
-
 import random
-
 data = []
-types = ['A', 'X', 'C']
-# data.append(data_io.EventDatum(time=1,
-#                                    type=types[0],
-#                                    specific_datum=(
-#         None, 'process' + str(1), None, None, 'process' + str(3), None, None)))
-# data.append(data_io.EventDatum(time=2,
-#                                    type=types[1],
-#                                    specific_datum=(
-#         None, 'process' + str(3), None, None, 'process' + str(1), None, None)))
-# data.append(data_io.EventDatum(time=4,
-#                                    type=types[2],
-#                                    specific_datum=(
-#         None, 'process' + str(3), None, None, 'process' + str(1), None, None)))
-# data.append(data_io.EventDatum(time=10,
-#                                    type=types[2],
-#                                    specific_datum=(
-#         None, 'process' + str(5), None, None, 'process' + str(4), None, None)))
-# data.append(data_io.EventDatum(time=15,
-#                                    type=types[1],
-#                                    specific_datum=(
-#         None, 'process' + str(5), None, None, 'process' + str(4), None, None)))
-
-for i in range(1, int(random.random() * 100)):
+types = ['accept', 'close', 'connect']
+for i in range(1, int(random.random() * 1000)):
     time = random.random() * 100
     s = int(random.random() * 100)
     d = int(random.random() * 100)
     data.append(data_io.EventDatum(time=time,
                                    type=types[random.randrange(0, 3)],
-                                   specific_datum=(
-        None, 'process' + str(s), None, None, 'process' + str(d), None, None)))
+                                   connected=[("source_", "dest_")],
+                                   specific_datum={
+                                        "source_pid": s % 25,
+                                        "source_comm": 'process' + str(s),
+                                        "source_port": s % 25,
+                                        "dest_pid": d % 25,
+                                        "dest_comm": 'process' + str(d),
+                                        "dest_port": d % 25,
+                                        "net_ns": s+d}))
 
-plot = TCPPlotter(data)
+data.append(data_io.EventDatum(time=30,
+                               type="new",
+                               connected=None,
+                               specific_datum={
+                                    "pid": 32,
+                                    "comm": 'newthing32',
+                                    "dodo": 25,
+                               }))
+
+data.append(data_io.EventDatum(time=50,
+                               type="old",
+                               connected=None,
+                               specific_datum={
+                                    "pid": 32,
+                                    "comm": 'newthing32',
+                                    "dodo": 27,
+                               }))
+
+plot = TCPPlotter([data])
 plot.show()
