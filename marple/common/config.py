@@ -61,6 +61,18 @@ class Parser:
         except ValueError as err:
             raise ValueError("Invalid type specified" + str(err))
 
+    def get_section(self, sec):
+        """
+        Retrieves a section from the config
+
+        :param sec: Section we want to retrieve
+        :return: The section as a dict
+        """
+        if self.config.has_section(sec):
+            return self.config[sec]
+        else:
+            raise ValueError("The section {} is not in the config".format(sec))
+
     def has_option(self, sec, opt):
         """
         Checks whether the an option exists

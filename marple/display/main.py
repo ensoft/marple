@@ -149,29 +149,24 @@ def _get_display_options(display_option):
 
     elif display_option == consts.DisplayOptions.TCPPLOT:
         return tcpplotter.TCPPlotter.DisplayOptions()
-        pass
 
     else:
         raise ValueError("Invalid display mode")
 
 
 @util.log(logger)
-def _get_data_options(header):
+def _get_data_options(datatype, data_options):
     """
     Function that returns the data options for a section whose data is of type
-    header['datatype']. Data options include x axis label, x axis units for
+    `datatype`. Data options include x axis label, x axis units for
     points, weight label for stacks
 
-    :param header: header of the section we are trying to display as a
-                   dictionary
+    :param datatype: the datatype we get options for
+    :param data_options: options we use to set up the DataOptions class
     :return: returns a `DataOptions` object, which should be  a class
              declared in each of the 'Data' objects in the common.datatypes
              module
     """
-    datatype = header['datatype']
-    # The data options are stored as a separate dictionary from the general
-    # header info
-    data_options = header['data_options']
 
     if datatype == consts.Datatypes.STACK.value:
         weight_units = data_options['weight_units']
@@ -216,59 +211,89 @@ def _display(args):
     else:
         output_filename = file.DisplayFileName()
 
-    # We now open the file and try to parse and display each section one at
-    # a time
-    with open(str(input_filename)) as file_object:
-        eof = False
-        # As long as we have not reached the eof (which is reached when the
-        # header we read was None), try to display next section
-        while not eof:
-            header = marple.common.data_io.read_header(file_object)
-            if header is None:
-                # EOF, we skip current step and exit the loop
-                eof = True
-                continue
+    # Read the metaheader
+    metaheader = marple.common.data_io.read_metaheader(input_filename)
+    # Initially all sections are to be displayed as standalones
+    standalone_sections_set = set(metaheader['sections'].split(','))
 
-            # Generator that returns data from the current section, one line
-            # at a time
-            data = marple.common.data_io.read_until_line(
-                file_object, consts.data_separator)
+    # Check if the no_agg flag is set. If it is, we skip
+    if not args.no_agg:
+        # We get the Aggregate section that contains all the sections that
+        # will be displayed using one display mode (sections are identified
+        # using the interface that was used to collect them)
+        aggregates = config_parser.get_section('Aggregate')
 
-            # We select the display option based on args or the config file,
-            # and get the associated options with that display option
-            display_for_interface = _select_mode(header['interface'],
-                                                 header['datatype'], vars(args))
-            display_options = _get_display_options(display_for_interface)
-            data_options = _get_data_options(header)
+        # We iterate through all the options in aggregates and display it
+        # with the appropriate display mode
+        for agg in aggregates:
+            sections = agg.replace(' ', '').split(',')
+            display_mode = aggregates[agg]
+            datum_generator = data_io.read_multiple_sect(input_filename,
+                                                         sections)
 
-            # We know the display option, we have its specific options, we only
-            # need to initialize the display object
-            if display_for_interface is consts.DisplayOptions.G2:
-                display_object = g2.G2(data, data_options,
-                                       display_options)
-            elif display_for_interface is consts.DisplayOptions.HEATMAP:
-                display_object = heatmap.HeatMap(data, output_filename,
-                                                 data_options, display_options)
-            elif display_for_interface is consts.DisplayOptions.TREEMAP:
-                display_object = treemap.Treemap(data, output_filename,
-                                                 data_options, display_options)
-            elif display_for_interface is consts.DisplayOptions.STACKPLOT:
-                display_object = stackplot.StackPlot(data, data_options,
-                                                     display_options)
-            elif display_for_interface is consts.DisplayOptions.FLAMEGRAPH:
-                display_object = flamegraph.Flamegraph(data,
-                                                       output_filename,
-                                                       data_options,
-                                                       display_options)
-            elif display_for_interface is consts.DisplayOptions.TCPPLOT:
-                display_object = tcpplotter.TCPPlotter(
-                    data, data_options, display_options)
+            # TODO: We skip options here, is this ok (think so since when we
+            # TODO: have aggregates we lose some info)
+            if display_mode == consts.DisplayOptions.TCPPLOT:
+                display_object = tcpplotter.TCPPlotter(datum_generator)
             else:
-                raise ValueError("Unexpected display mode {}!".
-                                 format(display_for_interface))
+                raise ValueError('Display mode {} does not support '
+                                 'displaying aggregated '
+                                 'data'.format(display_mode))
 
-            # Display it
+            # We have displayed the sections used at this step at least in
+            # one aggregate, so we remove them from the `to be displayed as
+            # standalone` set
+            standalone_sections_set.difference(sections)
+
+            # Display aggregates
             display_object.show()
+
+    # Now we display the standalone sections
+    for section in standalone_sections_set:
+        # Data object (EventData etc) that encapsulates the actual data
+        # and the header
+        data_object = marple.common.data_io.read_section(input_filename,
+                                                         section,
+                                                         consts.data_separator)
+
+        # We select the display option based on args or the config file,
+        # and get the associated options with that display option
+        display_for_interface = _select_mode(data_object.interface,
+                                             data_object.datatype,
+                                             vars(args))
+        display_options = _get_display_options(display_for_interface)
+        data_options = _get_data_options(data_object.data_options)
+
+        # We know the display option, we have its specific options, we only
+        # need to initialize the display object
+        if display_for_interface is consts.DisplayOptions.G2:
+            display_object = g2.G2(data_object.datum_generator,
+                                   data_options,
+                                   display_options)
+        elif display_for_interface is consts.DisplayOptions.HEATMAP:
+            display_object = heatmap.HeatMap(
+                data_object.datum_generator, output_filename,
+                data_options, display_options)
+        elif display_for_interface is consts.DisplayOptions.TREEMAP:
+            display_object = treemap.Treemap(
+                data_object.datum_generator, output_filename,
+                data_options, display_options)
+        elif display_for_interface is consts.DisplayOptions.STACKPLOT:
+            display_object = stackplot.StackPlot(
+                data_object.datum_generator, data_options, display_options)
+        elif display_for_interface is consts.DisplayOptions.FLAMEGRAPH:
+            display_object = flamegraph.Flamegraph(
+                data_object.datum_generator, output_filename,
+                data_options, display_options)
+        elif display_for_interface is consts.DisplayOptions.TCPPLOT:
+            display_object = tcpplotter.TCPPlotter(
+                data_object.datum_generator, data_options, display_options)
+        else:
+            raise ValueError("Unexpected display mode {}!".
+                             format(display_for_interface))
+
+        # Display it
+        display_object.show()
 
 
 @util.log(logger)
@@ -334,6 +359,10 @@ def _args_parse(argv):
     point_display.add_argument("-sp", "--" +
                                consts.DisplayOptions.STACKPLOT.value,
                                action="store_true", help="display as stackplot")
+
+    parser.add_argument("--noagg", action="store_true",
+                        help="if set, none of the sections in the file"
+                             "will be aggregated")
 
     # Add flag and parameter for input filename
     filename = parser.add_argument_group()

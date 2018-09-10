@@ -424,7 +424,7 @@ class _PlotterWindow(pg.GraphicsWindow):
 
     """
 
-    def __init__(self, generator_list, parent=None):
+    def __init__(self, event_generator, parent=None):
         """
         Initialises the window
 
@@ -433,17 +433,12 @@ class _PlotterWindow(pg.GraphicsWindow):
         :param parent: parent of the window, should be left None
 
         """
-        def events_from_generator_list():
-            for generator in generator_list:
-                for event in generator:
-                    yield event
-
         # Initialise superclass
         super().__init__(parent=parent)
 
         # Process data, this data will remain unchanged (so we can filter
         # things from it)
-        self.processed_data = _EventDataProcessor(events_from_generator_list())
+        self.processed_data = _EventDataProcessor(event_generator)
         # We store the currently displayed data (which will change once we
         # filter)
         self.current_displayed_data = self.processed_data
@@ -629,7 +624,7 @@ class TCPPlotter(generic_display.GenericDisplay):
     _DEFAULT_OPTIONS = DisplayOptions()
 
     def __init__(self, data_gen,
-                 data_options=data_io.StackData.DEFAULT_OPTIONS,
+                 data_options=data_io.EventData.DEFAULT_OPTIONS,
                  display_options=_DEFAULT_OPTIONS):
         """
         Initializes the class
@@ -661,42 +656,42 @@ class TCPPlotter(generic_display.GenericDisplay):
         renderer.raise_()
         app.exec_()
 
-import random
-data = []
-types = ['accept', 'close', 'connect']
-for i in range(1, int(random.random() * 1000)):
-    time = random.random() * 100
-    s = int(random.random() * 100)
-    d = int(random.random() * 100)
-    data.append(data_io.EventDatum(time=time,
-                                   type=types[random.randrange(0, 3)],
-                                   connected=[("source_", "dest_")],
-                                   specific_datum={
-                                        "source_pid": s % 25,
-                                        "source_comm": 'process' + str(s),
-                                        "source_port": s % 25,
-                                        "dest_pid": d % 25,
-                                        "dest_comm": 'process' + str(d),
-                                        "dest_port": d % 25,
-                                        "net_ns": s+d}))
-
-data.append(data_io.EventDatum(time=30,
-                               type="new",
-                               connected=None,
-                               specific_datum={
-                                    "pid": 32,
-                                    "comm": 'newthing32',
-                                    "dodo": 25,
-                               }))
-
-data.append(data_io.EventDatum(time=50,
-                               type="old",
-                               connected=None,
-                               specific_datum={
-                                    "pid": 32,
-                                    "comm": 'newthing32',
-                                    "dodo": 27,
-                               }))
-
-plot = TCPPlotter([data])
-plot.show()
+# import random
+# data = []
+# types = ['accept', 'close', 'connect']
+# for i in range(1, int(random.random() * 1000)):
+#     time = random.random() * 100
+#     s = int(random.random() * 100)
+#     d = int(random.random() * 100)
+#     data.append(data_io.EventDatum(time=time,
+#                                    type=types[random.randrange(0, 3)],
+#                                    connected=[("source_", "dest_")],
+#                                    specific_datum={
+#                                         "source_pid": s % 25,
+#                                         "source_comm": 'process' + str(s),
+#                                         "source_port": s % 25,
+#                                         "dest_pid": d % 25,
+#                                         "dest_comm": 'process' + str(d),
+#                                         "dest_port": d % 25,
+#                                         "net_ns": s+d}))
+#
+# data.append(data_io.EventDatum(time=30,
+#                                type="new",
+#                                connected=None,
+#                                specific_datum={
+#                                     "pid": 32,
+#                                     "comm": 'newthing32',
+#                                     "dodo": 25,
+#                                }))
+#
+# data.append(data_io.EventDatum(time=50,
+#                                type="old",
+#                                connected=None,
+#                                specific_datum={
+#                                     "pid": 32,
+#                                     "comm": 'newthing32',
+#                                     "dodo": 27,
+#                                }))
+#
+# plot = TCPPlotter([data])
+# plot.show()
