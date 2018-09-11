@@ -103,7 +103,7 @@ class Treemap(GenericDisplay):
                 # Write to the temp CSV file in the required format
                 out_file.write(str(line.weight) + ';' +
                                ';'.join(
-                                   line.stack[0:self.display_options.depth + 1])
+                                   line.stack[0:self.display_options.depth])
                                + '\n')
 
     @util.Override(GenericDisplay)
