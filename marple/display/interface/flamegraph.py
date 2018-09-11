@@ -51,7 +51,7 @@ class Flamegraph(GenericDisplay):
         Constructor for the flamegraph.
 
         :param data:
-            A generator that returns the lines for the section we want to
+            A generator that returns the data for the section we want to
             display as a flamegraph
         :param out:
             The output file where the image will be saved as an instance
@@ -71,19 +71,6 @@ class Flamegraph(GenericDisplay):
         # Setting the right extension and getting the path of the outp
         out.set_options("flamegraph", "svg")
         self.out_filename = str(out)
-
-    @util.log(logger)
-    def _read(self):
-        """
-        Read stack events from the self.data generator and parse each line to
-        a StackDatum object
-
-        :returns: a generator yielding StackDatum for each line read from
-                  self.data
-        """
-
-        for line in self.data:
-            yield StackDatum.from_string(line)
 
     @util.log(logger)
     def _make(self, stack_data):
@@ -124,10 +111,8 @@ class Flamegraph(GenericDisplay):
         Creates the image and uses firefox to display the flamegraph.
 
         """
-        # Generate data from the input file
-        stack_generator = self._read()
         # Create a flamegraph svg based on the data
-        self._make(stack_generator)
+        self._make(self.data)
         # Open firefox
         username = os.environ['SUDO_USER']
         subprocess.call(["su", "-", "-c",  "firefox " + self.out_filename,

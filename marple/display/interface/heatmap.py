@@ -133,7 +133,7 @@ class HeatMap(GenericDisplay):
         Constructor for the heat map - initialises the heatmap.
 
         :param data:
-            A generator that returns the lines for the section we want to
+            A generator that returns the data in the section we want to
             display as a heatmap
         :param out:
             The output file where the image will be saved as an instance
@@ -246,12 +246,13 @@ class HeatMap(GenericDisplay):
             A pair of sequences: x values, y values.
 
         """
-
-        datapoints = [data_io.PointDatum.from_string(line)
-                      for line in data]
-
-        x_values = [dp.x for dp in datapoints]
-        y_values = [dp.y for dp in datapoints]
+        x_values = []
+        y_values = []
+        for datum in data:
+            x_values.append(datum.x)
+            y_values.append(datum.y)
+        # x_values = [dp.x for dp in data] can't be used since we got a gen
+        # y_values = [dp.y for dp in data]
 
         if not x_values or not y_values:
             raise HeatmapException("No data in input file.")

@@ -50,7 +50,7 @@ class StackPlot(GenericDisplay):
         There is no out file since currently we do not save an image of the
         output
         :param data:
-            A generator that returns the lines for the section we want to
+            A generator that returns the data in the section we want to
             display as a stackplot
         :param data_options: object of the class specified in each of the `Data`
                              classes, containig various data options to be used
@@ -64,11 +64,10 @@ class StackPlot(GenericDisplay):
 
         # Read the data into a dict
         datapoints = {}
-        for line in data:
-            dp = data_io.PointDatum.from_string(line)
-            if dp.x not in datapoints:
-                datapoints[dp.x] = []
-            datapoints[dp.x].append((dp.y, dp.info))
+        for point in data:
+            if point.x not in datapoints:
+                datapoints[point.x] = []
+            datapoints[point.x].append((point.y, point.info))
 
         # Collapse same labels at same x
         self._collapse_labels(datapoints)
