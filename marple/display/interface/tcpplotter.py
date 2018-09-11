@@ -92,13 +92,14 @@ class _PlotterContainer:
                             unique_tracks += 1
             return ymap
 
+        # TODO: color_idx problem out of range?
         def _assign_colors():
             colors = {}
             color_idx = 0
             for event_type in processed_data.get_event_types():
                 if event_type not in colors:
                     colors[event_type] = self.line_colors[color_idx]
-                    if color_idx < len(self.line_colors):
+                    if color_idx < len(self.line_colors) - 1:
                         color_idx += 1
 
             return colors
@@ -656,42 +657,24 @@ class TCPPlotter(generic_display.GenericDisplay):
         renderer.raise_()
         app.exec_()
 
-# import random
-# data = []
-# types = ['accept', 'close', 'connect']
-# for i in range(1, int(random.random() * 1000)):
-#     time = random.random() * 100
-#     s = int(random.random() * 100)
-#     d = int(random.random() * 100)
-#     data.append(data_io.EventDatum(time=time,
-#                                    type=types[random.randrange(0, 3)],
-#                                    connected=[("source_", "dest_")],
-#                                    specific_datum={
-#                                         "source_pid": s % 25,
-#                                         "source_comm": 'process' + str(s),
-#                                         "source_port": s % 25,
-#                                         "dest_pid": d % 25,
-#                                         "dest_comm": 'process' + str(d),
-#                                         "dest_port": d % 25,
-#                                         "net_ns": s+d}))
-#
-# data.append(data_io.EventDatum(time=30,
-#                                type="new",
-#                                connected=None,
-#                                specific_datum={
-#                                     "pid": 32,
-#                                     "comm": 'newthing32',
-#                                     "dodo": 25,
-#                                }))
-#
-# data.append(data_io.EventDatum(time=50,
-#                                type="old",
-#                                connected=None,
-#                                specific_datum={
-#                                     "pid": 32,
-#                                     "comm": 'newthing32',
-#                                     "dodo": 27,
-#                                }))
-#
-# plot = TCPPlotter([data])
+import random
+data = []
+types = ['accept', 'close', 'connect']
+for i in range(1, int(random.random() * 1000)):
+    time = random.random() * 100
+    s = int(random.random() * 100)
+    d = int(random.random() * 100)
+    data.append(data_io.EventDatum(time=time,
+                                   type=types[random.randrange(0, 3)],
+                                   connected=[("source_", "dest_")],
+                                   specific_datum={
+                                        "source_pid": s % 25,
+                                        "source_comm": 'process' + str(s),
+                                        "source_port": s % 25,
+                                        "dest_pid": d % 25,
+                                        "dest_comm": 'process' + str(d),
+                                        "dest_port": d % 25,
+                                        "net_ns": s+d}))
+
+# plot = TCPPlotter(data)
 # plot.show()
