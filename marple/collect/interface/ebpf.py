@@ -376,12 +376,15 @@ class TCPTracer(collecter.Collecter):
 
             # Otherwise output event
             event = data_io.EventDatum(time=time, type=tcp_type,
-                                       specific_datum=(
-                                             source_pid, source_comm,
-                                             source_port,
-                                             dest_pid, dest_comm, dest_port,
-                                             net_ns),
-                                       connected=[('_source', '_dest')]
+                                       specific_datum={
+                                           "source_pid": source_pid,
+                                           "source_comm": source_comm,
+                                           "source_port": source_port,
+                                           "dest_pid": dest_pid,
+                                           "dest_comm": dest_comm,
+                                           "dest_port": dest_port,
+                                           "net_ns": net_ns},
+                                       connected=[('source_', 'dest_')]
                                        )
 
             yield event
