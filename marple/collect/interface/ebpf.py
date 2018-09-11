@@ -380,7 +380,8 @@ class TCPTracer(collecter.Collecter):
                                              source_pid, source_comm,
                                              source_port,
                                              dest_pid, dest_comm, dest_port,
-                                             net_ns)
+                                             net_ns),
+                                       connected=[('_source', '_dest')]
                                        )
 
             yield event
