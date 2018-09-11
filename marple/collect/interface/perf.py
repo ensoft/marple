@@ -96,8 +96,9 @@ class MemoryEvents(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
+        data_options = data_io.StackData.DataOptions("samples")
         return data_io.StackData(data, self.start_time, self.end_time,
-                                 InterfaceTypes.MEMEVENTS, "samples")
+                                 InterfaceTypes.MEMEVENTS, data_options)
 
 
 class MemoryMalloc(collecter.Collecter):
@@ -170,8 +171,9 @@ class MemoryMalloc(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
+        data_options = data_io.StackData.DataOptions("kilobytes")
         return data_io.StackData(data, self.start_time, self.end_time,
-                                 InterfaceTypes.PERF_MALLOC, "kilobytes")
+                                 InterfaceTypes.PERF_MALLOC, data_options)
 
 
 class StackTrace(collecter.Collecter):
@@ -239,8 +241,9 @@ class StackTrace(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
+        data_options = data_io.StackData.DataOptions("samples")
         return data_io.StackData(data, self.start_time, self.end_time,
-                                 InterfaceTypes.CALLSTACK, "samples")
+                                 InterfaceTypes.CALLSTACK, data_options)
 
 
 class SchedulingEvents(collecter.Collecter):
@@ -315,15 +318,12 @@ class SchedulingEvents(collecter.Collecter):
             # general manner so that they could be used, knowing their order,
             # to display them in a specific way (if g2 is used this info
             # can be used to decide the tracks and labels)
-            specific_datum_first = "{} (pid: {})".format(match.group("name"),
-                                                         match.group("pid"))
-            specific_datum_second = "cpu " + str(int(match.group("cpu")))
 
-            # The event specific data for this class is "track" and "label",
-            # both used to display the marple file using g2
-            specific_datum = (specific_datum_first, specific_datum_second)
+            specific_datum = {'pid': match.group("pid"),
+                              'comm': match.group('name'),
+                              'cpu': match.group('cpu')}
             event = data_io.EventDatum(specific_datum=specific_datum,
-                                       time=time_int,
+                                       time=time_int, connected=None,
                                        type=match.group("event"))
             yield event
 
@@ -390,8 +390,9 @@ class DiskBlockRequests(collecter.Collecter):
         """ Collect data asynchronously using perf """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
+        data_options = data_io.StackData.DataOptions("samples")
         return data_io.StackData(data, self.start_time, self.end_time,
-                                 InterfaceTypes.DISKBLOCK, "samples")
+                                 InterfaceTypes.DISKBLOCK, data_options)
 
 
 class StackParser:

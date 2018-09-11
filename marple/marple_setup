@@ -5,8 +5,8 @@
 # July-Aug 2018 - Hrutvik Kanabar, Franz Nowak
 # -------------------------------------------------------------
 
-echo $PWD
-LOG=${PWD}/marple_setup.log
+sudo echo  # ensure sudo
+
 if command -v python3 &> /dev/null; then
     echo Python 3 is installed.
 else
@@ -35,29 +35,37 @@ show_spinner()
     echo -ne '\b'
 }
 
-#BEGIN="\033[36m\033[1m\033[4m"
-#END="\033[0m\033[0m\033[0m"
+BEGIN="\033[36m\033[1m\033[4m"
+END="\033[0m\033[0m\033[0m"
 
+LOG=${PWD}/marple_setup.log
+printf "${BEGIN}Current working directory: ${PWD}${END}\n" | tee -a $LOG
+printf "${BEGIN}Log file: ${LOG}${END}\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}
 
 printf "Updating... " | tee -a $LOG
 sudo apt-get -qq update &>> $LOG &
 show_spinner
-printf "Done.\n\n\n" | tee -a $LOG
+printf "Done.\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}
 
 printf "Installing linux-tools... " | tee -a $LOG
 sudo apt-get -qq install linux-tools-generic linux-tools-common linux-tools-`uname -r` smem &>> $LOG &
 show_spinner
-printf "Done.\n\n\n" | tee -a $LOG
+printf "Done.\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}
 
 printf "Installing Perl... " | tee -a $LOG
 sudo apt-get -qq install perl &>> $LOG &
 show_spinner
-printf "Done.\n\n\n" | tee -a $LOG
+printf "Done.\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}
 
 printf "Installing Python TK... " | tee -a $LOG
 sudo apt-get -qq install python3-tk &>> $LOG &
 show_spinner
-printf "Done.\n\n\n" | tee -a $LOG
+printf "Done.\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}
 
 printf "Installing BCC... " | tee -a $LOG
 codename=`lsb_release -cs`
@@ -69,12 +77,14 @@ sudo apt-get update &>> $LOG &
 show_spinner
 sudo apt-get -qq --allow-unauthenticated install bcc-tools libbcc-examples linux-headers-$(uname -r) &>> $LOG &
 show_spinner
-printf "Done.\n\n\n" | tee -a $LOG
+printf "Done.\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}
 
 printf "Installing dependencies for vpp/g2... " | tee -a $LOG
 sudo apt-get -qq install libgtk2.0-dev &>> $LOG &
 show_spinner
-printf "Done.\n\n\n" | tee -a $LOG
+printf "Done.\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}
 
 printf "Configuring vpp/g2... " | tee -a $LOG
 cd ~
@@ -93,10 +103,12 @@ automake --add-missing &>> $LOG &
 show_spinner
 autoreconf &>> $LOG &
 show_spinner
-printf "Done.\n\n\n" | tee -a $LOG
+printf "Done.\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}
 
 printf "Installing vpp/g2... " | tee -a $LOG
 cd ../build-root
 make --silent g2-install &>> $LOG &
 show_spinner
-printf "Done.\n\n\n" | tee -a $LOG
+printf "Done.\n" | tee -a $LOG
+echo '\n\n\n' >> ${LOG}

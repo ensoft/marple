@@ -63,3 +63,6 @@
 
 [Aliases]
     boot: memleak,cpusched,disklat
+
+[Aggregate]
+    cpusched,ipc: tcpplot

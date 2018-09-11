@@ -131,9 +131,10 @@ class MemoryGraph(collecter.Collecter):
         """ Collect data asynchronously using smem """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
+        data_options = data_io.PointData.DataOptions(
+            x_label='Time', y_label='Memory', x_units='s', y_units='MB')
         return data_io.PointData(data, self.start_time, self.end_time,
-                                 InterfaceTypes.MEMTIME, 'Time', 'seconds',
-                                 'Memory', 'megabytes')
+                                 InterfaceTypes.MEMTIME, data_options)
 
     @staticmethod
     def _insert_datapoint(memory):

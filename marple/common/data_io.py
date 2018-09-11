@@ -43,9 +43,8 @@ __all__ = (
     'StackData',
     'PointData',
     'EventData',
-    'write',
-    'read_header',
-    'read_until_line'
+    'Writer',
+    'Reader'
 )
 
 import json
@@ -75,7 +74,7 @@ class EventDatum(typing.NamedTuple):
     type: str
     specific_datum: dict
     connected: list
-    # of touples of same length, connected[i][0] is the
+    # of tuples of same length, connected[i][0] is the
     # source and connected[i][1] is its destionation
 
     def __str__(self):
@@ -90,10 +89,11 @@ class EventDatum(typing.NamedTuple):
 
         """
         return consts.datum_field_separator.join((str(self.time), self.type,
-                                                  str(self.specific_datum)))
+                                                  str(self.specific_datum),
+                                                  str(self.connected)))
 
-    @classmethod
-    def from_string(cls, string):
+    @staticmethod
+    def from_string(string):
         """
         Converts a standard representation to a :class:`EventDatum` object.
 
@@ -109,9 +109,11 @@ class EventDatum(typing.NamedTuple):
 
         """
         try:
-            time, type_, datum = string.strip().split(consts.datum_field_separator)
+            time, type_, datum, connected = \
+                string.strip().split(consts.datum_field_separator)
             return EventDatum(time=int(time), type=type_,
-                              specific_datum=eval(datum))
+                              specific_datum=eval(datum),
+                              connected=eval(connected))
         except IndexError as ie:
             raise exceptions.DatatypeException(
                 "EventDatum - not enough values in datatype string "
@@ -150,8 +152,8 @@ class PointDatum(typing.NamedTuple):
         """
         return ",".join((str(self.x), str(self.y), self.info))
 
-    @classmethod
-    def from_string(cls, string):
+    @staticmethod
+    def from_string(string):
         """
         Converts a standard representation into a :class:`PointDatum` object.
 
@@ -205,8 +207,8 @@ class StackDatum(typing.NamedTuple):
         """
         return consts.datum_field_separator.join((str(self.weight), ';'.join(self.stack)))
 
-    @classmethod
-    def from_string(cls, string):
+    @staticmethod
+    def from_string(string):
         """
         Converts a standard representation into a :class:`StackDatum` object.
 
@@ -235,23 +237,26 @@ class Data:
     class DataOptions(typing.NamedTuple):
         pass
 
+    datum_class = None
+
     DEFAULT_OPTIONS = DataOptions()
 
-    def __init__(self, datum_generator, start_time, end_time, interface):
+    def __init__(self, datum_generator, start_time, end_time,
+                 interface, data_options=DEFAULT_OPTIONS):
         self.datum_generator = datum_generator
         self.start_time = start_time
         self.end_time = end_time
         self.interface = interface
         self.datatype = None
-        self.data_options = {}
+        self.data_options = data_options
 
     def header_dict(self):
         header_dict = {
-            "start": str(self.start_time),
-            "end": str(self.end_time),
+            "start time": str(self.start_time),
+            "end time": str(self.end_time),
             "interface": self.interface.value,
             "datatype": self.datatype,
-            "data_options": self.data_options,
+            "data options": self.data_options._asdict(),
         }
         return header_dict
 
@@ -261,33 +266,56 @@ class Data:
         for datum in self.datum_generator:
             yield str(datum)
 
+    @classmethod
+    def from_string(cls, string):
+        split = string.strip().split('\n')
+        header = json.loads(split[0])
+
+        datum_generator = (cls.datum_class.from_string(line)
+                           for line in split[1:])
+
+        return cls(datum_generator, header['start time'], header['end time'],
+                   consts.InterfaceTypes(header['interface']),
+                   cls.DataOptions(**(header['data options'])))
+
 
 class StackData(Data):
+    datum_class = StackDatum
+
     class DataOptions(typing.NamedTuple):
         """
         - weight_units: the units for the weight (calls, bytes etc)
 
         """
         weight_units: str
-    DEFAULT_OPTIONS = DataOptions("samples")
+
+    DEFAULT_OPTIONS = DataOptions(weight_units="samples")
 
     @util.Override(Data)
-    def __init__(self, datum_generator, start, end, interface, weight_units):
-        super().__init__(datum_generator, start, end, interface)
-        self.datatype = "stack"
-        self.data_options = {
-            'weight_units': weight_units,
-        }
+    def __init__(self, datum_generator, start, end, interface,
+                 data_options=DEFAULT_OPTIONS):
+        super().__init__(datum_generator, start, end, interface, data_options)
+        self.datatype = consts.Datatypes.STACK.value
 
 
 class EventData(Data):
+    datum_class = EventDatum
+
+    class DataOptions(typing.NamedTuple):
+        pass
+
+    DEFAULT_OPTIONS = DataOptions()
+
     @util.Override(Data)
-    def __init__(self, datum_generator, start, end, interface):
-        super().__init__(datum_generator, start, end, interface)
-        self.datatype = "event"
+    def __init__(self, datum_generator, start, end, interface,
+                 data_options=DEFAULT_OPTIONS):
+        super().__init__(datum_generator, start, end, interface, data_options)
+        self.datatype = consts.Datatypes.EVENT.value
 
 
 class PointData(Data):
+    datum_class = PointDatum
+
     class DataOptions(typing.NamedTuple):
         """
         - x_label: label for the x axis;
@@ -299,84 +327,188 @@ class PointData(Data):
         y_label: str
         x_units: str
         y_units: str
+
     DEFAULT_OPTIONS = DataOptions("x label", "y label", "x units", "y units")
 
-    def __init__(self, datum_generator, start, end, interface, x_label,
-                 x_units, y_label, y_units):
-        super().__init__(datum_generator, start, end, interface)
-        self.datatype = "point"
-        self.data_options = {
-            'x_label': x_label,
-            'x_units': x_units,
-            'y_label': y_label,
-            'y_units': y_units,
-        }
+    def __init__(self, datum_generator, start, end, interface,
+                 data_options=DEFAULT_OPTIONS):
+        super().__init__(datum_generator, start, end, interface, data_options)
+        self.datatype = consts.Datatypes.POINT.value
 
 
-@util.log(logger)
-def write(data, filename):
-    """
-    Write standard datatypes to a standard format file.
+class Writer:
 
-    Note that the file is appended to, rather than overwritten.
+    def __init__(self, filename):
+        """
+        Initialises a writer object.
 
-    :param data:
-        A StackData, EventData, or PointData object
-    :param filename:
-        The output file name
+        Creates a blank metaheader, and stores the filename.
+        Also initialises a file_length variable, to track the current length
+        of the file in lines.
 
-    """
-    with open(filename, "a") as out:
+        :param filename:
+            The desired output filename.
+
+        """
+        self.filename = filename
+        self.metaheader = dict()
+
+    def __enter__(self):
+        """ Context manager for writer. """
+        self.file = open(self.filename, 'w+', encoding='utf-8')
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """ Close the file resource. """
+
+        # Read data sections from beginning of file
+        self.file.seek(0)
+        sections = self.file.read()
+
+        # Write metaheader + data sections to file
+        self.file.seek(0)
+        self._write_metaheader()
+        self.file.write(sections)
+
+        # Close file
+        self.file.close()
+
+    def _write_metaheader(self):
+        """
+        Write the metaheader to the file.
+
+        """
+        metaheader = json.dumps(self.metaheader) + "\n"
+        self.file.write(metaheader)
+
+    def _write_section(self, index, data):
+        """
+        Write a single section in a standard format file.
+
+        Appends the section to the current standard format file.
+        Includes the section separator.
+
+        :param data:
+            A StackData, EventData, or PointData object.
+
+        """
+        # Write to file, keep track of start and end
+        start_byte = self.file.tell()
         for line in data.to_string():
-            out.write(line + "\n")
-        out.write(consts.data_separator)
+            self.file.write(line + "\n")
+        self.file.write(consts.data_separator)
+        end_byte = self.file.tell()
+
+        # Update metaheader
+        header = data.header_dict()
+        header["start byte"] = start_byte
+        header["end byte"] = end_byte
+        self.metaheader[index] = header
+
+    @util.log(logger)
+    def write(self, data_objs):
+        """
+        Write the data to a standard format file.
+
+        Write a metaheader, and then sections of data.
+
+        :param data_objs:
+            An iterator of data objects.
+
+        """
+        for index, data in enumerate(data_objs):
+            self._write_section(index, data)
 
 
-@util.log(logger)
-def read_header(file_object):
-    """
-    Read the header of the file (its first line).
+class Reader:
 
-    If the header is not a valid JSON on a single line, an error is thrown.
-    If at the end of a file, None is returned.
+    def __init__(self, filename):
+        """
+        Initialises a reader object.
 
-    :param file_object:
-        The input file object.
-    :return:
-        The dictionary representation of the file header.
-    :raises:
-        json.JSONDecodeError if the header is invalid.
+        Stores the filename.
 
-    """
-    header_str = file_object.readline().strip()
-    if not header_str:  # end of a file
-        return None
+        :param filename:
+            The input filename.
 
-    try:
-        header_dict = json.loads(header_str)
-        return header_dict
-    except json.JSONDecodeError as jse:
-        jse.msg = "Malformed JSON header!"
-        raise jse
+        """
+        self.filename = filename
 
+    def __enter__(self):
+        """
+        Context manager for reader.
 
-@util.log(logger)
-def read_until_line(file_object, stop_line):
-    """
-    Lazily read from the file until a certain line.
+        Stores the metaheader for future usage.
 
-    If the end of the file is encountered, the results so far are returned.
+        """
+        self.file = open(self.filename, 'r', encoding='utf-8')
+        self.metaheader = json.loads(self.file.readline().strip())
+        self.offset = self.file.tell()
+        return self
 
-    :param file_object:
-        The input file to read.
-        Reading continues from the current file pointer position.
-    :param stop_line:
-        The line at which to stop.
-    :return:
-        Yields single lines from the file.
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """ Close the file resource. """
+        self.file.close()
 
-    """
-    line = file_object.readline()
-    while line not in (stop_line, ''):
-        yield line
-        line = file_object.readline()
+    def _get_interface_index(self, interface):
+        for index, header in self.metaheader.items():
+            if header['interface'] == interface:
+                return index
+
+    def _get_data_from_section(self, index):
+        try:
+            header = self.metaheader[str(index)]
+        except KeyError as ke:
+            raise exceptions.DatatypeException(
+                "Metaheader error: entry no. {} not found!".format(index))\
+                from ke
+        self.file.seek(self.offset + header["start byte"])
+        num_bytes = header["end byte"] - header["start byte"]
+        section = self.file.read(num_bytes)
+
+        datatype = header['datatype']
+
+        if datatype == consts.Datatypes.EVENT.value:
+            result = EventData.from_string(section)
+        elif datatype == consts.Datatypes.POINT.value:
+            result = PointData.from_string(section)
+        elif datatype == consts.Datatypes.STACK.value:
+            result = StackData.from_string(section)
+        else:
+            raise exceptions.DatatypeException(
+                "Header error: datatype '{}' not recognised!".format(datatype))
+
+        return result
+
+    def get_interface_from_index(self, index):
+        try:
+            header = self.metaheader[str(index)]
+        except KeyError as ke:
+            raise exceptions.DatatypeException(
+                "Metaheader error: entry no. {} not found!".format(index)) \
+                from ke
+
+        return header['interface']
+
+    def get_all_interface_names(self):
+        interfaces = [header['interface']
+                      for _, header in self.metaheader.items()]
+        assert len(interfaces) == len(set(interfaces))  # no duplicates
+        return set(interfaces)
+
+    def get_header_list(self):
+        format_str = "{:>8.8}. {:12.12} {:10.10} {:30.30} {:30.30}"
+        headers = [
+            format_str
+            .format(index, header['interface'], header['datatype'],
+                    header['start time'], header['end time'])
+            for index, header in self.metaheader.items()
+        ]
+        return [format_str.format("Entry no", "Subcommand", "Datatype",
+                                  "Start time", "End time")] + headers
+
+    def get_interface_data(self, *interfaces):
+        for interface in interfaces:
+            index = self._get_interface_index(interface)
+            data = self._get_data_from_section(index)
+            yield data

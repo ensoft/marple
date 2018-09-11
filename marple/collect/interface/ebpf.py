@@ -83,8 +83,9 @@ class MallocStacks(collecter.Collecter):
         """ Collect data asynchronously using iosnoop."""
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
+        data_options = data_io.StackData.DataOptions("kilobytes")
         return data_io.StackData(data, self.start_time, self.end_time,
-                                 InterfaceTypes.MALLOCSTACKS, "kilobytes")
+                                 InterfaceTypes.MALLOCSTACKS, data_options)
 
 
 class Memleak(collecter.Collecter):
@@ -147,8 +148,9 @@ class Memleak(collecter.Collecter):
         """ Collect data asynchronously using memleak.py """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
+        data_options = data_io.StackData.DataOptions("kilobytes")
         return data_io.StackData(data, self.start_time, self.end_time,
-                                 InterfaceTypes.MEMLEAK, "kilobytes")
+                                 InterfaceTypes.MEMLEAK, data_options)
 
 
 class TCPTracer(collecter.Collecter):

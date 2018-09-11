@@ -100,8 +100,8 @@ def main(argv, config_parser):
     )
 
     # Write results
-    for result in results[:-1]:
-        marple.common.data_io.write(result, str(filename))
+    with marple.common.data_io.Writer(str(filename)) as writer:
+        writer.write(results[:-1])
 
     # Cleanup
     ioloop.close()
