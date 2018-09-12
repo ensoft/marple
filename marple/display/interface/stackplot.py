@@ -17,7 +17,11 @@ from typing import NamedTuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from marple.common import util, data_io
+from marple.common import (
+    config,
+    consts,
+    util
+)
 from marple.display.interface.generic_display import GenericDisplay
 
 logger = logging.getLogger(__name__)
@@ -39,11 +43,8 @@ class StackPlot(GenericDisplay):
         """
         top_processes: int
 
-    _DEFAULT_DISPLAY_OPTIONS = DisplayOptions(top_processes=5)
-
     @util.log(logger)
-    def __init__(self, data, data_options=data_io.PointData.DEFAULT_OPTIONS,
-                 display_options=_DEFAULT_DISPLAY_OPTIONS):
+    def __init__(self, data):
         """
         Constructor, initialises the stackplot.
 
@@ -52,19 +53,18 @@ class StackPlot(GenericDisplay):
         :param data:
             A generator that returns the data in the section we want to
             display as a stackplot
-        :param data_options: object of the class specified in each of the `Data`
-                             classes, containig various data options to be used
-                             in the display class as labels or info
-        :param display_options: display related options that are meant to make
-                                the display option more customizable
 
         """
         # Initialise the base class
-        super().__init__(data_options, display_options)
+        super().__init__(data)
+
+        top_processes = config.get_option_from_section(
+            consts.DisplayOptions.STACKPLOT.value, "top", typ="int")
+        self.display_options = self.DisplayOptions(top_processes)
 
         # Read the data into a dict
         datapoints = {}
-        for point in data:
+        for point in data.datum_generator:
             if point.x not in datapoints:
                 datapoints[point.x] = []
             datapoints[point.x].append((point.y, point.info))

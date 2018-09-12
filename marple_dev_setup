@@ -53,6 +53,7 @@ deactivate
 
 printf "${BEGIN}Changing sudoers file... ${END}"
 echo 'Defaults env_keep += "PYTHONPATH"' | sudo EDITOR='tee -a' visudo > /dev/null
+echo 'Defaults env_keep += "XDG_RUNTIME_DIR"' | sudo EDITOR='tee -a' visudo > /dev/null
 printf "${BEGIN}Done.${END}\n\n\n"
 
 printf "${BEGIN}Installing BCC... ${END}"

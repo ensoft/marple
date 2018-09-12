@@ -33,11 +33,11 @@ addons:
 #    s3_region: us-west-1
 #    debug: true
 #    paths: # Select artifacts to upload
-#      - coverage.xml
-#      - pytest.txt
-#      - pylint.txt
-#      - pylint.svg
-#      - $(find ./coverage_annotate -type f ! -size 0 | tr "\n" ":")
+#      - narple/coverage.xml
+#      - marple/pytest.txt
+#      - marple/pylint.txt
+#      - marple/pylint.svg
+#      - marple/$(find ./coverage_annotate -type f ! -size 0 | tr "\n" ":")
 #    target_paths: # Select where to upload artifacts
 #      - /${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}
 #      - /most_recent

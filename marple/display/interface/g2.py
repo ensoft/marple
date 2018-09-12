@@ -19,6 +19,7 @@ import subprocess
 from typing import NamedTuple
 
 from marple.common import (
+    consts,
     file,
     util,
     data_io,
@@ -40,29 +41,21 @@ class G2(GenericDisplay):
             - track: pid or cpu, tells the g2 tool what to use as track
         """
         track: str
-    _DEFAULT_OPTIONS = DisplayOptions(track="pid")
 
-    def __init__(self, data, data_options=data_io.EventData.DEFAULT_OPTIONS,
-                 display_options=_DEFAULT_OPTIONS):
+    def __init__(self, data):
         """
-        Constructor for the g2.
-
-        This display mode does not currently support an out file the g2 result
-        cannot be saved
+        Constructor for the g2 display mode.
 
         :param data:
-            A generator that returns the lines for the section we want to
-            display using g2
-        :param data_options: object of the class specified in each of the `Data`
-                             classes, containig various data options to be used
-                             in the display class as labels or info
-        :param display_options: display related options that are meant to make
-                                the display option more customizable
+            An EventData object.
+
         """
         # Initialise the base class
-        super().__init__(data_options, display_options)
+        super().__init__(data)
 
-        self.data = data
+        track = config.get_option_from_section(
+            consts.DisplayOptions.G2.value, "track")
+        self.display_options = self.DisplayOptions(track)
 
     @util.Override(GenericDisplay)
     @util.log(logger)
@@ -74,12 +67,14 @@ class G2(GenericDisplay):
         created
 
         """
-        tmp_cpel = file.TempFileName()
-        g2_path = config.Parser().get_option_from_section('g2', 'path')
+        tmp_cpel = str(file.TempFileName())
+        g2_path = config.get_option_from_section('g2', 'path')
         g2_path = os.path.expanduser(g2_path)
         logger.info("G2 path: " + g2_path)
 
-        writer = CpelWriter(self.data, self.display_options.track)
+        # We create a generator that yields EventDatum from
+        event_generator = self.data.datum_generator
+        writer = CpelWriter(event_generator, self.display_options.track)
         writer.write(str(tmp_cpel))
 
         try:

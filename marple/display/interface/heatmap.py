@@ -33,8 +33,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import widgets
 
-from marple.common import util
-from marple.common import data_io
+from marple.common import (
+    config,
+    consts,
+    util
+)
 from marple.display.interface.generic_display import GenericDisplay
 
 logger = logging.getLogger(__name__)
@@ -119,44 +122,39 @@ class HeatMap(GenericDisplay):
         parameters: GraphParameters
         normalise: bool
 
-    _DEFAULT_OPTIONS = DisplayOptions(parameters=GraphParameters(
-                                                     figure_size=10.0,
-                                                     scale=5.0,
-                                                     y_res=10.0),
-                                      normalise=True,
-                                      colorbar="No. Accesses")
-
-    def __init__(self, data, out,
-                 data_options=data_io.PointData.DEFAULT_OPTIONS,
-                 display_options=_DEFAULT_OPTIONS):
+    def __init__(self, data):
         """
         Constructor for the heat map - initialises the heatmap.
 
         :param data:
             A generator that returns the data in the section we want to
             display as a heatmap
-        :param out:
-            The output file where the image will be saved as an instance
-            of the :class:`DisplayFileName`.
-        :param data_options:
-        :param display_options:
 
         """
         # Initialise the base class
-        super().__init__(data_options, display_options)
+        super().__init__(data)
 
-        # Setting the right extension and getting the path of the outp
-        out.set_options("heatmap", "svg")
-        self.output = str(out)
+        self.labels = AxesLabels(self.data_options.x_label,
+                                 self.data_options.y_label,
+                                 self.data_options.x_units,
+                                 self.data_options.y_units)
 
-        self.labels = AxesLabels(data_options.x_label,
-                                 data_options.y_label,
-                                 data_options.x_units,
-                                 data_options.y_units)
+        figure_size = config.get_option_from_section(
+            consts.DisplayOptions.HEATMAP.value, "figure_size", typ="float")
+        scale = config.get_option_from_section(
+            consts.DisplayOptions.HEATMAP.value, "scale", typ="float")
+        y_res = config.get_option_from_section(
+            consts.DisplayOptions.HEATMAP.value, "y_res", typ="float")
+        parameters = GraphParameters(figure_size, scale, y_res)
+        normalise = config.get_option_from_section(
+            consts.DisplayOptions.HEATMAP.value, "normalised", typ="bool")
+        colorbar = "No. of occurences"
+        self.display_options = \
+            self.DisplayOptions(colorbar, parameters, normalise)
 
-        self.params = display_options.parameters
-        self.x_data, self.y_data = self._get_data(data,
-                                                  display_options.normalise)
+        self.params = self.display_options.parameters
+        self.x_data, self.y_data = self._get_data(
+            data.datum_generator, self.display_options.normalise)
 
         # Get values calculated from data
         self.data_stats = self._get_data_stats()
@@ -178,8 +176,6 @@ class HeatMap(GenericDisplay):
 
     @util.log(logger)
     def show(self):
-        # Save the figure in the output and then display it
-        plt.savefig(self.output, bbox_inches="tight")
         plt.show()
 
     class _DataStats(NamedTuple):
@@ -344,10 +340,14 @@ class HeatMap(GenericDisplay):
         Set the limits of the axes that should be visible.
 
         """
-        x_ax_min = max(self.data_stats.x_min, self.pos.x - self.data_stats.x_delta)
-        x_ax_max = min(self.data_stats.x_max, self.pos.x + self.data_stats.x_delta)
-        y_ax_min = max(self.data_stats.y_min, self.pos.y - self.data_stats.y_delta)
-        y_ax_max = min(self.data_stats.y_max, self.pos.y + self.data_stats.y_delta)
+        x_ax_min = max(self.data_stats.x_min,
+                       self.pos.x - self.data_stats.x_delta)
+        x_ax_max = min(self.data_stats.x_max,
+                       self.pos.x + self.data_stats.x_delta)
+        y_ax_min = max(self.data_stats.y_min,
+                       self.pos.y - self.data_stats.y_delta)
+        y_ax_max = min(self.data_stats.y_max,
+                       self.pos.y + self.data_stats.y_delta)
 
         if x_ax_min >= x_ax_max or y_ax_min >= y_ax_max:
             raise HeatmapException("Invalid axes bounds generated - change "
@@ -365,17 +365,17 @@ class HeatMap(GenericDisplay):
         # Position at top of the graph - numbers below are positionings relative
         # to the figure: [left, bottom, width, height]
         x_slider = plt.axes([0.2, 0.95, 0.6, 0.015])
-        x_slider_pos = widgets.Slider(x_slider,
-                              'Position of x-axis\n/ ' + self.labels.x_units,
-                              self.data_stats.x_min + self.data_stats.x_delta,
-                              self.data_stats.x_max - self.data_stats.x_delta)
+        x_slider_pos = widgets.Slider(
+            x_slider, 'Position of x-axis\n/ ' + self.labels.x_units,
+            self.data_stats.x_min + self.data_stats.x_delta,
+            self.data_stats.x_max - self.data_stats.x_delta)
         x_slider_pos.valtext.set_visible(False)
 
         y_slider = plt.axes([0.2, 0.9, 0.6, 0.015])
-        y_slider_pos = widgets.Slider(y_slider,
-                              'Position of y-axis\n/ ' + self.labels.y_units,
-                              self.data_stats.y_min + self.data_stats.y_delta,
-                              self.data_stats.y_max - self.data_stats.y_delta)
+        y_slider_pos = widgets.Slider(
+            y_slider, 'Position of y-axis\n/ ' + self.labels.y_units,
+            self.data_stats.y_min + self.data_stats.y_delta,
+            self.data_stats.y_max - self.data_stats.y_delta)
         y_slider_pos.valtext.set_visible(False)
 
         def update(val):

@@ -34,12 +34,11 @@ from marple.common import (
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-config_parser = config.Parser()
 
 
 # Attempt to import collect and display - keep track of which are present
 collect_exists, display_exists = True, True
-warn = config_parser.get_option_from_section("General", "warnings", "bool")
+warn = config.get_option_from_section("General", "warnings", "bool")
 
 try:
     from marple.collect import main as collect
@@ -84,7 +83,7 @@ def main():
                       "User was not root.")
         exit(1)
 
-    paths.create_directories()  # Create required directories TODO config dir?
+    paths.create_directories()  # Create required directories
     setup_logger()  # Setup logging
 
     # Parse arguments
@@ -103,11 +102,11 @@ def main():
     parsed, rest = parser.parse_known_args(sys.argv[1:])
 
     # Call relevant module
-    global collect_exists, display_exists, config_parser
+    global collect_exists, display_exists
     try:
         if parsed.collect:
             if collect_exists:
-                collect.main(rest, config_parser)
+                collect.main(rest)
             else:
                 raise ModuleNotFoundError(
                     name='common', path=(paths.MARPLE_DIR + '/__main__.py'))

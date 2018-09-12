@@ -20,7 +20,7 @@ from marple.common import (
     file,
     util,
     consts,
-    data_io
+    config
 )
 from marple.display.interface.generic_display import GenericDisplay
 from marple.display.tools.d3plus import d3IpyPlus as d3
@@ -40,32 +40,21 @@ class Treemap(GenericDisplay):
         depth: int
     _DEFAULT_OPTIONS = DisplayOptions(depth=25)
 
-    def __init__(self, data, out,
-                 data_options=data_io.StackData.DEFAULT_OPTIONS,
-                 display_options=_DEFAULT_OPTIONS):
+    def __init__(self, data):
         """
         Constructor for the Treemap.
 
         :param data:
             A generator that returns the data for the section we want to
             display as a treemap
-        :param out:
-            The output file where the image will be saved as an instance
-            of the :class:`DisplayFileName`.
-        :param data_options: object of the class specified in each of the `Data`
-                             classes, containig various data options to be used
-                             in the display class as labels or info
-        :param display_options: display related options that are meant to make
-                                the display option more customizable
 
         """
         # Initialise the base class
-        super().__init__(data_options, display_options)
+        super().__init__(data)
 
-        self.data = data
-        # Setting the right extension and getting the path of the outp
-        out.set_options("treemap", "html")
-        self.output = str(out)
+        depth = config.get_option_from_section(
+            consts.DisplayOptions.TREEMAP.value, "depth", typ="int")
+        self.display_options = self.DisplayOptions(depth)
 
     @util.log(logger)
     def _generate_csv(self, out_file):
@@ -94,17 +83,17 @@ class Treemap(GenericDisplay):
 
         with open(out_file, "w") as out_file:
             # Header of the csv; example: value;1;2;3;4;5...
-            out_file.write(self.data_options.weight_units + ";" +
-                           ";".join([str(i) for i in
-                                     range(1, self.display_options.depth+1)]) +
-                           "\n")
+            out_file.write(
+                self.data_options.weight_units + ";" +
+                ";".join(
+                    [str(i) for i in range(1, self.display_options.depth + 1)])
+                + "\n")
 
-            for line in self.data:
+            for line in self.data.datum_generator:
                 # Write to the temp CSV file in the required format
-                out_file.write(str(line.weight) + ';' +
-                               ';'.join(
-                                   line.stack[0:self.display_options.depth])
-                               + '\n')
+                out_file.write(
+                    str(line.weight) + ';' +
+                    ';'.join(line.stack[0:self.display_options.depth]) + '\n')
 
     @util.Override(GenericDisplay)
     @util.log(logger)
@@ -134,9 +123,11 @@ class Treemap(GenericDisplay):
                           value=self.data_options.weight_units,
                           color=self.data_options.weight_units,
                           legend=True, width=700)
-        with open(str(self.output), "w") as out:
+
+        temp_display_file = str(file.TempFileName())
+        with open(temp_display_file, "w") as out:
             out.write(tmap.dump_html(data))
 
         username = os.environ['SUDO_USER']
         subprocess.call(["su", "-", "-c", "firefox " +
-                         str(self.output), username])
+                         temp_display_file, username])
