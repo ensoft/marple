@@ -1,15 +1,22 @@
 # -------------------------------------------------------------
 # config.py - configuration of constants and defaults
-# June - August 2018 - Franz Nowak, Andrei Diaconu
+# June - September 2018 - Franz Nowak, Andrei Diaconu, Hrutvik Kanabar
 # -------------------------------------------------------------
 
 """
-Implements a Parser class that interacts with the config file to get the default
-values for various options
+Interacts with the MARPLE config file.
+
+The config file is located in ~/.marpleconfig.
+If no config file exists, the default one will be copied to the config location.
+The default config file can be found in the marple package (with __main__.py)
 
 """
 
-__all__ = ["Parser"]
+__all__ = (
+    'config',
+    'get_option_from_section',
+    'get_section',
+)
 
 import os
 import configparser
@@ -20,109 +27,69 @@ logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
 
 
-class Parser:
-    CONFIG_FILE = os.path.expanduser('~/.marpleconfig')
+CONFIG_FILE = os.path.expanduser('~/.marpleconfig')
+DEFAULTS_FILE = os.path.dirname(os.path.dirname(__file__)) + "/config.txt"
 
-    def __init__(self):
-        if not os.path.exists(self.CONFIG_FILE):
-            DEFAULTS_FILE = os.path.dirname(os.path.dirname(__file__)) + \
-                            "/config.txt"
-            copyfile(DEFAULTS_FILE, self.CONFIG_FILE)
+if not os.path.exists(CONFIG_FILE):
+    copyfile(DEFAULTS_FILE, CONFIG_FILE)
 
-        self.config = configparser.ConfigParser()
-        self.config.read(self.CONFIG_FILE)
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
 
-    def get_option_from_section(self, sec, opt, typ="string"):
-        """
-        Parses a section from the config file
 
-        :param sec: the section we are reading from
-        :param opt: the option we want to get
-        :param typ: the type of the output, so we can parse it to the
-                    appropriate type
-        :return: a dictionary that has the as keys the fields of the provided
-                 section
-        """
+def get_option_from_section(sec, opt, typ="string"):
+    """
+    Parses a section from the config file
 
-        try:
-            if typ == "string":
-                value = self.config.get(sec, opt)
-            elif typ == "int":
-                value = self.config.getint(sec, opt)
-            elif typ == "bool":
-                value = self.config.getboolean(sec, opt)
-            elif typ == "float":
-                value = self.config.getfloat(sec, opt)
-            return value
-        except configparser.NoSectionError:
-            raise
-        except configparser.NoOptionError as op:
-            raise
-        except ValueError as err:
-            raise ValueError("Invalid type specified" + str(err))
+    :param sec:
+        the section we are reading from
+    :param opt:
+        the option we want to get
+    :param typ:
+        the type of the output, so we can parse it to the appropriate type
+    :return:
+        a dictionary that has the as keys the fields of the provided section
 
-    def get_section(self, sec):
-        """
-        Retrieves a section from the config
+    """
 
-        :param sec: Section we want to retrieve
-        :return: The section as a dict
-        """
-        if self.config.has_section(sec):
-            return self.config[sec]
-        else:
-            raise ValueError("The section {} is not in the config".format(sec))
+    if typ == "string":
+        value = config.get(sec, opt)
+    elif typ == "int":
+        value = config.getint(sec, opt)
+    elif typ == "bool":
+        value = config.getboolean(sec, opt)
+    elif typ == "float":
+        value = config.getfloat(sec, opt)
+    else:
+        raise ValueError("Invalid type specified to read from config: {}."
+                         .format(typ))
 
-    def has_option(self, sec, opt):
-        """
-        Checks whether the an option exists
+    return value
 
-        :param sec: The section we search
-        :param opt: The option to be verified
-        :return: a boolean indicating the presence or absence of an option
-        """
-        return self.config.has_option(sec, opt)
 
-    def get_default_blocking(self):
-        """
-        Return config value defining whether caller should block
+def get_section(sec):
+    """
+    Retrieves a section from the config
 
-        The calling module function, e.g. perf.collect can either
-        return while data is still being collected
-        or wait for the collection to finish.
-        This function is called to tell it which of these it should do.
+    :param sec:
+        section we want to retrieve
+    :return:
+        the section as a dict
 
-        :return:
-            A boolean value that specifies whether to block
-        """
-        return self.get_option_from_section("General", "blocking", "boolean")
+    """
+    try:
+        return config[sec]
+    except ValueError as ve:
+        raise ValueError("The section {} is not in the config".format(sec)) \
+            from ve
 
-    def get_default_time(self):
-        """
-        Return the default time for which to collect data
 
-        :return:
-            The default time in seconds
+def get_default_time():
+    """
+    Return the default time for which to collect data
 
-        """
-        return self.get_option_from_section("General", "time", "int")
+    :return:
+        The default time in seconds
 
-    def get_default_frequency(self):
-        """
-        Return the default frequency
-
-        :return:
-            The default frequency in Hertz
-
-        """
-        return self.get_option_from_section("General", "frequency", "int")
-
-    def get_system_wide(self):
-        """
-        Return the default coverage
-
-        :return:
-            The default coverage of the profiler as a string option
-
-        """
-        return self.get_option_from_section("General", "system_wide")
+    """
+    return get_option_from_section("General", "time", "int")

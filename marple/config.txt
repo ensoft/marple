@@ -1,7 +1,6 @@
 # TODO: Verifier + create config from file at startup if it doesn not exist or
 # TODO: it is corrupted
 [General]
-    blocking:false
     time:10
     frequency:99
     system_wide: -a

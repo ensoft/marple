@@ -13,20 +13,20 @@ __all__ = (
     "Flamegraph"
 )
 
-import os
-import subprocess
 import collections
 import logging
+import os
+import subprocess
+from typing import NamedTuple
 
 from marple.common import (
+    config,
+    consts,
     file,
     util,
-    data_io,
     paths
 )
-from marple.common.data_io import StackDatum
 from marple.display.interface.generic_display import GenericDisplay
-from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -42,64 +42,53 @@ class Flamegraph(GenericDisplay):
         """
         coloring: str
 
-    _DEFAULT_OPTIONS = DisplayOptions(coloring="hot")
-
-    def __init__(self, data, out,
-                 data_options=data_io.StackData.DEFAULT_OPTIONS,
-                 display_options=_DEFAULT_OPTIONS):
+    def __init__(self, data):
         """
         Constructor for the flamegraph.
 
         :param data:
             A generator that returns the data for the section we want to
             display as a flamegraph
-        :param out:
-            The output file where the image will be saved as an instance
-            of the :class:`DisplayFileName`.
-        :param data_options: object of the class specified in each of the `Data`
-                             classes, containig various data options to be used
-                             in the display class as labels or info
-        :param display_options: display related options that are meant to make
-                                the display option more customizable
-
 
         """
         # Initialise the base class
-        super().__init__(data_options, display_options)
+        super().__init__(data)
 
-        self.data = data
-        # Setting the right extension and getting the path of the outp
-        out.set_options("flamegraph", "svg")
-        self.out_filename = str(out)
+        coloring = config.get_option_from_section(
+            consts.DisplayOptions.FLAMEGRAPH.value, "coloring")
+        self.display_options = self.DisplayOptions(coloring)
 
     @util.log(logger)
-    def _make(self, stack_data):
+    def _make(self, data):
         """
         Uses Brendan Gregg's flamegraph tool to convert data to flamegraph.
 
-        :param stack_data:
-            Generator for `StackDatum` objects.
+        :param data:
+            A StackData object.
 
         """
-        temp_file = str(file.TempFileName())
+        stacks_temp_file = str(file.TempFileName())
         counts = collections.Counter()
+
+        stack_data = data.datum_generator
         for stack in stack_data:
             new_counts = collections.Counter({stack.stack: stack.weight})
             counts += new_counts
 
-        with open(temp_file, "w") as out:
+        with open(stacks_temp_file, "w") as out:
             for stack, count in counts.items():
                 out.write(";".join(stack) + " {}\n".format(count))
 
-        with open(self.out_filename, "w") as out:
+        self.svg_temp_file = str(file.TempFileName())
+
+        with open(self.svg_temp_file, "w") as out:
             if self.display_options.coloring:
-                subprocess.Popen([FLAMEGRAPH_DIR, "--color=" +
-                                  self.display_options.coloring,
-                                  "--countname=" + self.data_options.weight_units,
-                                  temp_file],
-                                 stdout=out)
+                subprocess.Popen(
+                    [FLAMEGRAPH_DIR, "--color=" + self.display_options.coloring,
+                     "--countname=" + self.data_options.weight_units,
+                     stacks_temp_file], stdout=out)
             else:
-                subprocess.Popen([FLAMEGRAPH_DIR, temp_file], stdout=out)
+                subprocess.Popen([FLAMEGRAPH_DIR, stacks_temp_file], stdout=out)
 
         # Return counts to aid debugging
         return counts
@@ -113,7 +102,8 @@ class Flamegraph(GenericDisplay):
         """
         # Create a flamegraph svg based on the data
         self._make(self.data)
+
         # Open firefox
         username = os.environ['SUDO_USER']
-        subprocess.call(["su", "-", "-c",  "firefox " + self.out_filename,
-                         username])
+        subprocess.call(
+            ["su", "-", "-c",  "firefox " + self.svg_temp_file, username])

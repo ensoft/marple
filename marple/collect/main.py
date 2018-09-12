@@ -39,7 +39,7 @@ logger.debug('Entered module: %s', __name__)
 
 
 @util.log(logger)
-def main(argv, config_parser):
+def main(argv):
     """
     The main function of the controller.
 
@@ -48,13 +48,11 @@ def main(argv, config_parser):
 
     :param argv:
         a list of command line arguments from call in main module
-    :param config_parser:
-        the parser that reads the config; it is passed around to avoid creating
-        multiple parser objects
+
     """
 
     # Parse arguments
-    args = _args_parse(argv, config_parser)
+    args = _args_parse(argv)
 
     # Use user output filename specified, otherwise create a unique one
     if args.outfile:
@@ -73,7 +71,7 @@ def main(argv, config_parser):
     filename.export_filename()
 
     # Get collecter interfaces
-    collecters = _get_collecters(args, config_parser)
+    collecters = _get_collecters(args)
 
     # Create event loop to collect and write data
     ioloop = asyncio.get_event_loop()
@@ -83,10 +81,10 @@ def main(argv, config_parser):
     async def loading_bar():
         bar_width = 60
 
-        time = args.time if args.time else config_parser.get_default_time()
+        time = args.time if args.time else config.get_default_time()
         for i in range(2 * time + 1):
             progress = int((i / (2 * time)) * bar_width)
-            print("\rProgress: [{}] {}%".format(
+            print("\r\033[91mProgress:\033[0m [{}] \033[91m{}%\033[0m".format(
                 progress * "#" + (bar_width - progress) * " ",
                 int(progress * 100 / bar_width)),
                 end='', flush=True)
@@ -109,14 +107,13 @@ def main(argv, config_parser):
 
 
 @util.log(logger)
-def _args_parse(argv, config_parser):
+def _args_parse(argv):
     """
     Creates a parser that parses the collect command.
 
     :param argv:
         a list of arguments passed by the main function.
-    :param config_parser:
-        a config parser for MARPLE.
+
     :return:
         an object containing the parsed command information.
 
@@ -132,10 +129,10 @@ def _args_parse(argv, config_parser):
     # Add options for the modules
     options = parser.add_argument_group()
 
-    user_groups = [section for section in config_parser.config['Aliases']]
-    user_groups_help = \
-        [section + ": " + config_parser.config['Aliases'][section]
-         for section in user_groups]
+    user_groups = config.get_section('Aliases').items()
+
+    user_groups_help = [name + ": " + interfaces
+                        for name, interfaces in user_groups]
 
     subcommand_help = (
             "interfaces to use for data collection.\n\n"
@@ -161,7 +158,7 @@ def _args_parse(argv, config_parser):
 
     options.add_argument(
         "subcommands", nargs='+',
-        choices=consts.interfaces_argnames + user_groups,
+        choices=consts.interfaces_argnames + [name for name, _ in user_groups],
         metavar="subcommand",
         help=wrapped
     )
@@ -197,7 +194,7 @@ def _args_parse(argv, config_parser):
 
 
 @util.log(logger)
-def _get_collecters(args, parser):
+def _get_collecters(args):
     """
     Calls the relevant functions that user chose and stores output in file.
 
@@ -207,26 +204,25 @@ def _get_collecters(args, parser):
 
     """
     # Use user specified time for data collection, otherwise config value
-    time = args.time if args.time else parser.get_default_time()
+    time = args.time if args.time else config.get_default_time()
 
     # Determine all arguments specifying collecter interfaces
     args_seen = set()
-    config_parser = config.Parser()
     for arg in args.subcommands:
         if arg in consts.interfaces_argnames:
             args_seen.add(arg)
         else:
-            assert config_parser.has_option("Aliases", arg)
+            assert config.config.has_option("Aliases", arg)
             # Look for aliases
-            alias_args = set(config_parser.get_option_from_section(
+            alias_args = set(config.get_option_from_section(
                 "Aliases", arg).split(','))
             args_seen = args_seen.union(alias_args)
 
-    return [_get_collecter_instance(arg, time, parser)
+    return [_get_collecter_instance(arg, time)
             for arg in args_seen]
 
 
-def _get_collecter_instance(interface_name, time, parser):
+def _get_collecter_instance(interface_name, time):
     """
     A helper function that returns an instance of the appropriate interface
 
@@ -234,42 +230,41 @@ def _get_collecter_instance(interface_name, time, parser):
         the name of the interface we want an instance of
     :param time:
         the time used as an option for the collecter
-    :param parser:
-        a config parser used to fetch collecter related
-        options other than the time
+
     :returns:
         a collecter for the interface
 
     """
     interfaces = consts.InterfaceTypes
-    interface_enum = interfaces(interface_name)
+    interface = interfaces(interface_name)
 
-    assert interface_enum in interfaces
+    assert interface in interfaces
 
-    if interface_enum is interfaces.SCHEDEVENTS:
+    if interface is interfaces.SCHEDEVENTS:
         collecter = perf.SchedulingEvents(time)
-    elif interface_enum is interfaces.DISKLATENCY:
+    elif interface is interfaces.DISKLATENCY:
         collecter = iosnoop.DiskLatency(time)
-    elif interface_enum is interfaces.TCPTRACE:
+    elif interface is interfaces.TCPTRACE:
         collecter = ebpf.TCPTracer(time)
-    elif interface_enum is interfaces.LIB:
-        raise NotImplementedError("Lib not implemented")  # TODO
-    elif interface_enum is interfaces.MALLOCSTACKS:
+    # elif interface is interfaces.LIB:
+    #     raise NotImplementedError("Lib not implemented")  # TODO
+    elif interface is interfaces.MALLOCSTACKS:
         collecter = ebpf.MallocStacks(time)
-    elif interface_enum is interfaces.MEMTIME:
+    elif interface is interfaces.MEMTIME:
         collecter = smem.MemoryGraph(time)
-    elif interface_enum is interfaces.CALLSTACK:
-        options = perf.StackTrace.Options(parser.get_default_frequency(),
-                                          parser.get_system_wide())
+    elif interface is interfaces.CALLSTACK:
+        options = perf.StackTrace.Options(
+            config.get_option_from_section("General", "frequency", "int"),
+            config.get_option_from_section("General", "system_wide"))
         collecter = perf.StackTrace(time, options)
-    elif interface_enum is interfaces.MEMLEAK:
-        options = ebpf.Memleak.Options(10)
+    elif interface is interfaces.MEMLEAK:
+        options = ebpf.Memleak.Options(10)  # TODO CHANGE HARDCODED
         collecter = ebpf.Memleak(time, options)
-    elif interface_enum is interfaces.MEMEVENTS:
+    elif interface is interfaces.MEMEVENTS:
         collecter = perf.MemoryEvents(time)
-    elif interface_enum is interfaces.DISKBLOCK:
+    elif interface is interfaces.DISKBLOCK:
         collecter = perf.DiskBlockRequests(time)
-    elif interface_enum is interfaces.PERF_MALLOC:
+    elif interface is interfaces.PERF_MALLOC:
         collecter = perf.MemoryMalloc(time)
     else:
         raise NotImplementedError("{} not implemented!".format(interface_name))

@@ -12,11 +12,11 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtWidgets
 import logging
 import re
-import typing
 import functools
+import itertools
 
-from marple.common import data_io
 from marple.display.interface import generic_display
+from marple.common import data_io
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
@@ -624,30 +624,18 @@ class TCPPlotter(generic_display.GenericDisplay):
     Class that displays tcp data as a custom line graph"
 
     """
-    class DisplayOptions(typing.NamedTuple):
-        pass
 
-    _DEFAULT_OPTIONS = DisplayOptions()
-
-    def __init__(self, data_gen,
-                 data_options=data_io.EventData.DEFAULT_OPTIONS,
-                 display_options=_DEFAULT_OPTIONS):
+    def __init__(self, *data):
         """
-        Initializes the class
+        Initializes the class.
 
-        :param data_gen:
-            A generator that returns the lines for the section we want to
-            display as a flamegraph
-        :param data_options: object of the class specified in each of the `Data`
-                             classes, containig various data options to be used
-                             in the display class as labels or info
-        :param display_options: display related options that are meant to make
-                                the display option more customizable
         """
         # Initialise superclass
-        super().__init__(data_options, display_options)
+        # TODO tidy this up - all display interfaces should have same approach
+        super().__init__(*data)
 
-        self.data_gen = data_gen
+        datum_generator = itertools.chain(*[d.datum_generator for d in data])
+        self.data_gen = datum_generator
 
     def show(self):
         """

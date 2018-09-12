@@ -21,9 +21,9 @@ class GenericDisplay:
 
         """
 
-    def __init__(self, data_options, display_options):
-        self.display_options = display_options
-        self.data_options = data_options
+    def __init__(self, data, *args):
+        self.data = data
+        self.data_options = data.data_options
 
     def show(self):
         pass
