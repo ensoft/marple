@@ -22,22 +22,8 @@ logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
 
 _all__ = (
-
+    "TCPPlotter"
 )
-
-
-class _TCPPoint(typing.NamedTuple):
-    pid: str
-    comm: str
-    port: str
-    net_ns: str
-
-
-class _TCPMessage(typing.NamedTuple):
-    source: _TCPPoint
-    destination: _TCPPoint
-    time: str
-    type: str
 
 
 # TODO: more general x axis
@@ -261,7 +247,8 @@ class _PlotterContainer:
         else:
             connect = None
             pen = None
-            symbol = ['t2'] * num_points
+
+            symbol = ['t'] * num_points
             symbol_brushes = [pg.mkBrush(self.line_colors[event_type])] * \
                              num_points
         # Now we draw the markers and lines
@@ -313,7 +300,14 @@ class _EventDataProcessor:
             properties_set = set()
             event_partition = {}
 
+            min_time = None
             for event in events:
+                # Determine mintime:
+                if min_time is None:
+                    min_time = event.time
+                else:
+                    min_time = min(min_time, event.time)
+
                 # Extract info
                 connected = event.connected
 
@@ -337,10 +331,21 @@ class _EventDataProcessor:
                 else:
                     event_partition[event.type].append(event)
 
-            return event_partition, properties_set
+            return event_partition, properties_set, min_time
 
         # Process the data using the above function
-        self.event_partition, self.properties_set = process_data(events)
+        self.event_partition, self.properties_set, self.min_time = \
+            process_data(events)
+        self._normalise()
+
+    def _normalise(self):
+        for event_subset in self.event_partition.values():
+            for idx, event in enumerate(event_subset):
+                event_subset[idx] = data_io.EventDatum(event.time -
+                                                       self.min_time,
+                                                       event.type,
+                                                       event.specific_datum,
+                                                       event.connected)
 
     # The following getter functions make it easier to interact with the
     # process data
@@ -656,25 +661,3 @@ class TCPPlotter(generic_display.GenericDisplay):
         renderer.showMaximized()
         renderer.raise_()
         app.exec_()
-
-import random
-data = []
-types = ['accept', 'close', 'connect']
-for i in range(1, int(random.random() * 1000)):
-    time = random.random() * 100
-    s = int(random.random() * 100)
-    d = int(random.random() * 100)
-    data.append(data_io.EventDatum(time=time,
-                                   type=types[random.randrange(0, 3)],
-                                   connected=[("source_", "dest_")],
-                                   specific_datum={
-                                        "source_pid": s % 25,
-                                        "source_comm": 'process' + str(s),
-                                        "source_port": s % 25,
-                                        "dest_pid": d % 25,
-                                        "dest_comm": 'process' + str(d),
-                                        "dest_port": d % 25,
-                                        "net_ns": s+d}))
-
-# plot = TCPPlotter(data)
-# plot.show()

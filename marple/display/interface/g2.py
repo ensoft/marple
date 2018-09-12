@@ -64,17 +64,6 @@ class G2(GenericDisplay):
 
         self.data = data
 
-    def _generate_events_from_file(self):
-        """
-        Helper static method that yields EventDatum as we consume the
-        self.data generator that contains all the data in the section
-
-        :returns: an EventDatum object parsed form the current line of the file
-
-        """
-        for line in self.data:
-            yield data_io.EventDatum.from_string(line)
-
     @util.Override(GenericDisplay)
     @util.log(logger)
     def show(self):
@@ -90,10 +79,7 @@ class G2(GenericDisplay):
         g2_path = os.path.expanduser(g2_path)
         logger.info("G2 path: " + g2_path)
 
-        # We create a generator that yields EventDatum from
-        event_generator = self._generate_events_from_file()
-
-        writer = CpelWriter(event_generator, self.display_options.track)
+        writer = CpelWriter(self.data, self.display_options.track)
         writer.write(str(tmp_cpel))
 
         try:

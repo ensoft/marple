@@ -307,9 +307,7 @@ def main(argv):
                 datum_generators = [data.datum_generator for data in data_objs]
                 datum_generator = itertools.chain(*datum_generators)
 
-                # TODO: We skip options here, is this ok (think so since when we
-                # TODO: have aggregates we lose some info)
-                print(display_mode, consts.DisplayOptions.TCPPLOT.value)
+                # TODO: We skip options here
                 if display_mode == consts.DisplayOptions.TCPPLOT.value:
                     display_object = tcpplotter.TCPPlotter(datum_generator)
                 else:
@@ -317,7 +315,6 @@ def main(argv):
                         'Display mode {} does not support displaying aggregated'
                         ' data'.format(display_mode)
                     )
-                print("hello!")
 
                 # Remove displayed interfaces from standalone set
                 standalone_interfaces = standalone_interfaces - agg_interfaces

@@ -105,11 +105,13 @@ class CpelWriter:
 
         """
         if self.track == "pid":
-            return (event_object.specific_datum[0],
-                    event_object.specific_datum[1])
+            return (event_object.specific_datum['comm'] +
+                    '(' + event_object.specific_datum['pid'] + ')',
+                    event_object.specific_datum['cpu'])
         elif self.track == "cpu":
-            return (event_object.specific_datum[1],
-                    event_object.specific_datum[0])
+            return (event_object.specific_datum['cpu'],
+                    event_object.specific_datum['comm'] +
+                    '(' + event_object.specific_datum['pid'] + ')')
         else:
             raise ValueError("Unknown option for the track: {}. "
                              "Expected cpu or pid.".format(

@@ -538,7 +538,7 @@ def print_ipv4_event(cpu, data, size):
         if start_ts == 0:
             start_ts = event.ts_ns
         if args.verbose:
-            print("%-14d" % (event.ts_ns - start_ts), end="")
+            print("%-14d" % int(event.ts_ns / 1000.0), end="")
         else:
             print("%-9.3f" % ((event.ts_ns - start_ts) / 1000000000.0), end="")
     if event.type == 1:
@@ -572,10 +572,10 @@ def print_ipv6_event(cpu, data, size):
     event = ctypes.cast(data, ctypes.POINTER(TCPIPV6Evt)).contents
     global start_ts
     if args.timestamp:
-        if start_ts == 0:
-            start_ts = event.ts_ns
+        # if start_ts == 0:
+        #     start_ts = event.ts_ns
         if args.verbose:
-            print("%-14d" % (event.ts_ns - start_ts), end="")
+            print("%-14d" % int(event.ts_ns / 1000.0), end="")
         else:
             print("%-9.3f" % ((event.ts_ns - start_ts) / 1000000000.0), end="")
     if event.type == 1:
