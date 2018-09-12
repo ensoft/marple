@@ -1,19 +1,28 @@
 # -------------------------------------------------------------
-# tcpplotter.py - plots tcp data
+# plotter.py - plots event data
 # August 2018 - Andrei Diaconu
 # -------------------------------------------------------------
 
 """
-Display option that can display ipc/tcp data as a line graph
+Display option that can display event data as a line graph
+
+If the connect field of a datum is None, the event will be displayed as single
+coloured triangles on the timeline, otherwise lines will connect sources and
+destination based on the prefixes in the connect field
+The UI is created automatically based on the properties specified in the
+specific_datum field
 
 """
 
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui, QtWidgets
+import functools
 import logging
 import re
 import typing
-import functools
+import random
+import colorsys
+
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui, QtWidgets
 
 from marple.common import data_io
 from marple.display.interface import generic_display
@@ -22,7 +31,7 @@ logger = logging.getLogger(__name__)
 logger.debug('Entered module: {}'.format(__name__))
 
 _all__ = (
-    "TCPPlotter"
+    "Plotter"
 )
 
 
@@ -30,19 +39,19 @@ _all__ = (
 class _PlotterContainer:
     """
     Class that wraps the plot container, together with all its plots; makes it
-    easier and more readable when we overwrite plots
+    easy to redraw the whole plot area when filtering
 
     """
     source_brush = pg.mkBrush('w')
     destination_brush = pg.mkBrush('w')
+    # A list of easily distinguishable colours
     line_colors = [
-        (0, 117, 220),
-        (255, 0, 16),
-        (43, 206, 72),
-        (255, 164, 5),
-        (148, 255, 181),
-        (224, 255, 102),
-        (240, 163, 255),
+        (0, 0, 255),
+        (0, 255, 0),
+        (255, 0, 0),
+        (255, 255, 0),
+        (0, 255, 255),
+        (225, 0, 255),
         (255, 255, 255)
     ]
 
@@ -50,17 +59,30 @@ class _PlotterContainer:
         """
         Initialises the class
 
-        :param processed_data:
-        :param y_axis_ticks:
+        :param processed_data: object of type `_EventDataProcessor`
+        :param y_axis_ticks: list of strings, describing what the ticks
+                             on the y axis should be (their names should
+                             match with event properties)
         """
         def _create_map():
+            """
+            Helper method that creates a map between the track of each event
+            (based on the ticks) and the y axis
+
+            :return: a dict described above
+            """
             ymap = {}
             unique_tracks = 0
+            # We iterate through each event in each partition and assign its
+            # track a y value
             for event_type in processed_data.get_event_types():
                 partition = processed_data.get_specific_partition(event_type)
                 for event in partition:
                     if event.connected is not None:
                         for sd_pair in event.connected:
+                            # sd_pair[0] is the prefix for the source
+                            # properties, sd_pair[1] is the prefix for the
+                            # destination properties
                             source_track = self._compose_track(event,
                                                                sd_pair[0])
                             dest_track = self._compose_track(event, sd_pair[1])
@@ -72,38 +94,63 @@ class _PlotterContainer:
                                 ymap[dest_track] = unique_tracks
                                 unique_tracks += 1
                     else:
-                        track = self._compose_track(event, "")
+                        track = self._compose_track(event)
                         if track not in ymap.keys():
                             ymap[track] = unique_tracks
                             unique_tracks += 1
             return ymap
 
-        # TODO: color_idx problem out of range?
         def _assign_colors():
+            """
+            Helper method that creates a map between event types and colors
+
+            If the number of event types is greater that the provided colors,
+            we generate random saturated colors
+
+            :return: a dict described above
+            """
             colors = {}
             color_idx = 0
             for event_type in processed_data.get_event_types():
                 if event_type not in colors:
-                    colors[event_type] = self.line_colors[color_idx]
-                    if color_idx < len(self.line_colors) - 1:
+                    if color_idx < len(self.line_colors):
+                        colors[event_type] = self.line_colors[color_idx]
                         color_idx += 1
-
+                    else:
+                        # If every hard coded colour has been used,
+                        h, s, l = random.random(), \
+                                  0.5 + random.random() / 2.0, \
+                                  0.4 + random.random() / 5.0
+                        r, g, b = [int(256 * i) for i in
+                                   colorsys.hls_to_rgb(h, l, s)]
+                        colors[event_type] = (r, g, b)
             return colors
 
         def _create_container_and_plots(ticks):
-            plot_container = pg.PlotItem(title="IPC (TCP Messages)",
+            """
+            Helper method that creates the plot container, sets up the event
+            and helper plots, the axes labels and ticks
+
+            :param ticks: The ticks to be used on the y axis
+            :return: plot_container: a plot container as `pg.PlotItem`
+                     event_plots: a dict that maps event types to the plots in
+                                  the plot container
+                     helper_plots: a dict that maps the helper plot labels
+                                   to plots in the plot container
+            """
+            plot_container = pg.PlotItem(title="Events",
                                          labels={
                                              'left': ','.join(
                                                  self.y_axis_ticks),
-                                             'bottom': 'time'},
+                                             'bottom': 'time (ms)'},
                                          axisItems={'left': ticks})
 
-            # Event specific plots
+            # Event plots init
             event_plots = {}
             for event_type in self.processed_data.get_event_types():
                 event_plots[event_type] = plot_container.plot([], [])
 
-            # Support plots
+            # Helper plots init
             helper_plots = {
                 'lines': plot_container.plot([], []),
                 'highlight': plot_container.plot([], [])
@@ -111,13 +158,19 @@ class _PlotterContainer:
             return plot_container, event_plots, helper_plots
 
         def _create_ticks():
+            """
+            Helper method that creates the y axis ticks
+
+            :return: a `pg.AxisItem` that has its ticks set to the event tracks
+                     we have created in the mapping stage
+            """
             ticks = pg.AxisItem(orientation='left')
             ticks.setTicks([dict(enumerate(self.tracks_ymap.keys())).items()])
             return ticks
 
         def _add_legend():
             """
-            Function used during init that adds a legend in the top right corner
+            Helper function that adds a legend in the top right corner
             for the graph lines and symbols
 
             """
@@ -130,11 +183,12 @@ class _PlotterContainer:
 
             for event_type in self.processed_data.get_event_types():
                 legend.addItem(pg.PlotDataItem(
-                    pen=pg.mkPen(color=self.line_colors[event_type], width=2)),
+                    pen=pg.mkPen(color=self.line_colors[event_type], width=3)),
                     event_type)
 
-            legend.addItem(pg.PlotDataItem(pen=pg.mkPen('y', width=2)),
+            legend.addItem(pg.PlotDataItem(pen=pg.mkPen('y', width=3)),
                            "Selected process")
+        ######################
 
         self.processed_data = processed_data
         self.y_axis_ticks = y_axis_ticks
@@ -147,13 +201,14 @@ class _PlotterContainer:
         self.plot_container, self.event_plots, self.helper_plots = \
             _create_container_and_plots(self.tick)
 
+        # Max y coord
         self.max_y = max(self.tracks_ymap.values())
+        # Max x coord (max time)
         self.max_x = max(map(lambda event: event.time,
                              self.processed_data.get_all_events()))
 
         # We set the limits for the dispay viewbox (so we only have positive xs
-        # and ys); we add one to add (or subtract) one so things don't get
-        # clipped
+        # and ys); we use the +-1 so things don't get clipped
         self.plot_container.vb.setLimits(xMin=-1, xMax=self.max_x + 1,
                                          yMin=-1, yMax=self.max_y + 1)
 
@@ -168,9 +223,11 @@ class _PlotterContainer:
         _add_legend()
 
     def get_plot_container(self):
+        """ Getter method that returns the plot container"""
         return self.plot_container
 
     def get_plot_from_container(self, name):
+        """ Getter method that returns the plot with the specified name"""
         return self.plot_container[name]
 
     @staticmethod
@@ -186,6 +243,18 @@ class _PlotterContainer:
                 yield item
 
     def _compose_track(self, event, prefix=""):
+        """
+        Helper method that composes the tracks by searching for the properties
+        in self.y_axis_tick in event.specific_datum.
+        Example: when we call _compose_track(event, "source_") for the ticks
+                 ['comm', 'pid'] (and suppose the event has fields
+                 source_track: "abc", source_pid: 1) it will return "abc, 1"
+
+        :param event: the event we want to create a track for
+        :param prefix: the prefix used to extract the info for events that
+                       display connections
+        :return: the created track
+        """
         return ','.join([str(event.specific_datum[prefix + tick_track])
                          for tick_track in self.y_axis_ticks])
 
@@ -195,6 +264,7 @@ class _PlotterContainer:
         :param plot_name: name of the plot to be emptied
 
         """
+        # Special case for the helpe plot
         if plot_name == 'highlight':
             self.helper_plots['highlight'].setData([], [])
         else:
@@ -221,11 +291,16 @@ class _PlotterContainer:
         self.empty_plot('highlight')
 
         partition = self.processed_data.get_specific_partition(event_type)
+        # processes saves y coords, times saves x coords
+        # processes[i] and times[i] are coords for the i-th point that is to
+        # be drawn
         processes, times = [], []
 
         for event in partition:
             if event.connected is not None:
                 for sd_pair in event.connected:
+                    # For each source and destination we add the corresponding
+                    # tracks to the line lists
                     source_track = self._compose_track(event, sd_pair[0])
                     dest_track = self._compose_track(event, sd_pair[1])
                     processes.extend([source_track, dest_track])
@@ -236,11 +311,13 @@ class _PlotterContainer:
                 times.append(event.time)
         num_points = len(times)
 
-        # We look at the first event to check if we have a partition that
-        # needs connections
+        # We look at the first event of the partition to deduce if we have
+        # a partition that draws lines or just points and get the right settings
         if partition[0].connected is not None:
             connect = "pairs"
             pen = self.line_colors[event_type]
+            # Symbols and brushes must alternate since we have a chain of
+            # pairs (source, dest)
             symbol = ['s' if i % 2 == 0 else 'o' for i in range(num_points)]
             symbol_brushes = [self.source_brush if i % 2 == 0 else
                               self.destination_brush for i in range(num_points)]
@@ -248,15 +325,11 @@ class _PlotterContainer:
             connect = None
             pen = None
 
-            symbol = ['t'] * num_points
+            symbol = ['t2'] * num_points
             symbol_brushes = [pg.mkBrush(self.line_colors[event_type])] * \
                              num_points
+
         # Now we draw the markers and lines
-        # The symbols and symbol brushes need to be lists, the i-th point's
-        # style being defined by symbol[i] and symbolBrush[i]; the length
-        # of both needs to be exactly the number of selected points
-        # The connect keyword arg signals that point 2*i and 2*i+1 should be
-        # connected
         self.event_plots[event_type].setData(
             {
                 'x': times,
@@ -275,7 +348,8 @@ class _PlotterContainer:
 
 class _EventDataProcessor:
     """
-    Class that deal with the various properties of the event data
+    Class that deal with processing the various properties of the event data so
+    events are ready to be drawn
 
     Provides different getters, for various fields
     """
@@ -288,12 +362,13 @@ class _EventDataProcessor:
 
         def process_data(events):
             """
-            Helper method that partitions the events based on their type and gets
-            all the properties present in them (so they can be filtered later)
-            Properties will get their source - destination prefixed stripped so we
-            can treat 'pid', 'source1_pid', 'dest1_pid' the same
+            Helper method that partitions the events based on their type and
+            gets all the properties present in them (so they can be filtered
+            later)
+            Properties will get their source - destination prefixed stripped
+            so we can treat 'pid', 'source1_pid', 'dest4_pid' the same
 
-            :param: the event we want to process
+            :param: the events we want to process as a generator
             :returns: a dictionary representing the partition and a set for the
                       properties
             """
@@ -326,6 +401,7 @@ class _EventDataProcessor:
                     for prop in event.specific_datum.keys():
                         properties_set.add(prop)
 
+                # Add the event to either an existing partition or a new one
                 if event.type not in event_partition:
                     event_partition[event.type] = [event]
                 else:
@@ -336,16 +412,24 @@ class _EventDataProcessor:
         # Process the data using the above function
         self.event_partition, self.properties_set, self.min_time = \
             process_data(events)
+
+        # We normalise the times so they start at 0
         self._normalise()
 
     def _normalise(self):
-        for event_subset in self.event_partition.values():
-            for idx, event in enumerate(event_subset):
-                event_subset[idx] = data_io.EventDatum(event.time -
-                                                       self.min_time,
-                                                       event.type,
-                                                       event.specific_datum,
-                                                       event.connected)
+        """
+        Helper function that normalises the times so they start at 0, by
+        subtracting the minimum time from each of them
+
+        """
+        for partition in self.event_partition.values():
+            for idx, event in enumerate(partition):
+                # We replace the event datum from the partition with a new one,
+                # whose time is normalised
+                partition[idx] = data_io.EventDatum(event.time - self.min_time,
+                                                    event.type,
+                                                    event.specific_datum,
+                                                    event.connected)
 
     # The following getter functions make it easier to interact with the
     # process data
@@ -353,6 +437,9 @@ class _EventDataProcessor:
         return self.event_partition[event_type]
 
     def get_all_events(self):
+        """
+        :return: a list with all the events
+        """
         events = []
         for event_subset in self.event_partition.values():
             for event in event_subset:
@@ -367,6 +454,17 @@ class _EventDataProcessor:
 
     @staticmethod
     def get_property_value(event, property, prefix=""):
+        """
+        Helper function that retrieves the value of a property
+        Used outside the class
+
+        :param event: the event we want the property from
+        :param property: the name of the property
+        :param prefix: the prefix, if any, used to strip the source and
+                       destination prefixes so we know 'source_pid' is the same
+                       as 'pid'
+        :return: the value of the property or None if it was not found
+        """
         if prefix + property in event.specific_datum:
             return str(event.specific_datum[prefix + property])
         else:
@@ -374,6 +472,11 @@ class _EventDataProcessor:
 
 
 class _UIElementManager:
+    """
+    Class that deals with the creation of new UI elements, and keeping track
+    of them
+
+    """
     def __init__(self):
         self.ui_dict = {}
 
@@ -411,12 +514,18 @@ class _UIElementManager:
             new_elem = QtGui.QGraphicsProxyWidget()
             new_elem.setWidget(scroll_check)
         else:
-            raise ValueError('Invalid ui elem type')
+            raise ValueError('Invalid UI elem type')
 
-        # We save the element in the dictionary so we can reference it later
+        # We save the element in the dictionary so we can refer it later
         self.ui_dict[name] = new_elem
 
     def get_ui_elem(self, name):
+        """
+        UI getter function
+
+        :param name: name of the UI object we want
+        :return: the UI object
+        """
         if name in self.ui_dict:
             return self.ui_dict[name]
         else:
@@ -425,8 +534,8 @@ class _UIElementManager:
 
 class _PlotterWindow(pg.GraphicsWindow):
     """
-    Class that only deals with the plotter window, creates layouts and puts
-    things in them (not created here, external classes)
+    Class that that oversees the creation of the plotter window and the UI,
+    their layouts, and what goes into them (using the classes above)
 
     """
 
@@ -434,8 +543,8 @@ class _PlotterWindow(pg.GraphicsWindow):
         """
         Initialises the window
 
-        :param messages_gen: A generator that gives the TCP messages that we use
-                             to populate the graph
+        :param event_generator: A generator that gives the events that we
+                                use to populate the graph
         :param parent: parent of the window, should be left None
 
         """
@@ -445,11 +554,11 @@ class _PlotterWindow(pg.GraphicsWindow):
         # Process data, this data will remain unchanged (so we can filter
         # things from it)
         self.processed_data = _EventDataProcessor(event_generator)
-        # We store the currently displayed data (which will change once we
-        # filter)
+        # We store the currently displayed data (changes when filtering)
         self.current_displayed_data = self.processed_data
 
         # Setup current graph
+        # TODO: add a config option for the tracks
         self.current_plot = _PlotterContainer(self.current_displayed_data,
                                               ['comm', 'pid'])
 
@@ -467,7 +576,12 @@ class _PlotterWindow(pg.GraphicsWindow):
         text fields) the user interacts with
 
         """
+        # The two callbacks functions here are used so that a new function
+        # object is created each time we create a checkbox (for example the
+        # scoping of lambdas in for loops makes them not usable in this case
+        # since the lambdas get overwritten)
         def callback_check(state, event_type):
+            # state here describes the state of the checkbox
             return self.current_plot.draw(event_type) if state == 2 \
                 else self.current_plot.empty_plot(event_type)
 
@@ -506,7 +620,8 @@ class _PlotterWindow(pg.GraphicsWindow):
         self.ui_manager.new_ui_elem("button", "clear_highlight",
                                     "Clear highlight",
                                     callback_function=lambda:
-                                        self.empty_plot('highlight'))
+                                        self.current_plot.
+                                            empty_plot('highlight'))
         self.ui_manager.get_ui_elem("cb_filter").layout().addRow(
             self.ui_manager.get_ui_elem("clear_highlight"))
 
@@ -522,6 +637,7 @@ class _PlotterWindow(pg.GraphicsWindow):
 
     def _manage_layout(self):
         """
+        Creates the layout and puts the right things in the right cells
 
         """
         self.plot_layout = self.addLayout(row=0, col=0, colspan=2)
@@ -537,7 +653,12 @@ class _PlotterWindow(pg.GraphicsWindow):
             "scroll_filter"
         ))
 
-    def _hide_unused_checkoxes(self):
+    def _hide_unused_checkboxes(self):
+        """
+        Hides the checkboxes that are not relevant for the currently displayed
+        data
+
+        """
         for event_type in self.processed_data.get_event_types():
             if event_type in self.current_displayed_data.get_event_types():
                 hidden = False
@@ -545,6 +666,7 @@ class _PlotterWindow(pg.GraphicsWindow):
                 hidden = True
             self.ui_manager.get_ui_elem(event_type + "_check").setHidden(hidden)
 
+    # TODO: Add highlighting
     def new_graph_from_filter(self, property, filters):
         """
         Highlights the selected processes and displays only the markers
@@ -558,9 +680,10 @@ class _PlotterWindow(pg.GraphicsWindow):
             """
             Helper function that returns true if to_match matches with any
             of the regex patterns in regex_list, false otherwise
+
             :param to_match: text to be matched against the pattern list
             :param regex_list: regex pattern list
-            :return:
+            :return: True if we have a match, False otherwise
             """
             for reg_ex in regex_list:
                 if re.match(reg_ex, to_match):
@@ -601,7 +724,7 @@ class _PlotterWindow(pg.GraphicsWindow):
                                 event, property)
                     if value is not None and check_regex(value, filters):
                         filtered_events.append(event)
-        # If the filter finds nothing, do nothing
+        # If the filter finds nothing, do nothing and show an message box
         if len(filtered_events) == 0:
             QtGui.QMessageBox.warning(self, 'PyQt5 message',
                                       "No events found! No filtering applied "
@@ -612,16 +735,17 @@ class _PlotterWindow(pg.GraphicsWindow):
         new_plot_container = _PlotterContainer(filtered_data,
                                                ['comm', 'pid'])
 
+        # Update the data and the display
         self.plot_layout.removeItem(self.current_plot.plot_container)
         self.plot_layout.addItem(new_plot_container.plot_container)
         self.current_plot = new_plot_container
         self.current_displayed_data = filtered_data
-        self._hide_unused_checkoxes()
+        self._hide_unused_checkboxes()
 
 
-class TCPPlotter(generic_display.GenericDisplay):
+class Plotter(generic_display.GenericDisplay):
     """
-    Class that displays tcp data as a custom line graph"
+    Class that displays event data as a custom line graph"
 
     """
     class DisplayOptions(typing.NamedTuple):
@@ -636,8 +760,8 @@ class TCPPlotter(generic_display.GenericDisplay):
         Initializes the class
 
         :param data_gen:
-            A generator that returns the lines for the section we want to
-            display as a flamegraph
+            A generator that returns the data in the section(s) we want to
+            display with the plotter
         :param data_options: object of the class specified in each of the `Data`
                              classes, containig various data options to be used
                              in the display class as labels or info

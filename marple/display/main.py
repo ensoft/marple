@@ -29,7 +29,7 @@ from marple.display.interface import (
     g2,
     flamegraph,
     stackplot,
-    tcpplotter
+    plotter
 )
 
 logger = logging.getLogger(__name__)
@@ -147,7 +147,7 @@ def _get_display_options(display_option):
         return flamegraph.Flamegraph.DisplayOptions(coloring=coloring)
 
     elif display_option == consts.DisplayOptions.TCPPLOT:
-        return tcpplotter.TCPPlotter.DisplayOptions()
+        return plotter.Plotter.DisplayOptions()
 
     else:
         raise ValueError("Invalid display mode")
@@ -309,7 +309,7 @@ def main(argv):
 
                 # TODO: We skip options here
                 if display_mode == consts.DisplayOptions.TCPPLOT.value:
-                    display_object = tcpplotter.TCPPlotter(datum_generator)
+                    display_object = plotter.Plotter(datum_generator)
                 else:
                     raise ValueError(
                         'Display mode {} does not support displaying aggregated'
@@ -354,7 +354,7 @@ def main(argv):
                     data.datum_generator, output_filename,
                     data_options, display_options)
             elif display_for_interface is consts.DisplayOptions.TCPPLOT:
-                display_object = tcpplotter.TCPPlotter(
+                display_object = plotter.Plotter(
                     data.datum_generator, data_options, display_options)
             else:
                 raise ValueError("Unexpected display mode {}!".
