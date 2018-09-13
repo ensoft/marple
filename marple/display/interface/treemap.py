@@ -81,9 +81,9 @@ class Treemap(GenericDisplay):
 
         """
 
-        with open(out_file, "w") as out_file:
+        with open(out_file, "w") as out:
             # Header of the csv; example: value;1;2;3;4;5...
-            out_file.write(
+            out.write(
                 self.data_options.weight_units + ";" +
                 ";".join(
                     [str(i) for i in range(1, self.display_options.depth + 1)])
@@ -91,7 +91,7 @@ class Treemap(GenericDisplay):
 
             for line in self.data.datum_generator:
                 # Write to the temp CSV file in the required format
-                out_file.write(
+                out.write(
                     str(line.weight) + ';' +
                     ';'.join(line.stack[0:self.display_options.depth]) + '\n')
 

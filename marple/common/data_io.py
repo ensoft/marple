@@ -17,6 +17,7 @@ conversion to and from standard strings.
 Each collection of data has a method to convert the header to a string.
 
 MARPLE standard data files are as follows:
+<metaheader>
 <header 1>
 <collection of data
 ...
@@ -114,6 +115,7 @@ class EventDatum(typing.NamedTuple):
             return EventDatum(time=int(time), type=type_,
                               specific_datum=eval(datum),
                               connected=eval(connected))
+        # TODO fix bad use of eval above
         except IndexError as ie:
             raise exceptions.DatatypeException(
                 "EventDatum - not enough values in datatype string "
@@ -235,22 +237,49 @@ class StackDatum(typing.NamedTuple):
 
 class Data:
     class DataOptions(typing.NamedTuple):
+        """ Options for the data """
         pass
 
+    # The datum class the data object is expecting
     datum_class = None
 
+    # Default options for when none are specified
     DEFAULT_OPTIONS = DataOptions()
 
     def __init__(self, datum_generator, start_time, end_time,
                  interface, data_options=DEFAULT_OPTIONS):
+        """
+        Set relevant fields.
+
+        :param datum_generator:
+            A generator of datum object, each of class datum_class
+        :param start_time:
+            The start time for the data collection
+        :param end_time:
+            The end time for the data collection
+        :param interface:
+            The collecter interface used to collect the data.
+        :param data_options:
+            Data options of type DataOptions
+
+        """
         self.datum_generator = datum_generator
         self.start_time = start_time
         self.end_time = end_time
         self.interface = interface
-        self.datatype = None
+        self.datatype = None  # Will be set by subclasses
         self.data_options = data_options
 
     def header_dict(self):
+        """
+        Create a dictionary containing header information for this data.
+
+        This will be converted to JSON.
+
+        :return:
+            The dictionary
+
+        """
         header_dict = {
             "start time": str(self.start_time),
             "end time": str(self.end_time),
@@ -261,16 +290,33 @@ class Data:
         return header_dict
 
     def to_string(self):
+        """ Lazily convert the data object to a string for writing to file """
+        # Header
         yield json.dumps(self.header_dict())
 
+        # Data
         for datum in self.datum_generator:
             yield str(datum)
 
     @classmethod
     def from_string(cls, string):
+        """
+        Create a data object from a string for reading from files.
+
+        :param string:
+            The input string
+        :return:
+            The output data object
+
+        """
+        # Split newlines
         split = string.strip().split('\n')
+
+        # Get header
         header = json.loads(split[0])
 
+        # Create datum objects
+        # Use the datum_class field and datum from_string() to help
         datum_generator = (cls.datum_class.from_string(line)
                            for line in split[1:])
 
@@ -280,11 +326,14 @@ class Data:
 
 
 class StackData(Data):
+    """ Encapsulate stack data - i.e. a collection of ordered lists. """
+
     datum_class = StackDatum
 
     class DataOptions(typing.NamedTuple):
         """
-        - weight_units: the units for the weight (calls, bytes etc)
+        .. attribute:: weight_units:
+            the units for the weight (calls, bytes etc)
 
         """
         weight_units: str
@@ -294,11 +343,14 @@ class StackData(Data):
     @util.Override(Data)
     def __init__(self, datum_generator, start, end, interface,
                  data_options=DEFAULT_OPTIONS):
+        """ See superclass. """
         super().__init__(datum_generator, start, end, interface, data_options)
         self.datatype = consts.Datatypes.STACK.value
 
 
 class EventData(Data):
+    """ Encapsulate event data - i.e. events in time. """
+
     datum_class = EventDatum
 
     class DataOptions(typing.NamedTuple):
@@ -309,19 +361,23 @@ class EventData(Data):
     @util.Override(Data)
     def __init__(self, datum_generator, start, end, interface,
                  data_options=DEFAULT_OPTIONS):
+        """ See superclass. """
         super().__init__(datum_generator, start, end, interface, data_options)
         self.datatype = consts.Datatypes.EVENT.value
 
 
 class PointData(Data):
+    """ Encapsulate 2D point data. """
+
     datum_class = PointDatum
 
     class DataOptions(typing.NamedTuple):
         """
-        - x_label: label for the x axis;
-        - x_units: units for the x axis;
-        - y_label: label for the y axis;
-        - y_units: units for the y axis;
+        .. attribute:: x_label, y_label:
+            labels for the x and y axes respectively
+        .. attribute:: x_units, y_units:
+            units for the x and y axes respectively
+
         """
         x_label: str
         y_label: str
@@ -332,19 +388,28 @@ class PointData(Data):
 
     def __init__(self, datum_generator, start, end, interface,
                  data_options=DEFAULT_OPTIONS):
+        """ See superclass. """
         super().__init__(datum_generator, start, end, interface, data_options)
         self.datatype = consts.Datatypes.POINT.value
 
 
 class Writer:
+    """
+    Class for writing MARPLE data objects to file.
 
+    Uses a metaheader to keep track of the various data objects in the
+    current file.
+    The metaheader contains each data object header, as well as indices within
+    the file, and byte offsets for the start and end of each dataset.
+
+    Note that the byte offsets DO NOT account for the metaheader for simplicity.
+
+    """
     def __init__(self, filename):
         """
         Initialises a writer object.
 
         Creates a blank metaheader, and stores the filename.
-        Also initialises a file_length variable, to track the current length
-        of the file in lines.
 
         :param filename:
             The desired output filename.
@@ -352,38 +417,40 @@ class Writer:
         """
         self.filename = filename
         self.metaheader = dict()
+        self.file = None
 
     def __enter__(self):
         """ Context manager for writer. """
+        # Ensure utf-8 for reliable byte counts
         self.file = open(self.filename, 'w+', encoding='utf-8')
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """ Close the file resource. """
+        """
+        Close the file resource.
+
+        Write the metaheader to the file before closing.
+        This necessitates copying the entire file, then writing the metaheader,
+        then rewriting the remainder of the file.
+
+        """
 
         # Read data sections from beginning of file
         self.file.seek(0)
         sections = self.file.read()
 
-        # Write metaheader + data sections to file
+        # Write metaheader + rewrite data sections to file
         self.file.seek(0)
-        self._write_metaheader()
+        metaheader = json.dumps(self.metaheader) + "\n"
+        self.file.write(metaheader)
         self.file.write(sections)
 
         # Close file
         self.file.close()
 
-    def _write_metaheader(self):
-        """
-        Write the metaheader to the file.
-
-        """
-        metaheader = json.dumps(self.metaheader) + "\n"
-        self.file.write(metaheader)
-
     def _write_section(self, index, data):
         """
-        Write a single section in a standard format file.
+        Write a single section of data, and update the metaheader.
 
         Appends the section to the current standard format file.
         Includes the section separator.
@@ -408,7 +475,7 @@ class Writer:
     @util.log(logger)
     def write(self, data_objs):
         """
-        Write the data to a standard format file.
+        Write data objects to a data file.
 
         Write a metaheader, and then sections of data.
 
@@ -421,7 +488,13 @@ class Writer:
 
 
 class Reader:
+    """
+    Class for reading data objects from file.
 
+    Can use the metaheader to display information on the file without
+    reading the rest of it.
+
+    """
     def __init__(self, filename):
         """
         Initialises a reader object.
@@ -433,12 +506,17 @@ class Reader:
 
         """
         self.filename = filename
+        self.file = None
+        self.metaheader = None
+        self.offset = None
 
     def __enter__(self):
         """
         Context manager for reader.
 
         Stores the metaheader for future usage.
+        Also stores the base offset - i.e. the length of the metaheader.
+        All other offsets are computed from the end of the metaheader.
 
         """
         self.file = open(self.filename, 'r', encoding='utf-8')
@@ -451,11 +529,31 @@ class Reader:
         self.file.close()
 
     def _get_interface_index(self, interface):
+        """
+        Get the index corresponding to an interface within the file.
+
+        :param interface:
+            The desired interface.
+        :return:
+            The corresponding index within the data file.
+
+        """
         for index, header in self.metaheader.items():
             if header['interface'] == interface:
                 return index
+        raise IndexError("Interface {} not found in metaheader!"
+                         .format(interface))
 
     def _get_data_from_section(self, index):
+        """
+        Get a dataset from an index within the data file.
+
+        :param index:
+            The desired index within the data file.
+        :return:
+            The data object at that index.
+
+        """
         try:
             header = self.metaheader[str(index)]
         except KeyError as ke:
@@ -481,6 +579,15 @@ class Reader:
         return result
 
     def get_interface_from_index(self, index):
+        """
+        Get an interface name from an index in a file.
+
+        :param index:
+            The index within the file.
+        :return:
+            The corresponding interface name.
+
+        """
         try:
             header = self.metaheader[str(index)]
         except KeyError as ke:
@@ -491,12 +598,26 @@ class Reader:
         return header['interface']
 
     def get_all_interface_names(self):
+        """
+        Get all the interface names within the file.
+
+        :return:
+            A set of interface names.
+
+        """
         interfaces = [header['interface']
                       for _, header in self.metaheader.items()]
         assert len(interfaces) == len(set(interfaces))  # no duplicates
         return set(interfaces)
 
-    def get_header_list(self):
+    def get_header_info_string(self):
+        """
+        Get header information on all the datasets in the file.
+
+        :return:
+            A formatted informational string.
+
+        """
         format_str = "{:>8.8}. {:12.12} {:10.10} {:30.30} {:30.30}"
         headers = [
             format_str
@@ -508,6 +629,16 @@ class Reader:
                                   "Start time", "End time")] + headers
 
     def get_interface_data(self, *interfaces):
+        """
+        Lazily get data objects corresponding to interface names in the file.
+
+        :param interfaces:
+            The desired interface names.
+
+        :return:
+            The corresponding data objects.
+
+        """
         for interface in interfaces:
             index = self._get_interface_index(interface)
             data = self._get_data_from_section(index)

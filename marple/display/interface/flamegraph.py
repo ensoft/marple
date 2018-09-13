@@ -57,6 +57,7 @@ class Flamegraph(GenericDisplay):
         coloring = config.get_option_from_section(
             consts.DisplayOptions.FLAMEGRAPH.value, "coloring")
         self.display_options = self.DisplayOptions(coloring)
+        self.svg_temp_file = str(file.TempFileName())
 
     @util.log(logger)
     def _make(self, data):
@@ -78,8 +79,6 @@ class Flamegraph(GenericDisplay):
         with open(stacks_temp_file, "w") as out:
             for stack, count in counts.items():
                 out.write(";".join(stack) + " {}\n".format(count))
-
-        self.svg_temp_file = str(file.TempFileName())
 
         with open(self.svg_temp_file, "w") as out:
             if self.display_options.coloring:

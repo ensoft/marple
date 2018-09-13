@@ -258,7 +258,8 @@ def _get_collecter_instance(interface_name, time):
             config.get_option_from_section("General", "system_wide"))
         collecter = perf.StackTrace(time, options)
     elif interface is interfaces.MEMLEAK:
-        options = ebpf.Memleak.Options(10)  # TODO CHANGE HARDCODED
+        options = ebpf.Memleak.Options(
+            config.get_option_from_section("General", "top_stacks", "int"))
         collecter = ebpf.Memleak(time, options)
     elif interface is interfaces.MEMEVENTS:
         collecter = perf.MemoryEvents(time)

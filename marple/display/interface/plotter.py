@@ -14,21 +14,21 @@ specific_datum field
 
 """
 
-import logging
-import re
-import random
 import colorsys
+import functools
+import itertools
+import logging
+import random
+import re
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtWidgets
-import functools
-import itertools
 
-from marple.display.interface import generic_display
 from marple.common import data_io
+from marple.display.interface import generic_display
 
 logger = logging.getLogger(__name__)
-logger.debug('Entered module: {}'.format(__name__))
+logger.debug('Entered module: %s', format(__name__))
 
 _all__ = (
     "Plotter"
@@ -467,8 +467,9 @@ class _EventDataProcessor:
         """
         if prefix + property in event.specific_datum:
             return str(event.specific_datum[prefix + property])
-        else:
-            return None
+
+        # Otherwise
+        return None
 
 
 class _UIElementManager:
@@ -528,8 +529,9 @@ class _UIElementManager:
         """
         if name in self.ui_dict:
             return self.ui_dict[name]
-        else:
-            raise KeyError("No element with the supplied name found")
+
+        # Otherwise
+        raise KeyError("No element with the supplied name found")
 
 
 class _PlotterWindow(pg.GraphicsWindow):
@@ -725,7 +727,7 @@ class _PlotterWindow(pg.GraphicsWindow):
                     if value is not None and check_regex(value, filters):
                         filtered_events.append(event)
         # If the filter finds nothing, do nothing and show an message box
-        if len(filtered_events) == 0:
+        if not filtered_events:
             QtGui.QMessageBox.warning(self, 'PyQt5 message',
                                       "No events found! No filtering applied "
                                       "(the data remained the same)")

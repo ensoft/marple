@@ -21,8 +21,8 @@ class _PerfCollecterBaseTest(asynctest.TestCase):
     """
 
     time = 5
-    async_mock, log_mock, pipe_mock, create_mock, strio_mock = \
-        None, None, None, None, None
+    async_mock, log_mock, pipe_mock, create_mock, strio_mock, os_mock = \
+        None, None, None, None, None, None
 
     def run(self, result=None):
         with asynctest.patch('marple.collect.interface.perf.asyncio') as async_mock, \
@@ -151,9 +151,6 @@ class StackTraceTest(_PerfCollecterBaseTest):
             asynctest.call().communicate()
         ])
 
-        expected_logs = [
-
-        ]
         self.log_mock.error.assert_has_calls([
             asynctest.call('test_err1'),
             asynctest.call('test_err2')
@@ -179,8 +176,8 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
         match_mock = re_mock.match.return_value
         match_mock.group.side_effect = [
             "111.999",
-            "test_name",
             "test_pid",
+            "test_name",
             "4",
             "test_event"
         ]
@@ -222,8 +219,9 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
                                               "test_out2")
 
         expected_event = data_io.EventDatum(
-            specific_datum=("test_name (pid: test_pid)", "cpu 4"),
-            time=111000999, type="test_event"
+            specific_datum={'pid': 'test_pid', 'cpu': '4', 'comm': 'test_name'},
+        #"test_name (pid: test_pid)", "cpu 4"),
+            time=111000999, type="test_event", connected=None
         )
 
         self.assertEqual([expected_event], sched_events)

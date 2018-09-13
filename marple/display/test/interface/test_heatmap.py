@@ -8,8 +8,8 @@
 import unittest
 from unittest import mock
 
+from marple.common import data_io
 from marple.display.interface import heatmap
-from marple.common import file, data_io
 
 
 class _BaseHeatMapTest(unittest.TestCase):
@@ -17,20 +17,27 @@ class _BaseHeatMapTest(unittest.TestCase):
 
     # Set up test data
     def setUp(self):
-        self.test_params = heatmap.GraphParameters(figure_size=10, scale=10, y_res=8)
+        self.test_params = heatmap.GraphParameters(
+            figure_size=10, scale=10, y_res=8)
         self.test_labels = heatmap.AxesLabels("X", "Y", "X units", "Y units")
-        self.test_comps = heatmap.HeatMap._DataStats(x_min=1.0, x_max=5.0,
-                                                     y_min=6.0, y_max=10.0,
-                                                     y_median=8.0,
-                                                     x_bins=100.0, y_bins=10.0,
-                                                     x_bin_size=0.04, y_bin_size=0.4,
-                                                     x_delta=4, y_delta=40)
+        self.test_comps = heatmap.HeatMap._DataStats(
+            x_min=1.0, x_max=5.0, y_min=6.0, y_max=10.0, y_median=8.0,
+            x_bins=100.0, y_bins=10.0, x_bin_size=0.04, y_bin_size=0.4,
+            x_delta=4, y_delta=40)
         self.test_x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
         self.test_y_data = [6.0, 7.0, 8.0, 9.0, 10.0]
-        self.test_data = iter(("1.0,6.0,info1\n", "2.0,7.0,info2\n",
-                               "3.0,8.0,info3\n", "4.0,9.0,info4\n",
-                               "5.0,10.0,info5\n"))
-        self.colorbar = "Colorbar"
+        self.test_data = (
+            data_io.PointDatum(1.0, 6.0, 'info1'),
+            data_io.PointDatum(2.0, 7.0, 'info2'),
+            data_io.PointDatum(3.0, 8.0, 'info3'),
+            data_io.PointDatum(4.0, 9.0, 'info4'),
+            data_io.PointDatum(5.0, 10.0, 'info5')
+        )
+        self.data_options = data_io.PointData.DataOptions(
+            "X", "Y", "X units", "Y units")
+        self.test_data_obj = data_io.PointData(
+            self.test_data, None, None, 'disklat', self.data_options)
+        self.colorbar = "No. of occurrences"
 
 
 class GetDataTest(_BaseHeatMapTest):
@@ -59,8 +66,10 @@ class GetDataTest(_BaseHeatMapTest):
         hm = object.__new__(heatmap.HeatMap)
 
         # Test that correct data is produced
-        x, y = hm._get_data(iter(("1.0,2.0, info1", "3.0,4.0,info2")),
-                            normalised=False)
+        x, y = hm._get_data((
+            data_io.PointDatum(1.0, 2.0, 'info1'),
+            data_io.PointDatum(3.0, 4.0, 'info2')),
+            normalised=False)
         self.assertEqual(x, [1.0, 3.0])
         self.assertEqual(y, [2.0, 4.0])
 
@@ -74,8 +83,10 @@ class GetDataTest(_BaseHeatMapTest):
         hm = object.__new__(heatmap.HeatMap)
 
         # Test that correct data is produced
-        x, y = hm._get_data(iter(("1.0,2.0, info1", "3.0,4.0,info2")),
-                            normalised=True)
+        x, y = hm._get_data((
+            data_io.PointDatum(1.0, 2.0, 'info1'),
+            data_io.PointDatum(3.0, 4.0, 'info2')),
+            normalised=True)
         self.assertEqual(x, [0.0, 2.0])
         self.assertEqual(y, [2.0, 4.0])
 
@@ -109,12 +120,10 @@ class SetAxesLimitsTest(_BaseHeatMapTest):
 
         # Create blank heatmap object to access methods, set up data
         hm = object.__new__(heatmap.HeatMap)
-        hm.data_stats = heatmap.HeatMap._DataStats(x_min=1.0, x_max=5.0,
-                                                   y_min=6.0, y_max=10.0,
-                                                   y_median=8.0,
-                                                   x_bins=5.0, x_bin_size=0.8,
-                                                   y_bins=10.0, y_bin_size=0.4,
-                                                   x_delta=0.8, y_delta=0.4)
+        hm.data_stats = heatmap.HeatMap._DataStats(
+            x_min=1.0, x_max=5.0, y_min=6.0, y_max=10.0, y_median=8.0,
+            x_bins=5.0, x_bin_size=0.8, y_bins=10.0, y_bin_size=0.4,
+            x_delta=0.8, y_delta=0.4)
         hm.pos = test_pos
 
         # Ensure correct exception raised
@@ -157,7 +166,8 @@ class InitTest(_BaseHeatMapTest):
     @mock.patch('marple.display.interface.heatmap.np')
     @mock.patch('marple.display.interface.heatmap.plt')
     @mock.patch('marple.display.interface.heatmap.widgets.Slider')
-    def test_init(self, slider_mock, pyplot_mock, numpy_mock):
+    @mock.patch('marple.display.interface.heatmap.config')
+    def test_init(self, config_mock, slider_mock, pyplot_mock, numpy_mock):
         """
         Test the __init__ method of the HeatMap class - stub out all external
         methods, and ensure correct API calls are made.
@@ -195,16 +205,12 @@ class InitTest(_BaseHeatMapTest):
         xslide_pos_mock, yslide_pos_mock = mock.MagicMock(), mock.MagicMock()
         slider_mock.side_effect = [xslide_pos_mock, yslide_pos_mock]
 
+        # Create config mocks
+        config_mock.get_option_from_section.side_effect = \
+            [10.0, 10.0, 8.0, False] # fig_size, scale, y_res, normalise
+
         # RUN TRHOUGH INIT - CHECK VALUES/FUNCTION CALLS ARE AS EXPECTED
-        # Mock out file
-        out = file.DisplayFileName()
-        hm = heatmap.HeatMap(self.test_data, out,
-                             data_io.PointData.DataOptions('X', 'Y',
-                                                             'X units',
-                                                             'Y units'),
-                             heatmap.HeatMap.DisplayOptions(self.colorbar,
-                                                            self.test_params,
-                                                            False))
+        hm = heatmap.HeatMap(self.test_data_obj)
 
         # Check field values
         self.assertEqual(hm.labels, self.test_labels)

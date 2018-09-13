@@ -20,41 +20,6 @@ class _FileBaseTest(unittest.TestCase):
             super().run(result)
 
 
-class TestDisplayFileName(_FileBaseTest):
-
-    def test_empty(self):
-        with self.assertRaises(FileNotFoundError) as fnfe:
-            file.DisplayFileName(given_name="")
-            err = fnfe.msg
-            self.assertEqual("Cannot have empty file name.", err)
-
-    def test_simple(self):
-        dfn = file.DisplayFileName()
-        self.assertEqual(paths.OUT_DIR + "date.marple.display", str(dfn))
-
-    def test_custom_option(self):
-        dfn = file.DisplayFileName("option")
-        self.assertEqual(paths.OUT_DIR + "date_option.marple.display", str(dfn))
-
-    def test_custom_extension(self):
-        dfn = file.DisplayFileName(extension="extension")
-        self.assertEqual(paths.OUT_DIR + "date.extension", str(dfn))
-
-    def test_modification(self):
-        dfn = file.DisplayFileName()
-        dfn.set_options("option", "extension")
-        self.assertEqual(paths.OUT_DIR + "date_option.extension", str(dfn))
-
-    def test_custom_name(self):
-        dfn = file.DisplayFileName(given_name="test")
-        self.assertEqual(paths.OUT_DIR + "test", str(dfn))
-
-    def test_custom_path(self):
-        name = "/home/test"
-        dfn = file.DisplayFileName(given_name=name)
-        self.assertEqual(name, str(dfn))
-
-
 class TestDataFileName(_FileBaseTest):
     def test_empty(self):
         with self.assertRaises(FileNotFoundError) as fnfe:

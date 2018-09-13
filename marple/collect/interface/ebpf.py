@@ -45,13 +45,6 @@ class MallocStacks(collecter.Collecter):
 
     _DEFAULT_OPTIONS = None
 
-    def __init__(self, time, options=_DEFAULT_OPTIONS):
-        """
-        Initialize the collecter
-
-        """
-        super().__init__(time, options)
-
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def _get_raw_data(self):
@@ -114,9 +107,6 @@ class Memleak(collecter.Collecter):
 
     _DEFAULT_OPTIONS = Options(top_stacks=10)
 
-    def __init__(self, time, options=_DEFAULT_OPTIONS):
-        super().__init__(time, options)
-
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def _get_raw_data(self):
@@ -177,14 +167,6 @@ class TCPTracer(collecter.Collecter):
         net_ns: int
 
     _DEFAULT_OPTIONS = None
-
-    def __init__(self, time, options=_DEFAULT_OPTIONS):
-        """
-        :param options:
-            If options is None, then all namepsaces will be considered.
-
-        """
-        super().__init__(time, options)
 
     @util.log(logger)
     @util.Override(collecter.Collecter)

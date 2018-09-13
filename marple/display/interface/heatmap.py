@@ -148,7 +148,7 @@ class HeatMap(GenericDisplay):
         parameters = GraphParameters(figure_size, scale, y_res)
         normalise = config.get_option_from_section(
             consts.DisplayOptions.HEATMAP.value, "normalised", typ="bool")
-        colorbar = "No. of occurences"
+        colorbar = "No. of occurrences"
         self.display_options = \
             self.DisplayOptions(colorbar, parameters, normalise)
 
