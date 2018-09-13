@@ -209,6 +209,7 @@ class _PlotterContainer:
 
         # We set the limits for the dispay viewbox (so we only have positive xs
         # and ys); we use the +-1000 so things don't get clipped
+        # TODO: change +- here based on zoom
         self.plot_container.vb.setLimits(xMin=-10000, xMax=self.max_x + 10000,
                                          yMin=-1, yMax=self.max_y + 1)
 

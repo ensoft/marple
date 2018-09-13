@@ -261,7 +261,12 @@ class TCPTracer(collecter.Collecter):
             comm = values[3]
             source_addr = values[5]
             dest_addr = values[6]
-            source_port = int(values[7])
+            # TODO: source_port is the IP address sometimes
+            # TODO: Repro: run 3 servers which send messages one after the other
+            try:
+                source_port = int(values[7])
+            except Exception as ex:
+                continue
             net_ns = int(values[9])
 
             # Discard external TCP / not in net namespace
