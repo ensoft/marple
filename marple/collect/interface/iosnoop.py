@@ -16,7 +16,6 @@ __all__ = (
 import asyncio
 import datetime
 import logging
-import os
 from io import StringIO
 from typing import NamedTuple
 

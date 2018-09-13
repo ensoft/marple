@@ -349,12 +349,30 @@ class TCPTracerTest(asynctest.TestCase):
         port_dict = {4: {('pid1', 'test1')}, 3: {('pid2', 'test2')}}
         result = list(tracer._generate_events(data, port_dict))
         expected = [
-            data_io.EventDatum(time=1, type='A',
-                               specific_datum=(
-                                    2, 'comm1', 3, 'pid1', 'test1', 4, 5)),
-            data_io.EventDatum(time=6, type='B',
-                               specific_datum=(
-                                    7, 'comm2', 4, 'pid2', 'test2', 3, 5))
+            data_io.EventDatum(
+                time=1, type='A', connected=[('source_', 'dest_')],
+                specific_datum={
+                    "source_pid": 2,
+                    "source_comm": 'comm1',
+                    "source_port": 3,
+                    "dest_pid": 'pid1',
+                    "dest_comm": 'test1',
+                    "dest_port": 4,
+                    "net_ns": 5
+                }
+            ),
+            data_io.EventDatum(
+                time=6, type='B', connected=[('source_', 'dest_')],
+                specific_datum={
+                    "source_pid": 7,
+                    "source_comm": 'comm2',
+                    "source_port": 4,
+                    "dest_pid": 'pid2',
+                    "dest_comm": 'test2',
+                    "dest_port": 3,
+                    "net_ns": 5
+                }
+            )
         ]
         self.assertEqual(expected, result)
 
@@ -377,9 +395,18 @@ class TCPTracerTest(asynctest.TestCase):
                      3: {('pid2', 'test2'), ('pid3', 'test3')}}
         result = list(tracer._generate_events(data, port_dict))
         expected = [
-            data_io.EventDatum(time=1, type='A',
-                               specific_datum=(
-                                    2, 'comm1', 3, 'pid1', 'test1', 4, 5)),
+            data_io.EventDatum(
+                time=1, type='A', connected=[('source_', 'dest_')],
+                specific_datum={
+                    "source_pid": 2,
+                    "source_comm": 'comm1',
+                    "source_port": 3,
+                    "dest_pid": 'pid1',
+                    "dest_comm": 'test1',
+                    "dest_port": 4,
+                    "net_ns": 5
+                }
+            )
         ]
         self.assertEqual(expected, result)
 

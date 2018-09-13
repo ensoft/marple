@@ -14,6 +14,7 @@ __all__ = "main"
 
 import argparse
 import logging
+import os
 
 from marple.common import (
     file,
@@ -83,17 +84,18 @@ def _select_mode(interface, datatype, args):
         default_enum = consts.DisplayOptions(default)
     except ValueError as ve:
         raise ValueError(
-            "The default value from the config ({}) was not recognised."
+            "The default value from the config ({}) was not recognised. "
             "Make sure the config values are within the accepted parameters."
             .format(default)) from ve
 
     if default_enum in possibilities:
         return consts.DisplayOptions(default_enum)
-    else:
-        raise ValueError(
-            "No valid args or config values found for {}. Either "
-            "add an arg in the terminal command or modify the "
-            "config file".format(interface))
+
+    # Otherwise
+    raise ValueError(
+        "No valid args or config values found for {}. Either "
+        "add an arg in the terminal command or modify the "
+        "config file".format(interface))
 
 
 @util.log(logger)
@@ -159,8 +161,8 @@ def _args_parse(argv):
         "-g2", "--" + consts.DisplayOptions.G2.value,
         action="store_true", help="display as g2 image")
     event_display.add_argument(
-        "-tcp", "--" + consts.DisplayOptions.TCPPLOT.value,
-        action="store_true", help="display as TCP plot")
+        "-plt", "--" + consts.DisplayOptions.TCPPLOT.value,
+        action="store_true", help="display as plot")
 
     # Group of the display options for displaying points
     point_display = parser.add_mutually_exclusive_group()
@@ -201,6 +203,25 @@ def main(argv):
 
     # Set up input and output files
     if args.infile:
+        path = os.path.expanduser(args.infile)
+
+        # List directory contents if user has specified a dir
+        if args.list and os.path.isdir(path):
+            files = [f for f in os.listdir(path)
+                     if os.path.isfile(os.path.join(path, f))]
+            for f in files:
+                file_path = os.path.join(path, f)
+                red = '\033[91m'
+                bold = '\033[1m'
+                end = '\033[0m'
+                print(bold + "File: " + red + file_path + end)
+                with data_io.Reader(file_path) as reader:
+                    for header in reader.get_header_info_string():
+                        print(header)
+                print()
+            return
+
+        # Otherwise continue as normal
         input_filename = file.DataFileName(given_name=args.infile)
     else:
         input_filename = file.DataFileName.import_filename()
@@ -209,7 +230,7 @@ def main(argv):
     with data_io.Reader(str(input_filename)) as reader:
 
         if args.list:
-            headers = reader.get_header_list()
+            headers = reader.get_header_info_string()
             for header in headers:
                 print(header)
             interfaces = {}
@@ -241,6 +262,7 @@ def main(argv):
                         ' data'.format(display_mode))
                 else:
                     data_objs = reader.get_interface_data(*agg_interfaces)
+                    print(data_objs)
                     visualiser = plotter.Plotter(*data_objs)
                     visualiser.show()
 

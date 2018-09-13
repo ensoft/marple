@@ -96,7 +96,7 @@ optional arguments:
                         using the config file.
 
                         Built-in interfaces are:
-                            cpusched, disklat, mallocstacks, memleak, memtime,
+                            cpusched, disklat, mallocstacks, memusage, memtime,
                             callstack, ipc, memevents, diskblockrq, perf_malloc,
                             lib
                         Current user-defined groups are:
@@ -120,7 +120,7 @@ The subommands are listed below. Each one collects either event-based, stack-bas
 * `cpusched`: collect CPU scheduling event-based data.
 * `disklat`: collect disk latency event-based data.
 * `mallocstacks`: collect `malloc()` call information (including call graph data and size of allocation) as stack-based data.
-* `memleak`: collect outstanding memory allocation data (including call grap data) as stack-based data.
+* `memusage`: collect outstanding memory allocation data (including call grap data) as stack-based data.
 * `memtime`: collect data on memory usage over time as point data.
 * `callstack`: collect call stack data.
 * `ipc`: collect inter-process communication (IPC) data via TCP as event-based data.

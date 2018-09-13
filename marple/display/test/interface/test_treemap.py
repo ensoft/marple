@@ -3,7 +3,7 @@ import shutil
 import unittest
 from unittest import mock
 
-from marple.common import file, data_io, consts
+from marple.common import data_io, consts
 from marple.display.interface import treemap
 
 
@@ -17,7 +17,9 @@ class TreemapTest(unittest.TestCase):
     tmap.display_options = treemap.Treemap.DisplayOptions(25)
     tmap.data_options = data_io.StackData.DataOptions("kb")
     tmap.data = iter(())
-    tmap.output = file.DisplayFileName("file")
+
+    tmap.data_obj = data_io.StackData(
+        tmap.data, None, None, 'callstack', tmap.data_options)
 
     def setUp(self):
         """Per-test set-up"""
@@ -46,17 +48,22 @@ class TreemapTest(unittest.TestCase):
                    ';'.join([str(i) for i in
                              range(1, self.tmap.display_options.depth + 1)]) + \
                    '\n' + \
-                   "00000;pname;call1;call2\n" \
-                   "000000000;pname;call3;call4\n"
+                   "1;pname;call1;call2\n" \
+                   "2;pname;call3;call4\n"
 
         # Get the output from a collapsed stack (first line in inpt is the
         # empty header
-        data = iter(("00000" + consts.datum_field_separator + "pname;call1;call2\n",
-                     "000000000" + consts.datum_field_separator + "pname;call3;call4\n"))
+        datum_generator = (
+            data_io.StackDatum(1, ('pname', 'call1', 'call2')),
+            data_io.StackDatum(2, ('pname', 'call3', 'call4'))
+        )
+
+        data = data_io.StackData(datum_generator, None, None, None, None)
+
         outpt = self._get_output(data)
 
         # Check that we got the desired output
-        self.assertEqual(outpt, expected)
+        self.assertEqual(expected, outpt)
 
     def test_create_treemap_csv_different_stack_lengths(self):
         """
@@ -68,30 +75,26 @@ class TreemapTest(unittest.TestCase):
                    ';'.join([str(i) for i in
                              range(1, self.tmap.display_options.depth + 1)]) + \
                    '\n' + \
-                   "00000;pname;call1;call2;call3;call4;call5\n" \
-                   "000000000;pname;call1;call2\n" \
-                   "000;pname;call1;call2;call3\n"
+                   "1;pname;call1;call2;call3\n" \
+                   "2;pname;call1\n" \
+                   "3;pname;call1;call2\n"
 
         data = iter(("00000" + consts.datum_field_separator
                      + "pname;call1;call2;call3;call4;call5\n",
                      "000000000" + consts.datum_field_separator + "pname;call1;call2\n",
                      "000" + consts.datum_field_separator + "pname;call1;call2;call3"))
+        datum_generator = (
+            data_io.StackDatum(1, ('pname', 'call1', 'call2', 'call3')),
+            data_io.StackDatum(2, ('pname', 'call1')),
+            data_io.StackDatum(3, ('pname', 'call1', 'call2'))
+        )
+
+        data = data_io.StackData(datum_generator, None, None, None, None)
 
         out = self._get_output(data)
 
         # Check that we got the desired output
-        self.assertEqual(out, expected)
-
-    def test_corrupted_file(self):
-        """
-        Tests if corrupted files are handled correctly (the function should)
-        rise a ValueError
-
-        """
-        # First line is the empty header
-        data = iter(("Not a valid stackline"))
-        with self.assertRaises(ValueError):
-            self._get_output(data)
+        self.assertEqual(expected, out)
 
     @mock.patch("builtins.open")
     @mock.patch("os.environ")

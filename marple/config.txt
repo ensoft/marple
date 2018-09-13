@@ -5,6 +5,7 @@
     frequency:99
     system_wide: -a
     warnings:true
+    top_stacks:25
 
 [DisplayInterfaces]
     # Used to set the default display mode for the interfaces
@@ -13,7 +14,7 @@
     #       * 'cpusched';
     #       * 'disklat';
     #       * 'mallocstacks';
-    #       * 'memleak';
+    #       * 'memusage';
     #       * 'memtime';
     #       * 'callstack';
     #       * 'ipc';
@@ -26,17 +27,17 @@
     #                    * 'g2'
     #                    * 'heatmap'
     #                    * 'stackplot'
-    #                    * 'tcpplot'
+    #                    * 'plot'
     cpusched:g2
     disklat:heatmap
     mallocstacks:flamegraph
-    memleak:treemap
+    memusage:treemap
     memtime:stackplot
     callstack:flamegraph
     memevents:treemap
     diskblockrq:flamegraph
     perf_malloc:flamegraph
-    ipc:tcpplot
+    ipc:plot
 
 # The following sections will set some options for the various display modes
 [heatmap]
@@ -52,7 +53,7 @@
     path: ~/vpp/build-root/install-native/g2/bin/g2
 
 [stackplot]
-    top: 5
+    top: 10
 
 [treemap]
     depth: 25
@@ -64,4 +65,4 @@
     boot: memleak,cpusched,disklat
 
 [Aggregate]
-    cpusched,ipc: tcpplot
+    cpusched,ipc: plot

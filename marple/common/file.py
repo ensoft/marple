@@ -12,7 +12,6 @@ and temporary file names.
 """
 
 __all__ = (
-    'DisplayFileName',
     'DataFileName',
     'TempFileName'
 )

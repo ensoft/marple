@@ -22,7 +22,6 @@ from marple.common import (
     consts,
     file,
     util,
-    data_io,
     config,
     output
 )
@@ -70,7 +69,7 @@ class G2(GenericDisplay):
         tmp_cpel = str(file.TempFileName())
         g2_path = config.get_option_from_section('g2', 'path')
         g2_path = os.path.expanduser(g2_path)
-        logger.info("G2 path: " + g2_path)
+        logger.info("G2 path: %s", g2_path)
 
         # We create a generator that yields EventDatum from
         event_generator = self.data.datum_generator

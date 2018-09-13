@@ -24,7 +24,7 @@ class DisplayOptions(Enum):
     FLAMEGRAPH = "flamegraph"
     TREEMAP = "treemap"
     G2 = "g2"
-    TCPPLOT = "tcpplot"
+    TCPPLOT = "plot"
 
 
 class InterfaceTypes(Enum):
@@ -32,7 +32,7 @@ class InterfaceTypes(Enum):
     SCHEDEVENTS = 'cpusched'
     DISKLATENCY = 'disklat'
     MALLOCSTACKS = 'mallocstacks'
-    MEMLEAK = 'memleak'
+    MEMLEAK = 'memusage'
     MEMTIME = 'memtime'
     CALLSTACK = 'callstack'
     TCPTRACE = 'ipc'
