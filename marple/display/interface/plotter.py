@@ -208,8 +208,8 @@ class _PlotterContainer:
                              self.processed_data.get_all_events()))
 
         # We set the limits for the dispay viewbox (so we only have positive xs
-        # and ys); we use the +-1 so things don't get clipped
-        self.plot_container.vb.setLimits(xMin=-1, xMax=self.max_x + 1,
+        # and ys); we use the +-1000 so things don't get clipped
+        self.plot_container.vb.setLimits(xMin=-10000, xMax=self.max_x + 10000,
                                          yMin=-1, yMax=self.max_y + 1)
 
         # We draw the support lines
