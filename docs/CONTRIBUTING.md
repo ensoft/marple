@@ -122,7 +122,7 @@ optional arguments:
   -o OUTFILE, --outfile OUTFILE
                         Output file where the graph is stored
 ~~~~
-Tree maps and flame graphs can be used to display stack-based data. G2 and TCP plots can be used to display event-based data. Heat maps and stack plots can be used to display 2D point-based data.
+Tree maps and flame graphs can be used to display stack-based data. G2 and the event plotter can be used to display event-based data. Heat maps and stack plots can be used to display 2D point-based data.
 
 In general, MARPLE will not require specification of the display mode - it will determine this itself using defaults in the [config file](./config.txt). These can be overriden on a case-by-case basis using the command-line arguments. In particular, if displaying a data file with many data sets, overriding stack-based plots to display as flame graphs by using `-fg` will result in all stack-based data in that file being displayed as a flame graph for example.
 

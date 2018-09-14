@@ -288,6 +288,13 @@ Stack plots (also known as stacked graphs or stacked charts) show 'parts to the 
 
 **Figure:** An example stack plot, showing memory usage by process over time.
 
+#### Event plotter
+
+The event plotter is a visualization mode aimed at displaying big datasets of events (any type) in a simple, easy to use tool. It has two main areas: the figure and the UI. The figure contains a plot that uses various event information as y axis ticks (usually the process name and the PID, though this can be changed) and time as the x axis ticks, points representing an event and lines connections between the source and the destionation of events that have them (IPC events for example). Events and connecting lines are color coded so that they are easily distinguishable. The colors and the symbols can be seen in the legend. The UI is automatically generated, based on the event data. It provides a way to display only selected plots via checkboxes and to filter based on event properties via comma separated regex. The figure and the UI are redrawn with each filtering, so that they are relevant to the filtered data (y axis ticks that are empty after the filtering are hidden). One thing to mention here is that the original data is saved, so we filter on it, not on the data that is currently displayed.
+
+<a name="eventplotter_example"></a>
+![eventplotter](./res/eventplotter.png)
+
 
 ### Miscellaneous
  * MARPLE logs can be found in `/var/log/marple/`.
