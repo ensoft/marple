@@ -4,7 +4,7 @@
 [![Pylint](https://s3-us-west-1.amazonaws.com/marple.ci.logs/most_recent/pylint.svg)](https://www.pylint.org)
 
 ## Description
-MARPLE is a performance analysis and visualisation tool for Linux. It unifies a wide variety of pre-existing Linux tools such as perf and eBPF into one, simple user interface. MARPLE uses these Linux tools to collect data and write it to disk, and provides a variety of visualisation tools to display the data.
+MARPLE is a performance analysis and visualisation tool for Linux aimed at system-wide profiling. It unifies a wide variety of pre-existing Linux tools such as perf and eBPF into one, simple user interface. MARPLE uses these Linux tools to collect data and write it to disk, and provides a variety of visualisation tools to display the data.
 
 ## Installation
 1. Install Python 3 and Git.
@@ -117,45 +117,50 @@ optional arguments:
 ~~~~
 
 The subommands are listed below. Each one collects either event-based, stack-based, or 2D point-based data.
-* `cpusched`: collect CPU scheduling event-based data.
-* `disklat`: collect disk latency event-based data.
+* `cpusched`: collect CPU scheduling event-based data (requires /proc/sys/kernel/sched_schedstats to be set to 1 to record iowaits, waits and sleeps).
+* `disklat`: collect disk latency point-based data.
 * `mallocstacks`: collect `malloc()` call information (including call graph data and size of allocation) as stack-based data.
-* `memusage`: collect outstanding memory allocation data (including call grap data) as stack-based data.
+* `memusage`: collect outstanding memory allocation data as stack-based data.
 * `memtime`: collect data on memory usage over time as point data.
 * `callstack`: collect call stack data.
 * `ipc`: collect inter-process communication (IPC) data via TCP as event-based data.
 * `memevents`: collect memory accesses (including call graph data) as stack-based data.
 * `diskblockrq`: collect disk block accesses as event-based data.
-* `perf_malloc`: collect `malloc()` call information (including call graph data) as stack-based data.
-* `lib`: Not yet implemented.
+* `perf_malloc`: collect `malloc()` call information (including call graph data) as stack-based data (deprecated).
+* `lib`: library load times. Not yet implemented.
 
 MARPLE allows simultaneous collection using multiple subcommands at once - they are simply passed as multiple arguments, or as a custom collection group. Users can define custom collection groups by using the [config file](marple/config.txt). When using many subcommands, all data will be written to a single file.
 
 ### Displaying data
 ~~~~
-usage: sudo marple --display [-h] [-fg | -tm] [-g2 | -tcp] [-hm | -sp] [-i INFILE]
-                             [-o OUTFILE]
+usage: marple --display [-h] [-l | -e [ENTRY [ENTRY ...]] | --noagg]
+                        [-fg | -tm] [-g2 | -plt] [-hm | -sp] [-i INFILE]
 
-Display collected data in required format
+Display collected data in desired format
 
 optional arguments:
   -h, --help            show this help message and exit
+  -l, --list            list available datasets in data file
+  -e [ENTRY [ENTRY ...]], --entry [ENTRY [ENTRY ...]]
+                        select dataset(s) from data file
+  --noagg               if set, none of the sections in the file will be
+                        aggregated
   -fg, --flamegraph     display as flamegraph
   -tm, --treemap        display as treemap
   -g2, --g2             display as g2 image
-  -tcp, --tcpplot       display as TCP plot
+  -plt, --plot          display as plot
   -hm, --heatmap        display as heatmap
   -sp, --stackplot      display as stackplot
 
   -i INFILE, --infile INFILE
                         Input file where collected data to display is stored
 
-  -o OUTFILE, --outfile OUTFILE
-                        Output file where the graph is stored
 ~~~~
-Tree maps and flame graphs can be used to display stack-based data. G2 and TCP plots can be used to display event-based data. Heat maps and stack plots can be used to display 2D point-based data.
+Tree maps and flame graphs can be used to display stack-based data. G2 and the event plotter can be used to display event-based data. Heat maps and stack plots can be used to display 2D point-based data.
 
 In general, MARPLE will not require specification of the display mode - it will determine this itself using defaults in the [config file](marple/config.txt). These can be overriden on a case-by-case basis using the command-line arguments. In particular, if displaying a data file with many data sets, overriding stack-based plots to display as flame graphs by using `-fg` will result in all stack-based data in that file being displayed as a flame graph for example.
+
+One other thing to mention is the possibility to aggregate multiple datasets using the config section [Aggregate]. This can come in handy when the user wants to see different datasets at the same time . Currently only connected events (IPC) and standalone events (CPU scheduling events) can be aggregated, using the event plotter (though in theory the same can be done with stack and point data, but the results are not meaningful).
 
 Note that if collecting and displaying data on the same machine, MARPLE remembers the last data file written - in this case, no display options are necessary and simply invoking `marple -d` will give the correct display.
 
@@ -193,7 +198,7 @@ Currently, MARPLE can collect data on the following aspects of the system using 
 
 ### Iosnoop
 
-This is another Linux tool, designed for usage on Linux kernel versions 3.2 and later. It is part of Brendan Gregg's [perf-tools](https://github.com/brendangregg/perf-tools), which use [perf](#perf) and another Linux tool called `ftrace`. `Iosnoop` itself uses `ftrace`, and traces disk IO. MARPLE therefore uses `iosnoop` to trace disk latency.
+This is another Linux tool, designed for usage on Linux kernel versions 3.2 and later. It is part of Brendan Gregg's [perf-tools](https://github.com/brendangregg/perf-tools), which use [perf](#perf) and another Linux tool called `ftrace`. `iosnoop` itself uses `ftrace`, and traces disk IO. MARPLE therefore uses `iosnoop` to trace disk latency.
 
 ### eBPF and BCC
 
@@ -206,7 +211,7 @@ eBPF has extended BPF to give a general in-kernel virtual machine, with hooks th
 
 **Figure:** The worflow of using eBPF.
 
-The [BPF Compiler Collection](https://github.com/iovisor/bcc) (BCC) is a "toolkit for creating efficient kernel tracing and manipulation programs", generally requiring Linux kernel version 4.1 or higher. BCC uses eBPF extensively, and makes it simpler to write eBPF programs by providing a Python interfaces to the various tools. The eBPF programs are written in C, and handled in strings in the BCC code. Many useful example tools are provided too (see [the diagram below](#bcc_tools)).
+The [BPF Compiler Collection](https://github.com/iovisor/bcc) (BCC) is a "toolkit for creating efficient kernel tracing and manipulation programs", generally requiring Linux kernel version 4.1 or higher. BCC uses eBPF extensively, and makes it simpler to write eBPF programs by providing a Python interfaces to the various tools. The eBPF programs are written in C, and handled as strings in the BCC code. Many useful example tools are provided too (see [the diagram below](#bcc_tools)).
 
 <a name="bcc-tools"></a>
 
