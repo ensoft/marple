@@ -262,7 +262,6 @@ def main(argv):
                         ' data'.format(display_mode))
                 else:
                     data_objs = reader.get_interface_data(*agg_interfaces)
-                    print(data_objs)
                     visualiser = plotter.Plotter(*data_objs)
                     visualiser.show()
 
