@@ -28,8 +28,9 @@ from io import StringIO
 from typing import NamedTuple
 
 from marple.collect.interface import collecter
-from marple.common import data_io, util
+from marple.common import data_io, util, consts
 from marple.common.consts import InterfaceTypes
+import marple.collect.interface.error_acc as error_acc
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -70,7 +71,10 @@ class MemoryEvents(collecter.Collecter):
 
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.MEMEVENTS)
+            return None
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
@@ -78,7 +82,11 @@ class MemoryEvents(collecter.Collecter):
             stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.MEMEVENTS)
+            return None
+
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
@@ -128,14 +136,20 @@ class MemoryMalloc(collecter.Collecter):
             "perf probe -q --del *malloc*", stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.PERF_MALLOC)
+            return None
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf probe -qx /lib*/*/libc.so.* malloc:1 size=%di",
             stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.PERF_MALLOC)
+            return None
 
         # Record perf data
         self.start_time = datetime.datetime.now()
@@ -146,14 +160,21 @@ class MemoryMalloc(collecter.Collecter):
         )
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.PERF_MALLOC)
+            return None
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.PERF_MALLOC)
+            return None
+
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
@@ -216,14 +237,21 @@ class StackTrace(collecter.Collecter):
 
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.CALLSTACK)
+            return None
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.CALLSTACK)
+            return None
+
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
@@ -274,7 +302,10 @@ class SchedulingEvents(collecter.Collecter):
         )
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.SCHEDEVENTS)
+            return None
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf sched script -i " + self._PERF_FILE_NAME +
@@ -282,7 +313,11 @@ class SchedulingEvents(collecter.Collecter):
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.SCHEDEVENTS)
+            return None
+
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
@@ -365,14 +400,21 @@ class DiskBlockRequests(collecter.Collecter):
         )
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.DISKBLOCK)
+            return None
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         out, err = await sub_process.communicate()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.DISKBLOCK)
+            return None
+
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
         return StringIO(out.decode())
@@ -586,7 +628,6 @@ class StackParser:
             An iterable of tuples that contain information about stacks.
 
         """
-
         for line in self.data:
             # If end of stack, save cached data.
             if self._line_is_empty(line):

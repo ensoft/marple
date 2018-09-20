@@ -66,6 +66,7 @@ class MemoryGraph(collecter.Collecter):
 
         while current_time < self.time:
             if self.options.mode == "name":
+                # TODO: Stop using getoutput
                 out = subprocess.getoutput("smem -c \"name pss\" | tac")
                 # s = subprocess.Popen("smem -c \"name pss\" | tac",
                 #                      stdout=subprocess.PIPE,

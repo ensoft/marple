@@ -12,13 +12,17 @@ cpu data collection, stack data collection, etc).
 """
 import marple.common.data_io
 
-__all__ = "main"
+__all__ = (
+    "main",
+)
 
 import argparse
 import asyncio
 import logging
 import os
 import textwrap
+
+import marple.collect.interface.error_acc as error_acc
 
 from marple.common import (
     file,
@@ -91,15 +95,30 @@ def main(argv):
             await asyncio.sleep(0.5)
         print("")
 
+    # Reset the list of collectors whose subprocesses resulted in an error
+    error_acc.errored_collecters = set()
     # Begin async collection
     futures = tuple(collecter.collect() for collecter in collecters)
     results = ioloop.run_until_complete(
         asyncio.gather(*futures, loading_bar())
     )
 
-    # Write results
+    # We deal with the errored collecters
+    if error_acc.errored_collecters != set():
+        print("Interfaces {} errored. No data collected for them. "
+              "Check if the collection tools are installed "
+              "correctly. For more info check the logs.".format(
+            ','.join(map(lambda coll: coll.value, error_acc.errored_collecters))
+        ))
+
+    unerrored = []
+    for result in results[:-1]:  # We skip the last result since it is the bar
+        if result.interface not in error_acc.errored_collecters:
+            unerrored.append(result)
+
+    # Write results from the unerrored collecters
     with marple.common.data_io.Writer(str(filename)) as writer:
-        writer.write(results[:-1])
+        writer.write(unerrored)
 
     # Cleanup
     ioloop.close()
@@ -218,8 +237,7 @@ def _get_collecters(args):
                 "Aliases", arg).split(','))
             args_seen = args_seen.union(alias_args)
 
-    return [_get_collecter_instance(arg, time)
-            for arg in args_seen]
+    return [_get_collecter_instance(arg, time) for arg in args_seen]
 
 
 def _get_collecter_instance(interface_name, time):
@@ -268,6 +286,6 @@ def _get_collecter_instance(interface_name, time):
     elif interface is interfaces.PERF_MALLOC:
         collecter = perf.MemoryMalloc(time)
     else:
-        raise NotImplementedError("{} not implemented!".format(interface_name))
+        raise NotImplementedError(interface_name)
 
     return collecter

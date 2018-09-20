@@ -41,6 +41,7 @@ class InterfaceTypes(Enum):
     PERF_MALLOC = 'perf_malloc'
     LIB = 'lib'
 
+
 class Datatypes(Enum):
     STACK = 'stack'
     EVENT = 'event'

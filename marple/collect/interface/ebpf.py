@@ -23,9 +23,11 @@ import signal
 import typing
 from io import StringIO
 
+import marple.collect.interface.error_acc as error_acc
 from marple.collect.interface import collecter
-from marple.common import util, data_io, paths, output
+from marple.common import util, data_io, paths, output, consts
 from marple.common.consts import InterfaceTypes
+
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -59,7 +61,9 @@ class MallocStacks(collecter.Collecter):
         out, err = await sub_process.communicate()
 
         self.end_time = datetime.datetime.now()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.MALLOCSTACKS)
 
         return StringIO(out.decode())
 
@@ -121,7 +125,9 @@ class Memleak(collecter.Collecter):
 
         out, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.MEMLEAK)
 
         return StringIO(out.decode())
 
@@ -170,6 +176,7 @@ class TCPTracer(collecter.Collecter):
 
     @util.log(logger)
     @util.Override(collecter.Collecter)
+    # TODO: change how the timeout is done here
     async def _get_raw_data(self):
         """
         Collect raw data asynchronously using tcptracer.
@@ -195,14 +202,15 @@ class TCPTracer(collecter.Collecter):
         os.killpg(sub_process.pid, signal.SIGINT)
 
         out, err = await (pending.pop())
-
         # Check for unexpected errors
         # We expect tcptracer to print a stack trace on termination -
         # anything more than that must be logged
         pattern = r"^Traceback \(most recent call last\):" \
                   r"(\S*\s)*KeyboardInterrupt\s$"
         if not re.fullmatch(pattern, err.decode()):
-            self.log_error(err, logger)
+            if sub_process.returncode != 0:
+                self.log_error(err, logger)
+                error_acc.errored_collecters.add(consts.InterfaceTypes.TCPTRACE)
 
         return StringIO(out.decode())
 

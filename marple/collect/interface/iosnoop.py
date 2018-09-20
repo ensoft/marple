@@ -19,8 +19,9 @@ import logging
 from io import StringIO
 from typing import NamedTuple
 
+import marple.collect.interface.error_acc as error_acc
 from marple.collect.interface import collecter
-from marple.common import data_io, util, paths
+from marple.common import data_io, util, paths, consts
 from marple.common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
@@ -56,7 +57,10 @@ class DiskLatency(collecter.Collecter):
         out, err = await sub_process.communicate()
 
         self.end_time = datetime.datetime.now()
-        self.log_error(err, logger)
+        if sub_process.returncode != 0:
+            self.log_error(err, logger)
+            error_acc.errored_collecters.add(consts.InterfaceTypes.DISKLATENCY)
+            return None
 
         return StringIO(out.decode())
 
