@@ -79,10 +79,10 @@ class TreemapTest(unittest.TestCase):
                    "2;pname;call1\n" \
                    "3;pname;call1;call2\n"
 
-        data = iter(("00000" + consts.datum_field_separator
+        data = iter(("00000" + consts.field_separator
                      + "pname;call1;call2;call3;call4;call5\n",
-                     "000000000" + consts.datum_field_separator + "pname;call1;call2\n",
-                     "000" + consts.datum_field_separator + "pname;call1;call2;call3"))
+                     "000000000" + consts.field_separator + "pname;call1;call2\n",
+                     "000" + consts.field_separator + "pname;call1;call2;call3"))
         datum_generator = (
             data_io.StackDatum(1, ('pname', 'call1', 'call2', 'call3')),
             data_io.StackDatum(2, ('pname', 'call1')),

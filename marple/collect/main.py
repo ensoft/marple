@@ -43,89 +43,6 @@ logger.debug('Entered module: %s', __name__)
 
 
 @util.log(logger)
-def main(argv):
-    """
-    The main function of the controller.
-
-    Calls the middle level modules according to options selected by user.
-    Uses asyncio to asynchronously call collecters.
-
-    :param argv:
-        a list of command line arguments from call in main module
-
-    """
-
-    # Parse arguments
-    args = _args_parse(argv)
-
-    # Use user output filename specified, otherwise create a unique one
-    if args.outfile:
-        if os.path.isfile(args.outfile):
-            output.print_("A file named {} already exists! Overwrite [y/n]? "
-                          .format(args.outfile))
-            if input() not in ("y", "yes", "Y"):
-                output.error_("Aborted.\n",
-                              "User aborted collect due to file overwrite.")
-                exit(1)
-        filename = file.DataFileName(given_name=args.outfile)
-    else:
-        filename = file.DataFileName()
-
-    # Save latest filename to temporary file for display module
-    filename.export_filename()
-
-    # Get collecter interfaces
-    collecters = _get_collecters(args)
-
-    # Create event loop to collect and write data
-    ioloop = asyncio.get_event_loop()
-    # ioloop.set_debug(True)
-
-    # Create function to display loading bar when collecting
-    async def loading_bar():
-        bar_width = 60
-
-        time = args.time if args.time else config.get_default_time()
-        for i in range(2 * time + 1):
-            progress = int((i / (2 * time)) * bar_width)
-            print("\r\033[91mProgress:\033[0m [{}] \033[91m{}%\033[0m".format(
-                progress * "#" + (bar_width - progress) * " ",
-                int(progress * 100 / bar_width)),
-                end='', flush=True)
-            await asyncio.sleep(0.5)
-        print("")
-
-    # Reset the list of collectors whose subprocesses resulted in an error
-    error_acc.errored_collecters = set()
-    # Begin async collection
-    futures = tuple(collecter.collect() for collecter in collecters)
-    results = ioloop.run_until_complete(
-        asyncio.gather(*futures, loading_bar())
-    )
-
-    # We deal with the errored collecters
-    if error_acc.errored_collecters != set():
-        print("Interfaces {} errored. No data collected for them. "
-              "Check if the collection tools are installed "
-              "correctly. For more info check the logs.".format(
-            ','.join(map(lambda coll: coll.value, error_acc.errored_collecters))
-        ))
-
-    unerrored = []
-    for result in results[:-1]:  # We skip the last result since it is the bar
-        if result.interface not in error_acc.errored_collecters:
-            unerrored.append(result)
-
-    # Write results from the unerrored collecters
-    with marple.common.data_io.Writer(str(filename)) as writer:
-        writer.write(unerrored)
-
-    # Cleanup
-    ioloop.close()
-    output.print_("Done.")
-
-
-@util.log(logger)
 def _args_parse(argv):
     """
     Creates a parser that parses the collect command.
@@ -204,8 +121,8 @@ def _args_parse(argv):
         "-o", "--outfile", type=str, help=wrapped)
 
     # Add flag and parameter for time
-    time = parser.add_argument_group()
-    time.add_argument(
+    collection_time = parser.add_argument_group()
+    collection_time.add_argument(
         "-t", "--time", type=int, help="specify the duration for data "
                                        "collection (in seconds).")
 
@@ -213,40 +130,39 @@ def _args_parse(argv):
 
 
 @util.log(logger)
-def _get_collecters(args):
+def _get_collecters(subcommands, collection_time):
     """
     Calls the relevant functions that user chose and stores output in file.
 
-    :param args:
-        Command line arguments for data-collection.
-        Passed by main function.
+    :param subcommands:
+        The subcommands that tell which collecters to get
+    :param collection_time:
+        The time for collection
+
 
     """
-    # Use user specified time for data collection, otherwise config value
-    time = args.time if args.time else config.get_default_time()
-
     # Determine all arguments specifying collecter interfaces
     args_seen = set()
-    for arg in args.subcommands:
-        if arg in consts.interfaces_argnames:
-            args_seen.add(arg)
+    for subcommand in subcommands:
+        if subcommand in consts.interfaces_argnames:
+            args_seen.add(subcommand)
         else:
-            assert config.config.has_option("Aliases", arg)
+            assert config.config.has_option("Aliases", subcommand)
             # Look for aliases
             alias_args = set(config.get_option_from_section(
-                "Aliases", arg).split(','))
+                "Aliases", subcommand).split(','))
             args_seen = args_seen.union(alias_args)
 
-    return [_get_collecter_instance(arg, time) for arg in args_seen]
+    return [_get_collecter_instance(arg, collection_time) for arg in args_seen]
 
 
-def _get_collecter_instance(interface_name, time):
+def _get_collecter_instance(interface_name, collection_time):
     """
     A helper function that returns an instance of the appropriate interface
 
     :param interface_name:
         the name of the interface we want an instance of
-    :param time:
+    :param collection_time:
         the time used as an option for the collecter
 
     :returns:
@@ -259,33 +175,124 @@ def _get_collecter_instance(interface_name, time):
     assert interface in interfaces
 
     if interface is interfaces.SCHEDEVENTS:
-        collecter = perf.SchedulingEvents(time)
+        collecter = perf.SchedulingEvents(collection_time)
     elif interface is interfaces.DISKLATENCY:
-        collecter = iosnoop.DiskLatency(time)
+        collecter = iosnoop.DiskLatency(collection_time)
     elif interface is interfaces.TCPTRACE:
-        collecter = ebpf.TCPTracer(time)
-    # elif interface is interfaces.LIB:
-    #     raise NotImplementedError("Lib not implemented")  # TODO
+        collecter = ebpf.TCPTracer(collection_time)
     elif interface is interfaces.MALLOCSTACKS:
-        collecter = ebpf.MallocStacks(time)
+        collecter = ebpf.MallocStacks(collection_time)
     elif interface is interfaces.MEMTIME:
-        collecter = smem.MemoryGraph(time)
+        collecter = smem.MemoryGraph(collection_time)
     elif interface is interfaces.CALLSTACK:
         options = perf.StackTrace.Options(
             config.get_option_from_section("General", "frequency", "int"),
             config.get_option_from_section("General", "system_wide"))
-        collecter = perf.StackTrace(time, options)
+        collecter = perf.StackTrace(collection_time, options)
     elif interface is interfaces.MEMLEAK:
         options = ebpf.Memleak.Options(
             config.get_option_from_section("General", "top_stacks", "int"))
-        collecter = ebpf.Memleak(time, options)
+        collecter = ebpf.Memleak(collection_time, options)
     elif interface is interfaces.MEMEVENTS:
-        collecter = perf.MemoryEvents(time)
+        collecter = perf.MemoryEvents(collection_time)
     elif interface is interfaces.DISKBLOCK:
-        collecter = perf.DiskBlockRequests(time)
+        collecter = perf.DiskBlockRequests(collection_time)
     elif interface is interfaces.PERF_MALLOC:
-        collecter = perf.MemoryMalloc(time)
+        collecter = perf.MemoryMalloc(collection_time)
     else:
         raise NotImplementedError(interface_name)
 
     return collecter
+
+
+async def _loading_bar(collection_time):
+    """
+    Function that displays a progress bar during collection
+
+    We update the bar asyncronously every half a second, while collecting
+    data
+    """
+
+    bar_width = 60
+    for i in range(2 * collection_time + 1):
+        progress = int((i / (2 * collection_time)) * bar_width)
+        # \r - carriage return so that we overwrite the progress bar each
+        #      time it is drawn
+        # \033 - escape character so we can specify colors
+        # [91m - red
+        # [0m  - reset color to normal (from red)
+        print("\r\033[91mProgress:\033[0m [{}] \033[91m{}%\033[0m".format(
+            progress * "#" + (bar_width - progress) * " ",
+            int(progress * 100 / bar_width)),
+            end='', flush=True)
+        await asyncio.sleep(0.5)
+    print("")
+
+
+@util.log(logger)
+def main(argv):
+    """
+    The main function of the controller.
+
+    Calls the middle level modules according to options selected by user.
+    Uses asyncio to asynchronously call collecters.
+
+    :param argv:
+        a list of command line arguments from call in main module
+
+    """
+
+    # Parse arguments
+    args = _args_parse(argv)
+
+    # Use user output filename specified, otherwise create a unique one
+    if args.outfile:
+        if os.path.isfile(args.outfile):
+            output.print_("A file named {} already exists! Overwrite [y/n]? "
+                          .format(args.outfile))
+            if input() not in ("y", "yes", "Y"):
+                output.error_("Aborted.\n",
+                              "User aborted collect due to file overwrite.")
+                exit(1)
+        filename = file.DataFileName(given_name=args.outfile)
+    else:
+        filename = file.DataFileName()
+
+    # Save latest filename to temporary file for display module
+    filename.export_filename()
+
+    # Use user specified time for data collection, otherwise config value
+    collection_time = args.time if args.time else config.get_default_time()
+
+    # Get collecter interfaces
+    collecters = _get_collecters(args.subcommands, collection_time)
+
+    # Create event loop to collect and write data
+    ioloop = asyncio.get_event_loop()
+
+    # Reset the list of collectors whose subprocesses resulted in an error
+    error_acc.errored_collecters = set()
+    # Begin async collection
+    futures = tuple(collecter.collect() for collecter in collecters)
+    results = ioloop.run_until_complete(
+        asyncio.gather(*futures, _loading_bar(collection_time))
+    )
+
+    # We deal with the errored collecters
+    if error_acc.errored_collecters != set():
+        print("Interfaces {} errored. No data collected for them. "
+              "Check if the collection tools are installed "
+              "correctly. For more info check the logs.".format(
+            ','.join(map(lambda coll: coll.value, error_acc.errored_collecters))
+        ))
+
+    unerrored = []
+    for result in results[:-1]:  # We skip the last result since it is the bar
+        if result.interface not in error_acc.errored_collecters:
+            unerrored.append(result)
+
+    with marple.common.data_io.Writer(str(filename)) as writer:
+        writer.write(unerrored)
+
+    ioloop.close()
+    output.print_("Done.")

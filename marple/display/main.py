@@ -39,12 +39,12 @@ logger.debug('Entered module: %s', __name__)
 @util.log(logger)
 def _select_mode(interface, datatype, args):
     """
-    Captures the common pattern of selecting the right display.
+    Function that selects the right display mode based on the interface and the
+    datatype found in the header
 
     We first try to see if one of the cmd line arguments matches one of the
-    possible display options for :param:datatype; if not we try to use the
+    possible display options for :param datatype; if not we try to use the
     option associated with the interface in the config file;
-
     We have chosen to use the interface and not the datatype so that the user
     can choose a more specific option; it is advisable to only use the config
     file, the args being only used for 'one of' situations
@@ -58,7 +58,7 @@ def _select_mode(interface, datatype, args):
     :param args:
         terminal arguments as a dictionary
 
-    :returns:
+    :return:
         a consts.DisplayOptions specifing the display mode
 
     """
@@ -90,12 +90,11 @@ def _select_mode(interface, datatype, args):
 
     if default_enum in possibilities:
         return consts.DisplayOptions(default_enum)
-
-    # Otherwise
-    raise ValueError(
-        "No valid args or config values found for {}. Either "
-        "add an arg in the terminal command or modify the "
-        "config file".format(interface))
+    else:
+        raise ValueError(
+            "No valid args or config values found for {}. Either "
+            "add an arg in the terminal command or modify the "
+            "config file".format(interface))
 
 
 @util.log(logger)
@@ -103,22 +102,8 @@ def _args_parse(argv):
     """
     Create a parser that parses the display command.
 
-    Mutex groups of arguments that are created in the parser object (each
-    group represents the display options for a datatype, each group is
-    optional):
-        Stack:
-            fg: display with a flamegraph
-            tm: display with a treemap
-
-        Event:
-            g2: display with g2
-
-        Point:
-            hm: display with heatmap
-            sp: display with stackplot
-
-        infile i: the filename of the file containing the input (optional)
-        outfile o: the filename of the file that stores the output (optional)
+    We create mutex groups for display options associated with the same
+    datatype
 
     :param argv:
         the arguments passed by the main function
@@ -182,6 +167,31 @@ def _args_parse(argv):
     return parser.parse_args(argv)
 
 
+def _list_directory_files(path):
+    """
+    Helper function that lists the contents of a directory
+
+    :param path: the path of the directory as a string
+
+    """
+    # Get all files in dir
+    files = [f for f in os.listdir(path)
+             if os.path.isfile(os.path.join(path, f))]
+    for f in files:
+        # Now for each file we get its contents, based on the headers
+        file_path = os.path.join(path, f)
+
+        # Now some styles for the cmd line text
+        red = '\033[91m'
+        bold = '\033[1m'
+        end = '\033[0m'
+        print(bold + "File: " + red + file_path + end)
+        with data_io.Reader(file_path) as reader:
+            for header in reader.get_header_info_string():
+                print(header)
+        print()
+
+
 @util.log(logger)
 def main(argv):
     """
@@ -207,18 +217,7 @@ def main(argv):
 
         # List directory contents if user has specified a dir
         if args.list and os.path.isdir(path):
-            files = [f for f in os.listdir(path)
-                     if os.path.isfile(os.path.join(path, f))]
-            for f in files:
-                file_path = os.path.join(path, f)
-                red = '\033[91m'
-                bold = '\033[1m'
-                end = '\033[0m'
-                print(bold + "File: " + red + file_path + end)
-                with data_io.Reader(file_path) as reader:
-                    for header in reader.get_header_info_string():
-                        print(header)
-                print()
+            _list_directory_files(path)
             return
 
         # Otherwise continue as normal
@@ -227,65 +226,62 @@ def main(argv):
         input_filename = file.DataFileName.import_filename()
 
     # Set up reader
-    with data_io.Reader(str(input_filename)) as reader:
+    with data_io.Reader(input_filename) as reader:
 
         if args.list:
             headers = reader.get_header_info_string()
             for header in headers:
                 print(header)
-            interfaces = {}
+            return
         elif args.entry:
             entries = set(int(arg) for arg in args.entry)
             interfaces = {reader.get_interface_from_index(index)
-                                     for index in entries}
-        elif args.noagg:  # Check if the no_agg flag is set
-            interfaces = reader.get_all_interface_names()
+                          for index in entries}
         else:
-            assert not args.noagg
             interfaces = reader.get_all_interface_names()
 
+        if args.noagg:
             # Get the aggregate section from the config file
             agg_groups = config.get_section('Aggregate')
 
             for agg_group in agg_groups:
+                # Parse the string containing the interfaces into a list
                 agg_interfaces = set(agg_group.replace(' ', '').split(','))
 
                 if not agg_interfaces.issubset(interfaces):
-                    continue  # skip when all aggregates are not in file
+                    continue  # skip when not all aggregates are in file
                 else:
+                    # We remove the aggregated interfaces from the list
+                    # of interfaces since we display them here
                     interfaces = interfaces - agg_interfaces
 
                 display_mode = agg_groups[agg_group]
-                if display_mode != consts.DisplayOptions.TCPPLOT.value:
-                    raise ValueError(
-                        'Display mode {} does not support displaying aggregated'
-                        ' data'.format(display_mode))
-                else:
+                if display_mode == consts.DisplayOptions.TCPPLOT.value:
                     data_objs = reader.get_interface_data(*agg_interfaces)
                     visualiser = plotter.Plotter(*data_objs)
                     visualiser.show()
+                else:
+                    raise ValueError(
+                        'Display mode {} does not support displaying aggregated'
+                        ' data'.format(display_mode))
 
         # Display remaining interfaces
         data_objs = reader.get_interface_data(*interfaces)
         for data in data_objs:
-            display_mode = _select_mode(
-                data.interface.value, data.datatype, vars(args))
-
-            if display_mode is consts.DisplayOptions.G2:
-                visualiser = g2.G2
-            elif display_mode is consts.DisplayOptions.HEATMAP:
-                visualiser = heatmap.HeatMap
-            elif display_mode is consts.DisplayOptions.TREEMAP:
-                visualiser = treemap.Treemap
-            elif display_mode is consts.DisplayOptions.STACKPLOT:
-                visualiser = stackplot.StackPlot
-            elif display_mode is consts.DisplayOptions.FLAMEGRAPH:
-                visualiser = flamegraph.Flamegraph
-            elif display_mode is consts.DisplayOptions.TCPPLOT:
-                visualiser = plotter.Plotter
-            else:
-                raise ValueError("Unexpected display mode {}!".
-                                 format(display_mode))
+            display_mode = _select_mode(data.interface.value,
+                                        data.datatype, vars(args))
+            try:
+                visualiser = {
+                    consts.DisplayOptions.G2: g2.G2,
+                    consts.DisplayOptions.HEATMAP: heatmap.HeatMap,
+                    consts.DisplayOptions.TREEMAP: treemap.Treemap,
+                    consts.DisplayOptions.STACKPLOT: stackplot.StackPlot,
+                    consts.DisplayOptions.FLAMEGRAPH: flamegraph.Flamegraph,
+                    consts.DisplayOptions.TCPPLOT: plotter.Plotter
+                }[display_mode]
+            except KeyError as ke:
+                raise KeyError("Unexpected display mode {}!".
+                               format(display_mode)) from ke
 
             visualiser = visualiser(data)
             visualiser.show()

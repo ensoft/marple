@@ -6,11 +6,10 @@
 """
 Handles data input and output for MARPLE.
 
-Standard datatypes (PointDatum, StackDatum, and EventDatum) are defined.
-Collections of data (including header info) are also defined - these are
-PointData, StackData, and EventData.
+Standard datatypes are defined.
+Collections of data (including header info) are also defined here.
 Lastly, methods for writing and reading these to standard MARPLE data files
-are defined.
+are defined here.
 
 Each datatype has __str__ and from_string methods, allowing for simple
 conversion to and from standard strings.
@@ -51,6 +50,7 @@ __all__ = (
 import json
 import logging
 import typing
+import ast
 
 from marple.common import exceptions, consts, util
 
@@ -60,7 +60,7 @@ logger.debug('Entered module: %s', __name__)
 
 class EventDatum(typing.NamedTuple):
     """
-    Represents a single scheduler event.
+    Represents an event (any type).
 
     .. attribute:: time:
         The timestamp of the event in CPU ticks.
@@ -80,18 +80,16 @@ class EventDatum(typing.NamedTuple):
 
     def __str__(self):
         """
-        Converts an event to standard hashtag-separated value string format.
+        Converts an event to standard string format.
 
         The string does not have a line break at the end.
-            Format: <time>consts.separator<type>consts.separator<datum>,
-            where datum is a tuple
-            Note that the fields cannot contain hashtags (and should not
-            since they are events).
+            Format: <time>consts.separator<type>consts.separator<specific_datum>
+                    consts.separator<connected>,
 
         """
-        return consts.datum_field_separator.join((str(self.time), self.type,
-                                                  str(self.specific_datum),
-                                                  str(self.connected)))
+        return consts.field_separator.join((str(self.time), self.type,
+                                            str(self.specific_datum),
+                                            str(self.connected)))
 
     @staticmethod
     def from_string(string):
@@ -111,11 +109,11 @@ class EventDatum(typing.NamedTuple):
         """
         try:
             time, type_, datum, connected = \
-                string.strip().split(consts.datum_field_separator)
-            return EventDatum(time=int(time), type=type_,
-                              specific_datum=eval(datum),
-                              connected=eval(connected))
-        # TODO fix bad use of eval above
+                string.strip().split(consts.field_separator)
+            return EventDatum(time=int(time),
+                              type=type_,
+                              specific_datum=ast.literal_eval(datum),
+                              connected=ast.literal_eval(connected))
         except IndexError as ie:
             raise exceptions.DatatypeException(
                 "EventDatum - not enough values in datatype string "
@@ -152,7 +150,8 @@ class PointDatum(typing.NamedTuple):
             separators if necessary.
 
         """
-        return ",".join((str(self.x), str(self.y), self.info))
+        return consts.field_separator.join((str(self.x), str(self.y),
+                                            self.info))
 
     @staticmethod
     def from_string(string):
@@ -171,7 +170,7 @@ class PointDatum(typing.NamedTuple):
 
         """
         try:
-            x, y, info = string.strip().split(",")
+            x, y, info = string.strip().split(consts.field_separator)
             return PointDatum(x=float(x), y=float(y), info=info)
         except IndexError as ie:
             raise exceptions.DatatypeException(
@@ -207,7 +206,9 @@ class StackDatum(typing.NamedTuple):
         commas or semicolons.
 
         """
-        return consts.datum_field_separator.join((str(self.weight), ';'.join(self.stack)))
+        return consts.field_separator.join((str(self.weight),
+                                            consts.field_separator.join(
+                                                self.stack)))
 
     @staticmethod
     def from_string(string):
@@ -226,8 +227,9 @@ class StackDatum(typing.NamedTuple):
 
         """
         try:
-            weight, stack = string.strip().split(consts.datum_field_separator)
-            stack_tuple = tuple(stack.split(';'))
+            separated = string.strip().split(consts.field_separator)
+            weight = separated[0]
+            stack_tuple = tuple(separated[1:])
             return StackDatum(weight=int(weight), stack=stack_tuple)
         except ValueError as ve:
             raise exceptions.DatatypeException(
@@ -236,6 +238,10 @@ class StackDatum(typing.NamedTuple):
 
 
 class Data:
+    """
+    Base class for the the other more specific data classers
+
+    """
     class DataOptions(typing.NamedTuple):
         """ Options for the data """
         pass
@@ -273,8 +279,6 @@ class Data:
     def header_dict(self):
         """
         Create a dictionary containing header information for this data.
-
-        This will be converted to JSON.
 
         :return:
             The dictionary
@@ -340,7 +344,6 @@ class StackData(Data):
 
     DEFAULT_OPTIONS = DataOptions(weight_units="samples")
 
-    @util.Override(Data)
     def __init__(self, datum_generator, start, end, interface,
                  data_options=DEFAULT_OPTIONS):
         """ See superclass. """
@@ -358,7 +361,6 @@ class EventData(Data):
 
     DEFAULT_OPTIONS = DataOptions()
 
-    @util.Override(Data)
     def __init__(self, datum_generator, start, end, interface,
                  data_options=DEFAULT_OPTIONS):
         """ See superclass. """
@@ -495,17 +497,17 @@ class Reader:
     reading the rest of it.
 
     """
-    def __init__(self, filename):
+    def __init__(self, fileobj):
         """
         Initialises a reader object.
 
         Stores the filename.
 
-        :param filename:
-            The input filename.
+        :param fileobj:
+            The MARPLE file object.
 
         """
-        self.filename = filename
+        self.fileobj = fileobj
         self.file = None
         self.metaheader = None
         self.offset = None
@@ -519,7 +521,7 @@ class Reader:
         All other offsets are computed from the end of the metaheader.
 
         """
-        self.file = open(self.filename, 'r', encoding='utf-8')
+        self.file = open(str(self.fileobj), 'r', encoding='utf-8')
         self.metaheader = json.loads(self.file.readline().strip())
         self.offset = self.file.tell()
         return self
@@ -607,7 +609,6 @@ class Reader:
         """
         interfaces = [header['interface']
                       for _, header in self.metaheader.items()]
-        assert len(interfaces) == len(set(interfaces))  # no duplicates
         return set(interfaces)
 
     def get_header_info_string(self):
@@ -618,6 +619,9 @@ class Reader:
             A formatted informational string.
 
         """
+        # A string to display the header info nicely in the terminal.
+        # Numbers are based on the maximum lengths so that they are
+        # aligned correctly.
         format_str = "{:>8.8}. {:12.12} {:10.10} {:30.30} {:30.30}"
         headers = [
             format_str
