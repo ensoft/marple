@@ -64,6 +64,7 @@ class MallocStacks(collecter.Collecter):
         if sub_process.returncode != 0:
             self.log_error(err, logger)
             error_acc.errored_collecters.add(consts.InterfaceTypes.MALLOCSTACKS)
+            return None
 
         return StringIO(out.decode())
 
@@ -128,6 +129,7 @@ class Memleak(collecter.Collecter):
         if sub_process.returncode != 0:
             self.log_error(err, logger)
             error_acc.errored_collecters.add(consts.InterfaceTypes.MEMLEAK)
+            return None
 
         return StringIO(out.decode())
 
@@ -211,6 +213,7 @@ class TCPTracer(collecter.Collecter):
             if sub_process.returncode != 0:
                 self.log_error(err, logger)
                 error_acc.errored_collecters.add(consts.InterfaceTypes.TCPTRACE)
+                return None
 
         return StringIO(out.decode())
 
@@ -269,13 +272,8 @@ class TCPTracer(collecter.Collecter):
             comm = values[3]
             source_addr = values[5]
             dest_addr = values[6]
-            # TODO: source_port is the IP address sometimes
-            # TODO: Repro: run 3 servers which send messages one after the other
-            try:
-                source_port = int(values[7])
-            except Exception as ex:
-                continue
-            net_ns = int(values[9])
+            source_port = int(values[7])
+            net_ns = int(values[10])
 
             # Discard external TCP / not in net namespace
             if not source_addr.startswith("127."):
@@ -318,14 +316,16 @@ class TCPTracer(collecter.Collecter):
         for line in data:
             values = line.split()
             time = int(values[0])
-            tcp_type = values[1]  # connect, accept, or close
+            tcp_type = values[1]  # connect, accept, close, send or recv
             source_pid = int(values[2])
             source_comm = values[3]
             source_addr = values[5]
             dest_addr = values[6]
             source_port = int(values[7])
             dest_port = int(values[8])
-            net_ns = int(values[9])
+            size = int(values[9])
+            net_ns = int(values[10])
+
 
             # Discard external TCP
             if not source_addr.startswith("127."):
@@ -378,6 +378,7 @@ class TCPTracer(collecter.Collecter):
                                            "dest_pid": dest_pid,
                                            "dest_comm": dest_comm,
                                            "dest_port": dest_port,
+                                           "size": size,
                                            "net_ns": net_ns},
                                        connected=[('source_', 'dest_')]
                                        )

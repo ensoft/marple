@@ -49,6 +49,8 @@ bpf_text = """
 #define TCP_EVENT_TYPE_CONNECT 1
 #define TCP_EVENT_TYPE_ACCEPT  2
 #define TCP_EVENT_TYPE_CLOSE   3
+#define TCP_EVENT_TYPE_SEND   4
+#define TCP_EVENT_TYPE_RECV   5
 
 struct tcp_ipv4_event_t {
     u64 ts_ns;
@@ -61,6 +63,7 @@ struct tcp_ipv4_event_t {
     u16 sport;
     u16 dport;
     u32 netns;
+    u32 size;
 };
 BPF_PERF_OUTPUT(tcp_ipv4_event);
 
@@ -75,6 +78,7 @@ struct tcp_ipv6_event_t {
     u16 sport;
     u16 dport;
     u32 netns;
+    u32 size;
 };
 BPF_PERF_OUTPUT(tcp_ipv6_event);
 
@@ -491,6 +495,181 @@ int trace_accept_return(struct pt_regs *ctx)
 
   return 0;
 }
+
+int tcp_send(struct pt_regs *ctx, struct sock *sk,
+    struct msghdr *msg, size_t size)
+{
+  u64 pid = bpf_get_current_pid_tgid();
+
+  ##FILTER_PID##
+
+  if (sk == NULL) {
+      return 0;
+  }
+
+  // pull in details
+  u16 lport = 0, dport = 0;
+  u32 net_ns_inum = 0;
+  u8 ipver = 0;
+
+  dport = sk->__sk_common.skc_dport;
+  lport = sk->__sk_common.skc_num;
+
+  // Get network namespace id, if kernel supports it
+#ifdef CONFIG_NET_NS
+  net_ns_inum = sk->__sk_common.skc_net.net->ns.inum;
+#endif
+
+  ##FILTER_NETNS##
+
+  if (check_family(sk, AF_INET)) {
+      ipver = 4;
+
+      struct tcp_ipv4_event_t evt4 = { 0 };
+
+      evt4.ts_ns = bpf_ktime_get_ns();
+      evt4.type = TCP_EVENT_TYPE_SEND;
+      evt4.netns = net_ns_inum;
+      evt4.pid = pid >> 32;
+      evt4.ip = ipver;
+
+      evt4.saddr = sk->__sk_common.skc_rcv_saddr;
+      evt4.daddr = sk->__sk_common.skc_daddr;
+
+      evt4.sport = lport;
+      evt4.dport = ntohs(dport);
+      bpf_get_current_comm(&evt4.comm, sizeof(evt4.comm));
+
+      evt4.size = size;
+
+      // do not send event if IP address is 0.0.0.0 or port is 0
+      if (evt4.saddr != 0 && evt4.daddr != 0 &&
+          evt4.sport != 0 && evt4.dport != 0) {
+          tcp_ipv4_event.perf_submit(ctx, &evt4, sizeof(evt4));
+      }
+  } else if (check_family(sk, AF_INET6)) {
+      ipver = 6;
+
+      struct tcp_ipv6_event_t evt6 = { 0 };
+
+      evt6.ts_ns = bpf_ktime_get_ns();
+      evt6.type = TCP_EVENT_TYPE_SEND;
+      evt6.netns = net_ns_inum;
+      evt6.pid = pid >> 32;
+      evt6.ip = ipver;
+
+      bpf_probe_read(&evt6.saddr, sizeof(evt6.saddr),
+                     sk->__sk_common.skc_v6_rcv_saddr.in6_u.u6_addr32);
+      bpf_probe_read(&evt6.daddr, sizeof(evt6.daddr),
+                     sk->__sk_common.skc_v6_daddr.in6_u.u6_addr32);
+
+      evt6.sport = lport;
+      evt6.dport = ntohs(dport);
+      bpf_get_current_comm(&evt6.comm, sizeof(evt6.comm));
+
+      evt6.size = size;
+
+      // do not send event if IP address is 0.0.0.0 or port is 0
+      if (evt6.saddr != 0 && evt6.daddr != 0 &&
+          evt6.sport != 0 && evt6.dport != 0) {
+          tcp_ipv6_event.perf_submit(ctx, &evt6, sizeof(evt6));
+      }
+  }
+  // else drop
+
+  return 0;
+}
+
+/*
+ * tcp_recvmsg() would be obvious to trace, but is less suitable because:
+ * - we'd need to trace both entry and return, to have both sock and size
+ * - misses tcp_read_sock() traffic
+ * we'd much prefer tracepoints once they are available.
+ */
+int tcp_recv(struct pt_regs *ctx, struct sock *sk, int copied)
+{
+  u64 pid = bpf_get_current_pid_tgid();
+
+  ##FILTER_PID##
+
+  if (sk == NULL) {
+      return 0;
+  }
+  if (copied <= 0)
+      return 0;
+
+  // pull in details
+  u16 lport = 0, dport = 0;
+  u32 net_ns_inum = 0;
+  u8 ipver = 0;
+
+  dport = sk->__sk_common.skc_dport;
+  lport = sk->__sk_common.skc_num;
+
+  // Get network namespace id, if kernel supports it
+#ifdef CONFIG_NET_NS
+  net_ns_inum = sk->__sk_common.skc_net.net->ns.inum;
+#endif
+
+  ##FILTER_NETNS##
+
+  if (check_family(sk, AF_INET)) {
+      ipver = 4;
+
+      struct tcp_ipv4_event_t evt4 = { 0 };
+
+      evt4.ts_ns = bpf_ktime_get_ns();
+      evt4.type = TCP_EVENT_TYPE_RECV;
+      evt4.netns = net_ns_inum;
+      evt4.pid = pid >> 32;
+      evt4.ip = ipver;
+
+      evt4.saddr = sk->__sk_common.skc_rcv_saddr;
+      evt4.daddr = sk->__sk_common.skc_daddr;
+
+      evt4.sport = lport;
+      evt4.dport = ntohs(dport);
+      bpf_get_current_comm(&evt4.comm, sizeof(evt4.comm));
+
+      evt4.size = copied;
+
+      // do not send event if IP address is 0.0.0.0 or port is 0
+      if (evt4.saddr != 0 && evt4.daddr != 0 &&
+          evt4.sport != 0 && evt4.dport != 0) {
+          tcp_ipv4_event.perf_submit(ctx, &evt4, sizeof(evt4));
+      }
+  } else if (check_family(sk, AF_INET6)) {
+      ipver = 6;
+
+      struct tcp_ipv6_event_t evt6 = { 0 };
+
+      evt6.ts_ns = bpf_ktime_get_ns();
+      evt6.type = TCP_EVENT_TYPE_RECV;
+      evt6.netns = net_ns_inum;
+      evt6.pid = pid >> 32;
+      evt6.ip = ipver;
+
+      bpf_probe_read(&evt6.saddr, sizeof(evt6.saddr),
+                     sk->__sk_common.skc_v6_rcv_saddr.in6_u.u6_addr32);
+      bpf_probe_read(&evt6.daddr, sizeof(evt6.daddr),
+                     sk->__sk_common.skc_v6_daddr.in6_u.u6_addr32);
+
+      evt6.sport = lport;
+      evt6.dport = ntohs(dport);
+      bpf_get_current_comm(&evt6.comm, sizeof(evt6.comm));
+
+      evt6.size = copied;
+
+      // do not send event if IP address is 0.0.0.0 or port is 0
+      if (evt6.saddr != 0 && evt6.daddr != 0 &&
+          evt6.sport != 0 && evt6.dport != 0) {
+          tcp_ipv6_event.perf_submit(ctx, &evt6, sizeof(evt6));
+      }
+  }
+  // else drop
+
+  return 0;
+}
 """
 
 TASK_COMM_LEN = 16   # linux/sched.h
@@ -507,7 +686,8 @@ class TCPIPV4Evt(ctypes.Structure):
             ("daddr", ctypes.c_uint),
             ("sport", ctypes.c_ushort),
             ("dport", ctypes.c_ushort),
-            ("netns", ctypes.c_uint)
+            ("netns", ctypes.c_uint),
+            ("size", ctypes.c_uint)
     ]
 
 
@@ -522,12 +702,13 @@ class TCPIPV6Evt(ctypes.Structure):
             ("daddr", (ctypes.c_ulong * 2)),
             ("sport", ctypes.c_ushort),
             ("dport", ctypes.c_ushort),
-            ("netns", ctypes.c_uint)
+            ("netns", ctypes.c_uint),
+            ("size", ctypes.c_uint)
     ]
 
 
 verbose_types = {"C": "connect", "A": "accept",
-                 "X": "close", "U": "unknown"}
+                 "X": "close", "S": "send", "R": "recv", "U": "unknown"}
 
 
 def print_ipv4_event(cpu, data, size):
@@ -547,6 +728,10 @@ def print_ipv4_event(cpu, data, size):
         type_str = "A"
     elif event.type == 3:
         type_str = "X"
+    elif event.type == 4:
+        type_str = "S"
+    elif event.type == 5:
+        type_str = "R"
     else:
         type_str = "U"
 
@@ -555,13 +740,14 @@ def print_ipv4_event(cpu, data, size):
     else:
         print("%-2s " % (type_str), end="")
 
-    print("%-6d %-16s %-2d %-16s %-16s %-6d %-6d" %
-          (event.pid, event.comm.decode('utf-8'),
+    print("%-6d %-16s %-2d %-16s %-16s %-6d %-6d %-8d" %
+          (event.pid, event.comm.decode('utf-8').replace(' ', ''),
            event.ip,
            inet_ntop(AF_INET, pack("I", event.saddr)),
            inet_ntop(AF_INET, pack("I", event.daddr)),
            event.sport,
-           event.dport), end="")
+           event.dport,
+           event.size), end="")
     if args.verbose and not args.netns:
         print(" %-8d" % event.netns)
     else:
@@ -584,6 +770,10 @@ def print_ipv6_event(cpu, data, size):
         type_str = "A"
     elif event.type == 3:
         type_str = "X"
+    elif event.type == 4:
+        type_str = "S"
+    elif event.type == 5:
+        type_str = "R"
     else:
         type_str = "U"
 
@@ -592,13 +782,14 @@ def print_ipv6_event(cpu, data, size):
     else:
         print("%-2s " % (type_str), end="")
 
-    print("%-6d %-16s %-2d %-16s %-16s %-6d %-6d" %
-          (event.pid, event.comm.decode('utf-8'),
+    print("%-6d %-16s %-2d %-16s %-16s %-6d %-6d %-8d" %
+          (event.pid, event.comm.decode('utf-8').replace(' ', ''),
            event.ip,
            "[" + inet_ntop(AF_INET6, event.saddr) + "]",
            "[" + inet_ntop(AF_INET6, event.daddr) + "]",
            event.sport,
-           event.dport), end="")
+           event.dport,
+           event.size), end="")
     if args.verbose and not args.netns:
         print(" %-8d" % event.netns)
     else:
@@ -630,22 +821,27 @@ b.attach_kprobe(event="tcp_set_state", fn_name="trace_tcp_set_state_entry")
 b.attach_kprobe(event="tcp_close", fn_name="trace_close_entry")
 b.attach_kretprobe(event="inet_csk_accept", fn_name="trace_accept_return")
 
+b.attach_kprobe(event="tcp_sendmsg", fn_name="tcp_send")
+b.attach_kprobe(event="tcp_cleanup_rbuf", fn_name="tcp_recv")
+
 print("Tracing TCP established connections. Ctrl-C to end.")
 
 # header
 if args.verbose:
     if args.timestamp:
         print("%-14s" % ("TIME(ns)"), end="")
-    print("%-12s %-6s %-16s %-2s %-16s %-16s %-6s %-7s" % ("TYPE",
-          "PID", "COMM", "IP", "SADDR", "DADDR", "SPORT", "DPORT"), end="")
+    print("%-12s %-6s %-16s %-2s %-16s %-16s %-6s %-7s %-8s" % ("TYPE",
+          "PID", "COMM", "IP", "SADDR", "DADDR", "SPORT", "DPORT", "SIZE"),
+          end="")
     if not args.netns:
         print("%-8s" % "NETNS", end="")
     print()
 else:
     if args.timestamp:
         print("%-9s" % ("TIME(s)"), end="")
-    print("%-2s %-6s %-16s %-2s %-16s %-16s %-6s %-6s" %
-          ("T", "PID", "COMM", "IP", "SADDR", "DADDR", "SPORT", "DPORT"))
+    print("%-2s %-6s %-16s %-2s %-16s %-16s %-6s %-6s %-8s" %
+          ("T", "PID", "COMM", "IP", "SADDR", "DADDR", "SPORT", "DPORT",
+           "SIZE"))
 
 start_ts = 0
 
