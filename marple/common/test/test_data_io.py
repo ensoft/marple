@@ -13,7 +13,8 @@ from unittest import mock
 from marple.common import (
     data_io,
     exceptions,
-    paths
+    paths,
+    consts
 )
 from marple.common.data_io import EventDatum
 from marple.display.tools.g2 import cpel_writer
@@ -28,6 +29,7 @@ class _DatatypeBaseTest(unittest.TestCase):
 
 class PointDatumTest(_DatatypeBaseTest):
     """Test datapoints are correctly converted to/from strings."""
+    standard_field = consts.field_separator.join(["0.0", "0.0", "info"])
 
     def test_empty_string(self):
         """Ensure empty strings raise a DatatypeException"""
@@ -37,18 +39,26 @@ class PointDatumTest(_DatatypeBaseTest):
     def test_malformed_floats(self):
         """Ensure invalid string floats raise a DatatypeException"""
         with self.assertRaises(exceptions.DatatypeException):
-            data_io.PointDatum.from_string("test,0.0,info")
+            data_io.PointDatum.from_string(consts.field_separator.join(
+                ["test", "0.0", "info"]
+            ))
         with self.assertRaises(exceptions.DatatypeException):
-            data_io.PointDatum.from_string("0.0,test,info")
+            data_io.PointDatum.from_string(consts.field_separator.join(
+                ["0.0", "tests", "info"]
+            ))
 
     def test_too_few_fields(self):
         """Ensure strings with too few fields raise a DatatypeException"""
         with self.assertRaises(exceptions.DatatypeException):
-            data_io.PointDatum.from_string("0.0,0.0")
+            data_io.PointDatum.from_string(consts.field_separator.join(
+                ["0.0", "0.0"]
+            ))
 
     def test_empty_info_field(self):
         """Ensure empty info field is OK"""
-        result = data_io.PointDatum.from_string("0.0,0.0,")
+        result = data_io.PointDatum.from_string(consts.field_separator.join(
+                ["0", "0"]
+            ) + consts.field_separator)
         self.assertEqual(result.info, "",
                          msg="Expected info field '', was actually {}"
                          .format(result.info))
@@ -56,27 +66,28 @@ class PointDatumTest(_DatatypeBaseTest):
     def test_with_newline_n(self):
         """Ensure from_string copes with newlines"""
         expected = data_io.PointDatum(0.0, 0.0, 'info')
-        self.check_from_str('0.0,0.0,info\n', expected)
+        self.check_from_str(self.standard_field + "\n", expected)
 
     def test_with_newline_r(self):
         """Ensure from_string copes with newlines"""
         expected = data_io.PointDatum(0.0, 0.0, 'info')
-        self.check_from_str('0.0,0.0,info\r', expected)
+        self.check_from_str(consts.field_separator.join(
+            ["0.0", "0.0", "info"]) + "\r", expected)
 
     def test_with_newline_rn(self):
         """Ensure from_string copes with newlines"""
         expected = data_io.PointDatum(0.0, 0.0, 'info')
-        self.check_from_str('0.0,0.0,info\r\n', expected)
+        self.check_from_str(self.standard_field + "\r\n", expected)
 
     def test_without_newline(self):
         """Ensure from_string works without newlines"""
         expected = data_io.PointDatum(0.0, 0.0, 'info')
-        self.check_from_str('0.0,0.0,info', expected)
+        self.check_from_str(self.standard_field, expected)
 
     def test_to_string(self):
         """Test datapoints are correctly converted to strings."""
         dp = data_io.PointDatum(0.0, 0.0, 'info')
-        expected = '0.0,0.0,info'
+        expected = self.standard_field
         actual = str(dp)
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
@@ -85,24 +96,29 @@ class PointDatumTest(_DatatypeBaseTest):
 class StackDatumTest(_DatatypeBaseTest):
     """Test stack data are correctly converted to/from strings."""
 
+    standard_field = consts.field_separator.join(["0", "A", "B"])
+
     def test_empty_string(self):
         """Ensure empty strings raise a DatatypeException"""
         with self.assertRaises(exceptions.DatatypeException):
-            data_io.StackDatum.from_string("")
+            data_io.StackDatum.from_string(consts.field_separator.join([""]))
 
     def test_malformed_floats(self):
         """Ensure invalid string floats raise a DatatypeException"""
         with self.assertRaises(exceptions.DatatypeException):
-            data_io.StackDatum.from_string("test$$$A;B")
+            data_io.StackDatum.from_string(consts.field_separator.join(
+                ["test", "A", "B"]))
 
     def test_too_few_fields(self):
         """Ensure strings with too few fields raise a DatatypeException"""
         with self.assertRaises(exceptions.DatatypeException):
-            data_io.StackDatum.from_string("test")
+            data_io.StackDatum.from_string(consts.field_separator.join(
+                ["test"]))
 
     def test_empty_stack_field(self):
         """Ensure empty stack field is OK"""
-        result = data_io.StackDatum.from_string("0$$$")
+        result = data_io.StackDatum.from_string(consts.field_separator.join(
+            ["0"]) + consts.field_separator)
         self.assertEqual(result.stack, ('',),
                          msg="Expected stack field empty, was actually {}"
                          .format(result.stack))
@@ -110,27 +126,27 @@ class StackDatumTest(_DatatypeBaseTest):
     def test_with_newline_n(self):
         """Ensure from_string copes with newlines"""
         expected = data_io.StackDatum(0, ('A', 'B'))
-        self.check_from_str('0$$$A;B\n', expected)
+        self.check_from_str(self.standard_field + '\n', expected)
 
     def test_with_newline_r(self):
         """Ensure from_string copes with newlines"""
         expected = data_io.StackDatum(0, ('A', 'B'))
-        self.check_from_str('0$$$A;B\r', expected)
+        self.check_from_str(self.standard_field + '\r', expected)
 
     def test_with_newline_rn(self):
         """Ensure from_string copes with newlines"""
         expected = data_io.StackDatum(0, ('A', 'B'))
-        self.check_from_str('0$$$A;B\r\n', expected)
+        self.check_from_str(self.standard_field + '\r\n', expected)
 
     def test_without_newline(self):
         """Ensure from_string works without newlines"""
         expected = data_io.StackDatum(0, ('A', 'B'))
-        self.check_from_str('0$$$A;B', expected)
+        self.check_from_str(self.standard_field, expected)
 
     def test_to_string(self):
         """Test datapoints are correctly converted to strings."""
         sd = data_io.StackDatum(0, ('A', 'B'))
-        expected = '0$$$A;B'
+        expected = self.standard_field
         actual = str(sd)
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
@@ -154,59 +170,82 @@ class EventDatumTest(_DatatypeBaseTest):
         with self.assertRaises(exceptions.DatatypeException):
             data_io.EventDatum.from_string("test")
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
     def test_empty_type_field(self):
         """Ensure empty type field is OK"""
-        result = data_io.EventDatum.from_string("1$$$$$$(\'track\', \'datum\')")
+        result = data_io.EventDatum.from_string(
+            "1" + consts.field_separator + consts.field_separator +
+            "{'pid': 'p', 'comm': 'c', 'cpu': 'c'}" + consts.field_separator +
+            "None"
+        )
         self.assertEqual(result.type, "",
                          msg="Expected type field '', was actually {}"
                          .format(result.type))
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
-    def test_empty_track_field(self):
+    def test_specific_datum_field(self):
         """Ensure empty track field is OK"""
-        result = data_io.EventDatum.from_string("1$$$type$$$(\'\', \'datum\')")
-        self.assertEqual(result.specific_datum[0], "",
+        result = data_io.EventDatum.from_string(
+            "1" + consts.field_separator + "type" + consts.field_separator +
+            "{}" + consts.field_separator +
+            "None"
+        )
+        self.assertEqual(result.specific_datum, {},
                          msg="Expected type field '', was actually {}"
-                         .format(result.specific_datum[0]))
+                         .format(result.specific_datum))
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
-    def test_empty_datum_field(self):
-        """Ensure empty datum field is OK"""
-        result = data_io.EventDatum.from_string("1$$$type$$$(\'track\',\'\')")
-        self.assertEqual(result.specific_datum[1], "",
-                         msg="Expected type field '', was actually {}"
-                         .format(result.specific_datum[1]))
-
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
     def test_with_newline_n(self):
         """Ensure from_string copes with newlines"""
-        expected = data_io.EventDatum(0, 'type', ('track', 'datum'))
-        self.check_from_str('0$$$type$$$(\'track\', \'datum\')\n', expected)
+        expected = data_io.EventDatum(
+            time=1, type="type",
+            specific_datum={'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'},
+            connected=[('source_', 'dest_')])
+        x = "1" + consts.field_separator + "type" + consts.field_separator + \
+            "{'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'}" + \
+            consts.field_separator + "[('source_', 'dest_')]"
+        self.check_from_str(x + '\n', expected)
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
     def test_with_newline_r(self):
         """Ensure from_string copes with newlines"""
-        expected = data_io.EventDatum(0, 'type', ('track', 'datum'))
-        self.check_from_str('0$$$type$$$(\'track\', \'datum\')\r', expected)
+        expected = data_io.EventDatum(
+            time=1, type="type",
+            specific_datum={'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'},
+            connected=[('source_', 'dest_')])
+        x = "1" + consts.field_separator + "type" + consts.field_separator + \
+            "{'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'}" + \
+            consts.field_separator + "[('source_', 'dest_')]"
+        self.check_from_str(x + '\r', expected)
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
     def test_with_newline_rn(self):
         """Ensure from_string copes with newlines"""
-        expected = data_io.EventDatum(0, 'type', ('track', 'datum'))
-        self.check_from_str('0$$$type$$$(\'track\', \'datum\')\r\n', expected)
+        expected = data_io.EventDatum(
+            time=1, type="type",
+            specific_datum={'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'},
+            connected=[('source_', 'dest_')])
+        x = "1" + consts.field_separator + "type" + consts.field_separator + \
+            "{'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'}" + \
+            consts.field_separator + "[('source_', 'dest_')]"
+        self.check_from_str(x + '\r\n', expected)
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
     def test_without_newline(self):
         """Ensure from_string works without newlines"""
-        expected = data_io.EventDatum(0, 'type', ('track', 'datum'))
-        self.check_from_str('0$$$type$$$(\'track\', \'datum\')', expected)
+        """Ensure from_string copes with newlines"""
+        expected = data_io.EventDatum(
+            time=1, type="type",
+            specific_datum={'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'},
+            connected=[('source_', 'dest_')])
+        x = "1" + consts.field_separator + "type" + consts.field_separator + \
+            "{'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'}" + \
+            consts.field_separator + "[('source_', 'dest_')]"
+        self.check_from_str(x, expected)
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
     def test_to_string(self):
         """Test datapoints are correctly converted to strings."""
-        se = data_io.EventDatum(0, 'type', ('track', 'datum'))
-        expected = '0$$$type$$$(\'track\', \'datum\')'
+        se = data_io.EventDatum(
+            time=1, type="type",
+            specific_datum={'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'},
+            connected=[('source_', 'dest_')])
+        expected = "1" + consts.field_separator + "type" + consts.field_separator + \
+            "{'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'}" + \
+            consts.field_separator + "[('source_', 'dest_')]"
         actual = str(se)
         self.assertEqual(expected, actual, msg='Expected {}, got {}'
                          .format(expected, actual))
@@ -227,11 +266,13 @@ class SchedTest(unittest.TestCase):
     # Create Event iterators for testing
     testEvents = [
         EventDatum(
+            time=11112221, type="event_type",
             specific_datum={'pid': '1234', 'comm': 'test_name', 'cpu': 'cpu 2'},
-            time=11112221, type="event_type", connected=None),
+            connected=None),
         EventDatum(
+            time=11112222, type="event_type",
             specific_datum={'pid': '1234', 'comm': 'test_name2', 'cpu': 'cpu 1'},
-            time=11112222, type="event_type", connected=None)]
+            connected=None)]
 
 
 class CPELTest(SchedTest):
@@ -284,7 +325,6 @@ class CPELTest(SchedTest):
             if not buffer1 or not buffer2:
                 break
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
     def test_basic_file(self):
         """Creates a test file in test directory and compares it with example"""
         filename = self._TEST_DIR + "create_scheddata_test.cpel"
@@ -343,7 +383,6 @@ class CPELTest(SchedTest):
 
             return 0
 
-    @unittest.skip("Updates to EventDatum")  # TODO Andrei to fix
     def test_nr_of_entries(self):
         """
         Test the right number of entries get created in each section.
@@ -358,11 +397,13 @@ class CPELTest(SchedTest):
         # Two different events with different data, track and event:
         writer = cpel_writer.CpelWriter([
             EventDatum(
+                time=11112221, type="e1",
                 specific_datum={'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'},
-                time=11112221, type="e1", connected=None),
+                connected=None),
             EventDatum(
-                specific_datum={'pid': 'p1', 'comm': 'n1', 'cpu': 'c1'},
-                time=11112222, type="e2", connected=None)],
+                time=11112222, type="e2",
+                specific_datum={'pid': 'p2', 'comm': 'n2', 'cpu': 'c2'},
+                connected=None)],
             track="pid")
         writer.write(filename)
 

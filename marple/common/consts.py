@@ -59,4 +59,4 @@ display_dictionary = {
 interfaces_argnames = [interface.value for interface in InterfaceTypes]
 
 field_separator = "$$$"
-data_separator = "\n"
+section_separator = "\n"

@@ -465,7 +465,7 @@ class Writer:
         start_byte = self.file.tell()
         for line in data.to_string():
             self.file.write(line + "\n")
-        self.file.write(consts.data_separator)
+        self.file.write(consts.section_separator)
         end_byte = self.file.tell()
 
         # Update metaheader
