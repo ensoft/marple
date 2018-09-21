@@ -221,15 +221,6 @@ class PlotContainerBasicTest(_BasePlotterTest):
         exp_y = 0
         self._check_init(init_container, exp_ymap, exp_color_map, exp_x, exp_y)
 
-    def test_concat(self):
-        """
-        Testing the function that transforms a list of lists into a list
-
-        """
-        exp = [1, 2, 3, 4, 5]
-        inp = [[1], [2, 3], [4], [5]]
-        self.assertEqual(exp, list(plotter._PlotContainer._concat(inp)))
-
     @mock.patch("marple.display.interface.plotter.pg")
     def test_empties(self, pg_mock):
         """
