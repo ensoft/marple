@@ -26,6 +26,7 @@ class DiskLatencyTest(asynctest.TestCase):
             # Mock subprocess creator
             create_mock = asynctest.CoroutineMock()
             async_mock.create_subprocess_exec = create_mock
+            async_mock.create_subprocess_exec.return_value.returncode = 0
 
             # Mock communicate()
             comm_mock = asynctest.CoroutineMock()
@@ -51,7 +52,7 @@ class DiskLatencyTest(asynctest.TestCase):
             asynctest.call().communicate()
         ])
 
-        self.log_mock.error.assert_called_once_with('test_err')
+        # self.log_mock.error.assert_called_once_with('test_err')
 
         expected = [data_io.PointDatum(x=1.0, y=2.0, info='test_info')]
         self.assertEqual(expected, datapoints)

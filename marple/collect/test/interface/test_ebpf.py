@@ -11,7 +11,7 @@ from io import StringIO
 
 
 from marple.collect.interface import ebpf
-from marple.common import data_io
+from marple.common import data_io, consts
 
 
 class Mallocstacks(asynctest.TestCase):
@@ -36,6 +36,7 @@ class Mallocstacks(asynctest.TestCase):
             # Set up mocks
             create_mock = asynctest.CoroutineMock()
             async_mock.create_subprocess_exec = create_mock
+            async_mock.create_subprocess_exec.return_value.returncode = 0
             comm_mock = asynctest.CoroutineMock()
             comm_mock.side_effect = [(out, b'')]
             create_mock.return_value.communicate = comm_mock
@@ -58,8 +59,10 @@ class Mallocstacks(asynctest.TestCase):
         Basic test case where everything should work as expected
 
         """
-        mock_return_popen_stdout = b"123123$$$proc1;func1;func2\n" \
-                                   b"321321$$$proc2;func1;func2;func3\n"
+        mock_return_popen_stdout = str.encode(consts.field_separator.join(
+            ["123123", "proc1", "func1", "func2"]) + "\n") + \
+                                   str.encode(consts.field_separator.join(
+            ["321321", "proc2", "func1", "func2", "func3"]) + "\n")
 
         expected = [data_io.StackDatum(123123,
                                        ("proc1", "func1", "func2")),
@@ -74,7 +77,11 @@ class Mallocstacks(asynctest.TestCase):
         Basic test case where everything should work as expected
 
         """
-        mock_return_popen_stdout = b"123123$$$1   []#';[]-=1   2=\n"
+        mock_return_popen_stdout = b"123123" + \
+                                   str.encode(consts.field_separator) +\
+                                   b"1   []#'" + \
+                                   str.encode(consts.field_separator) + \
+                                   b"[]-=1   2=\n"
 
         expected = [data_io.StackDatum(123123,
                                        ("1   []#'", "[]-=1   2="))]
@@ -213,10 +220,10 @@ class TCPTracerTest(asynctest.TestCase):
         tracer.options = None
         data = StringIO(
             "header1\n"
-            "time type pid comm   ip  s_addr d_addr s_port d_port netns\n"
-            "1    A    2   comm1  4   127.   127.   3      4      5\n"
-            "6    B    7   comm2  4   127.   127.   4      3      5\n"
-            "1    A    2   comm3  4   x      x      3      4      5\n"
+            "time type pid comm   ip  s_addr d_addr s_port d_port size netns\n"
+            "1    A    2   comm1  4   127.   127.   3      4         1     5\n"
+            "6    B    7   comm2  4   127.   127.   4      3         1     5\n"
+            "1    A    2   comm3  4   x      x      3      4         1     5\n"
         )
 
         expected = {3: {(2, 'comm1')}, 4: {(7, 'comm2')}}
@@ -233,11 +240,11 @@ class TCPTracerTest(asynctest.TestCase):
         tracer.options = ebpf.TCPTracer.Options(5)
         data = StringIO(
             "header1\n"
-            "time type pid comm   ip  s_addr d_addr s_port d_port netns\n"
-            "1    A    2   comm1  4   127.   127.   3      4      5\n"
-            "6    B    7   comm2  4   127.   127.   4      3      5\n"
-            "6    B    8   comm4  4   127.   127.   4      3      6\n"
-            "1    A    2   comm3  4   x      x      3      4      5\n"
+            "time type pid comm   ip  s_addr d_addr s_port d_port size netns\n"
+            "1    A    2   comm1  4   127.   127.   3      4         1     5\n"
+            "6    B    7   comm2  4   127.   127.   4      3         1     5\n"
+            "6    B    8   comm4  4   127.   127.   4      3         1     6\n"
+            "1    A    2   comm3  4   x      x      3      4         1     5\n"
         )
 
         expected = {3: {(2, 'comm1')}, 4: {(7, 'comm2')}}
@@ -250,11 +257,11 @@ class TCPTracerTest(asynctest.TestCase):
         tracer.options = None
         data = StringIO(
             "header1\n"
-            "time type pid comm   ip  s_addr d_addr s_port d_port netns\n"
-            "1    A    2   comm1  4   127.   127.   3      4      5\n"
-            "6    B    7   comm2  4   127.   127.   4      3      5\n"
-            "7    C    8   comm4  4   127.   127.   4      2      5\n"
-            "1    A    2   comm3  4   x      x      3      4      5\n"
+            "time type pid comm   ip  s_addr d_addr s_port d_port size netns\n"
+            "1    A    2   comm1  4   127.   127.   3      4         1     5\n"
+            "6    B    7   comm2  4   127.   127.   4      3         1     5\n"
+            "7    C    8   comm4  4   127.   127.   4      2         1     5\n"
+            "1    A    2   comm3  4   x      x      3      4         1     5\n"
         )
 
         expected = {3: {(2, 'comm1')}, 4: {(7, 'comm2'), (8, 'comm4')}}
@@ -271,12 +278,12 @@ class TCPTracerTest(asynctest.TestCase):
         tracer.options = ebpf.TCPTracer.Options(5)
         data = StringIO(
             "header1\n"
-            "time type pid comm   ip  s_addr d_addr s_port d_port netns\n"
-            "1    A    2   comm1  4   127.   127.   3      4      5\n"
-            "6    B    7   comm2  4   127.   127.   4      3      5\n"
-            "7    C    8   comm4  4   127.   127.   4      2      5\n"
-            "6    B    9   comm5  4   127.   127.   4      3      6\n"
-            "1    A    2   comm3  4   x      x      3      4      5\n"
+            "time type pid comm   ip  s_addr d_addr s_port d_port size netns\n"
+            "1    A    2   comm1  4   127.   127.   3      4         1     5\n"
+            "6    B    7   comm2  4   127.   127.   4      3         1     5\n"
+            "7    C    8   comm4  4   127.   127.   4      2         1     5\n"
+            "6    B    9   comm5  4   127.   127.   4      3         1     6\n"
+            "1    A    2   comm3  4   x      x      3      4         1     5\n"
         )
 
         expected = {3: {(2, 'comm1')}, 4: {(7, 'comm2'), (8, 'comm4')}}
@@ -305,10 +312,10 @@ class TCPTracerTest(asynctest.TestCase):
         tracer.options = None
         data = StringIO(
             "header1\n"
-            "time type pid comm   ip  s_addr d_addr s_port d_port netns\n"
-            "1    A    2   comm1  4   127.   127.   3      4      5\n"
-            "6    B    7   comm2  4   127.   127.   4      3      5\n"
-            "1    A    2   comm3  4   x      x      3      4      5\n"
+            "time type pid comm   ip  s_addr d_addr s_port d_port size netns\n"
+            "1    A    2   comm1  4   127.   127.   3      4         1     5\n"
+            "6    B    7   comm2  4   127.   127.   4      3         1     5\n"
+            "1    A    2   comm3  4   x      x      3      4         1     5\n"
         )
         result = list(tracer._generate_events(data, {}))
         self.assertEqual([], result)
@@ -341,10 +348,10 @@ class TCPTracerTest(asynctest.TestCase):
         tracer.options = None
         data = StringIO(
             "header1\n"
-            "time type pid comm   ip  s_addr d_addr s_port d_port netns\n"
-            "1    A    2   comm1  4   127.   127.   3      4      5\n"
-            "6    B    7   comm2  4   127.   127.   4      3      5\n"
-            "1    A    2   comm3  4   x      x      3      4      5\n"
+            "time type pid comm   ip  s_addr d_addr s_port d_port size netns\n"
+            "1    A    2   comm1  4   127.   127.   3      4         1     5\n"
+            "6    B    7   comm2  4   127.   127.   4      3         1     5\n"
+            "1    A    2   comm3  4   x      x      3      4         1     5\n"
         )
         port_dict = {4: {('pid1', 'test1')}, 3: {('pid2', 'test2')}}
         result = list(tracer._generate_events(data, port_dict))
@@ -358,6 +365,7 @@ class TCPTracerTest(asynctest.TestCase):
                     "dest_pid": 'pid1',
                     "dest_comm": 'test1',
                     "dest_port": 4,
+                    "size": 1,
                     "net_ns": 5
                 }
             ),
@@ -370,6 +378,7 @@ class TCPTracerTest(asynctest.TestCase):
                     "dest_pid": 'pid2',
                     "dest_comm": 'test2',
                     "dest_port": 3,
+                    "size": 1,
                     "net_ns": 5
                 }
             )
@@ -386,10 +395,10 @@ class TCPTracerTest(asynctest.TestCase):
         tracer.options = None
         data = StringIO(
             "header1\n"
-            "time type pid comm   ip  s_addr d_addr s_port d_port netns\n"
-            "1    A    2   comm1  4   127.   127.   3      4      5\n"
-            "6    B    7   comm2  4   127.   127.   4      3      5\n"
-            "1    A    2   comm3  4   x      x      3      4      5\n"
+            "time type pid comm   ip  s_addr d_addr s_port d_port size netns\n"
+            "1    A    2   comm1  4   127.   127.   3      4         1     5\n"
+            "6    B    7   comm2  4   127.   127.   4      3         1     5\n"
+            "1    A    2   comm3  4   x      x      3      4         1     5\n"
         )
         port_dict = {4: {('pid1', 'test1')},
                      3: {('pid2', 'test2'), ('pid3', 'test3')}}
@@ -404,6 +413,7 @@ class TCPTracerTest(asynctest.TestCase):
                     "dest_pid": 'pid1',
                     "dest_comm": 'test1',
                     "dest_port": 4,
+                    "size": 1,
                     "net_ns": 5
                 }
             )
