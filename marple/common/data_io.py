@@ -620,8 +620,8 @@ class Reader:
 
         """
         # A string to display the header info nicely in the terminal.
-        # Numbers are based on the maximum lengths so that they are
-        # aligned correctly.
+        # Numbers are based on the maximum lengths of each section so that
+        # they are aligned correctly.
         format_str = "{:>8.8}. {:12.12} {:10.10} {:30.30} {:30.30}"
         headers = [
             format_str

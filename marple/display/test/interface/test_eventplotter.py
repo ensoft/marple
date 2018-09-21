@@ -191,8 +191,8 @@ class PlotContainerBasicTest(_BasePlotterTest):
         exp_ymap = dict([(tracks[idx], idx) for idx in range(6)])
         # Create the color map manually
         exp_color_map = {
-            'type1': plotter._PlotContainer.line_colors[0],
-            'type2': plotter._PlotContainer.line_colors[1],
+            'type1': plotter._PlotContainer.color_list[0],
+            'type2': plotter._PlotContainer.color_list[1],
         }        # Max x and y coordinates for the normal dataset
         exp_x = 1
         exp_y = 5
@@ -214,7 +214,7 @@ class PlotContainerBasicTest(_BasePlotterTest):
                                                 self.y_axis_ticks)
         exp_ymap = {'1,1': 0}
         exp_color_map = dict([('type' + str(i),
-                              plotter._PlotContainer.line_colors[i]) for
+                              plotter._PlotContainer.color_list[i]) for
                               i in range(7)] +
                              [('type7', (0, 0, 0)), ('type8', (0, 0, 0))])
         exp_x = 0
@@ -270,7 +270,7 @@ class PlotContainerBasicTest(_BasePlotterTest):
         test_container = plotter._PlotContainer(self.normal_data,
                                                 self.y_axis_ticks)
         # First connected
-        test_container.draw('type2')
+        test_container.draw_type('type2')
 
         symbol = ['s', 'o', 's', 'o']
         symbol_brushes = [plotter._PlotContainer.source_brush,
@@ -287,7 +287,7 @@ class PlotContainerBasicTest(_BasePlotterTest):
             connect="pairs")
 
         # Now standalones
-        test_container.draw('type1')
+        test_container.draw_type('type1')
 
         symbol = ['t2', 't2']
         symbol_brushes = [pg_mock.mkBrush(test_container.color_map['type1']),

@@ -240,7 +240,7 @@ def main(argv):
         else:
             interfaces = reader.get_all_interface_names()
 
-        if args.noagg:
+        if not args.noagg:
             # Get the aggregate section from the config file
             agg_groups = config.get_section('Aggregate')
 
