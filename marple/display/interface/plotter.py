@@ -587,6 +587,7 @@ class _PlotterWindow(pg.GraphicsWindow):
         # Process data, this data will remain unchanged (so we can filter
         # things from it)
         self.processed_data = _EventDataProcessor(event_generator)
+        self.tracks = tracks
         # We store the currently displayed data (changes when filtering)
         self.current_displayed_data = self.processed_data
 
@@ -776,7 +777,7 @@ class _PlotterWindow(pg.GraphicsWindow):
             return
 
         filtered_data = _EventDataProcessor(filtered_events)
-        new_plot_container = _PlotContainer(filtered_data, tracks)
+        new_plot_container = _PlotContainer(filtered_data, self.tracks)
 
         # Update the data and the display
         self.plot_layout.removeItem(self.current_plot.plot_container)
