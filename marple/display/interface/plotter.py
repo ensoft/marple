@@ -813,32 +813,3 @@ class Plotter(generic_display.GenericDisplay):
         renderer.showMaximized()
         renderer.raise_()
         app.exec_()
-
-
-standalone_events = data_io.EventDatum(
-            time=1,
-            type="type1",
-            specific_datum={
-                "pid": 1,
-                "comm": str(3),
-                "cpu": 5
-            },
-            connected=None
-        )
-
-connected_events = data_io.EventDatum(
-            time=3,
-            type="type2",
-            specific_datum={
-                "source_pid": 2,
-                "source_comm": str(2),
-                "dest_pid": 3,
-                "dest_comm": str(2 + 10),
-                "net_ns": 10
-            },
-            connected=[('source_', 'dest_')]
-)
-
-x = Plotter(data_io.EventData([standalone_events] + [connected_events],
-                              12, 12, "qew", "ewqwe"))
-x.show()

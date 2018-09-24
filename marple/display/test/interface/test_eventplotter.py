@@ -158,7 +158,6 @@ class EventDataProcessorTest(_BasePlotterTest):
             event_conn, 'pid', 'sourc_'), None)
 
 
-
 class PlotContainerBasicTest(_BasePlotterTest):
     """
     Tests the plot container class
