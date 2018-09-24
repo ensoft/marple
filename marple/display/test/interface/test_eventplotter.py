@@ -148,10 +148,15 @@ class EventDataProcessorTest(_BasePlotterTest):
             event_conn, 'pid', 'source_'), '2')
         self.assertEqual(plotter._EventDataProcessor.get_property_value(
             event_conn, 'pid', 'dest_'), '3')
+        # Check if for connected events we search for the property without the
+        # prefix (might be a general property of the event, with no prefix)
+        self.assertEqual(plotter._EventDataProcessor.get_property_value(
+            event_conn, 'net_ns', 'dest_'), '10')
         # Again, test if None is returned if the property does not exist,
         # now for connected events
         self.assertEqual(plotter._EventDataProcessor.get_property_value(
             event_conn, 'pid', 'sourc_'), None)
+
 
 
 class PlotContainerBasicTest(_BasePlotterTest):
@@ -344,7 +349,7 @@ class UIManagerTest(unittest.TestCase):
         qt_mock.QtGui.QScrollArea().setFixedHeight.assert_called_once_with(height)
 
     @mock.patch("marple.display.interface.plotter.Qt")
-    def test_get_elem(self, qt_mock):
+    def test_new_elem(self, qt_mock):
         """
         Test if the function UI element getter works
 
@@ -353,34 +358,113 @@ class UIManagerTest(unittest.TestCase):
                                     callback_function=lambda x: x)
         self.assertTrue("name" in self.ui_manager.ui_dict)
 
+        with self.assertRaises(ValueError):
+            self.ui_manager.new_ui_elem("invalid", "name", "text")
 
-# TODO: Fix the mocking of the superclass so we can test it
-# class TestPlotterWindow(_BasePlotterTest):
-#     def setUp(self):
-#         super().setUp()
-#         self.data = self.standalone_events + self.connected_events
-#
-#     @mock.patch("marple.display.interface.plotter.pg")
-#     @mock.patch("marple.display.interface.plotter.Qt")
-#     @mock.patch("marple.display.interface.plotter._EventDataProcessor")
-#     @mock.patch("marple.display.interface.plotter._UIElementManager")
-#     @mock.patch("marple.display.interface.plotter._PlotContainer")
-#     def test_init(self, container_mock, ui_mock, processor_mock,
-#                   qt_mock, pg_mock):
-#         class MockGW:
-#             def addLayout(self, item, row, col, rowspan, colspan):
-#                 pass
-#
-#         with mock.patch('marple.display.interface.plotter.pg.GraphicsWindow.addLayout'):
-#             window = plotter._PlotterWindow(self.data)
-#         processor_mock.assert_called_once_with(self.data)
-#         container_mock.assert_called_once_with(window.processed_data)
-#         ui_mock.assert_called_once()
-#
-#         ui_mock().new_ui_elem.assert_called_with("type1_check")
-#         ui_mock().new_ui_elem.assert_called_with("type2_check")
-#         ui_mock().new_ui_elem.assert_called_with("regex_cpu")
-#         ui_mock().new_ui_elem.assert_called_with("regex_pid")
-#         ui_mock().new_ui_elem.assert_called_with("regex_comm")
-#         ui_mock().new_ui_elem.assert_called_with("regex_net_ns")
-#
+    @mock.patch("marple.display.interface.plotter.Qt")
+    def test_get_elem(self, qt_mock):
+        """
+        Test if the function UI element getter works
+
+        """
+        self.ui_manager.new_ui_elem("check", "name", "text",
+                                    callback_function=lambda x: x)
+        elem = self.ui_manager.get_ui_elem("name")
+        self.assertTrue(elem == self.ui_manager.ui_dict["name"])
+
+        with self.assertRaises(KeyError):
+            self.ui_manager.get_ui_elem("invalid")
+
+
+# TODO: Fix workaround init via __new__ so init can be tested properly (so far
+# TODO: only the addUI and manage_layout calls are checked
+class TestPlotterWindow(_BasePlotterTest):
+    def setUp(self):
+        super().setUp()
+        self.data = self.standalone_events + self.connected_events
+        self.tracks = ['comm', 'pid']
+
+    def window_init(self, data, tracks):
+        """
+        Class that returns a custom window that is created by bypassing the
+        the superclass init and that monkey patches several of its functions
+        :param data: the data for the window
+        :param tracks: tracks
+        :return: a `plotter._PlotterWindow` object
+        """
+        class Layout:
+            def __init__(self):
+                pass
+
+            def addItem(self, item):
+                pass
+
+            def removeItem(self, item):
+                pass
+
+        window = plotter._PlotterWindow.__new__(plotter._PlotterWindow)
+        window.processed_data = plotter._EventDataProcessor(data)
+        window.tracks = self.tracks
+        window.current_displayed_data = window.processed_data
+        window.current_plot = plotter._PlotContainer(window.processed_data,
+                                                     window.tracks)
+        window.addLayout = lambda row=0, col=0, colspan=0: Layout()
+
+        window.ui_manager = plotter._UIElementManager()
+        window._add_ui()
+        window._manage_layout()
+        return window
+
+    @mock.patch("marple.display.interface.plotter._UIElementManager")
+    @mock.patch("marple.display.interface.plotter.pg")
+    @mock.patch("marple.display.interface.plotter.Qt")
+    def test_ui_init_calls(self, qt_mock, pg_mock, ui_mock):
+        window = self.window_init(self.data, self.tracks)
+        self.assertEqual(ui_mock.return_value.new_ui_elem.call_count, 15)
+        self.assertEqual(ui_mock.return_value.get_ui_elem.call_count, 22)
+
+    @mock.patch("marple.display.interface.plotter._UIElementManager")
+    @mock.patch("marple.display.interface.plotter.pg")
+    @mock.patch("marple.display.interface.plotter.Qt")
+    def test_filtering(self, qt_mock, pg_mock, ui_mock):
+        window = self.window_init(self.data, self.tracks)
+        # We select data
+        with mock.patch("marple.display.interface.plotter._EventDataProcessor") as evd_mock, \
+             mock.patch("marple.display.interface.plotter._PlotContainer") as plt_mock:
+
+            # Unmock the property getter function
+            def get_property_value(event, property, prefix=""):
+                if prefix + property in event.specific_datum:
+                    return str(event.specific_datum[prefix + property])
+                else:
+                    return None
+            evd_mock.get_property_value = get_property_value
+
+            # Filter
+            window.new_graph_from_filter("comm", "2")
+
+            filtered_events = [
+                data_io.EventDatum(
+                    time=1,
+                    type="type1",
+                    specific_datum={
+                        "pid": 1,
+                        "comm": "2",
+                        "cpu": 5
+                    },
+                    connected=None
+                ),
+                data_io.EventDatum(
+                time=1,
+                type="type2",
+                specific_datum={
+                    "source_pid": 2,
+                    "source_comm": "2",
+                    "dest_pid": 3,
+                    "dest_comm": "12",
+                    "net_ns": 10
+                },
+                connected=[('source_', 'dest_')]
+            )]
+
+            evd_mock.assert_called_once_with(filtered_events, normalised=False)

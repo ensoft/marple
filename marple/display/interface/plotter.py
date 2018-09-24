@@ -248,14 +248,6 @@ class _PlotContainer:
                        "Selected process")
 # ---------------------------- Init end here
 
-    def get_plot_container(self):
-        """ Getter method that returns the plot container"""
-        return self.plot_container
-
-    def get_plot_from_container(self, name):
-        """ Getter method that returns the plot with the specified name"""
-        return self.plot_container[name]
-
     def _compose_track(self, event, prefix=""):
         """
         Helper method that composes the tracks by searching for the properties
@@ -372,18 +364,21 @@ class _EventDataProcessor:
     Processes various properties of the event data so we separate the processing
     from drawing. Provides different getters, for various fields
     """
-    def __init__(self, events):
+    def __init__(self, events, normalised=True):
         """
         Initialises the class
 
         :param events: An iterable representing the events
+        :param normalised: True if we want to normalised the data, false
+                           otherwise
         """
 
         self.event_partition, self.properties_set, self.min_time = \
             self._process_data(events)
 
         # We normalise the times so they start at 0
-        self._normalise()
+        if normalised:
+            self._normalise()
 
     @staticmethod
     def _process_data(events):
@@ -471,10 +466,6 @@ class _EventDataProcessor:
                 events.append(event)
         return events
 
-    def get_properties(self):
-        """Geter that returns the properties set"""
-        return self.properties_set
-
     def get_event_types(self):
         """Getter that returns the event_types"""
         return self.event_partition.keys()
@@ -493,6 +484,10 @@ class _EventDataProcessor:
         """
         if prefix + property in event.specific_datum:
             return str(event.specific_datum[prefix + property])
+        elif property in event.specific_datum:
+            # If with the prefix we didn't find a match, we try without it,
+            # since we might have connected events that have general properties
+            return str(event.specific_datum[property])
         else:
             return None
 
@@ -594,7 +589,7 @@ class _PlotterWindow(pg.GraphicsWindow):
         # Setup current graph
         # TODO: add a config option for the tracks
         self.current_plot = _PlotContainer(self.processed_data,
-                                           tracks)
+                                           self.tracks)
 
         # Setup UI
         self.ui_manager = _UIElementManager()
@@ -639,7 +634,7 @@ class _PlotterWindow(pg.GraphicsWindow):
                 self.ui_manager.get_ui_elem(event_type + "_check"))
 
         # Now the filters
-        for prop in self.current_displayed_data.get_properties():
+        for prop in self.current_displayed_data.properties_set:
             callback = functools.partial(callback_filter, prop)
             self.ui_manager.new_ui_elem("text", "regex_" + prop, "")
             self.ui_manager.new_ui_elem("button", "filter_" + prop,
@@ -695,7 +690,7 @@ class _PlotterWindow(pg.GraphicsWindow):
 
         """
         for event_type in self.processed_data.get_event_types():
-            hidden = event_type in \
+            hidden = event_type not in \
                      self.current_displayed_data.get_event_types()
             self.ui_manager.get_ui_elem(event_type + "_check").setHidden(hidden)
 
@@ -776,7 +771,7 @@ class _PlotterWindow(pg.GraphicsWindow):
                                          " (the data remained the same)")
             return
 
-        filtered_data = _EventDataProcessor(filtered_events)
+        filtered_data = _EventDataProcessor(filtered_events, normalised=False)
         new_plot_container = _PlotContainer(filtered_data, self.tracks)
 
         # Update the data and the display
@@ -818,3 +813,32 @@ class Plotter(generic_display.GenericDisplay):
         renderer.showMaximized()
         renderer.raise_()
         app.exec_()
+
+
+standalone_events = data_io.EventDatum(
+            time=1,
+            type="type1",
+            specific_datum={
+                "pid": 1,
+                "comm": str(3),
+                "cpu": 5
+            },
+            connected=None
+        )
+
+connected_events = data_io.EventDatum(
+            time=3,
+            type="type2",
+            specific_datum={
+                "source_pid": 2,
+                "source_comm": str(2),
+                "dest_pid": 3,
+                "dest_comm": str(2 + 10),
+                "net_ns": 10
+            },
+            connected=[('source_', 'dest_')]
+)
+
+x = Plotter(data_io.EventData([standalone_events] + [connected_events],
+                              12, 12, "qew", "ewqwe"))
+x.show()
