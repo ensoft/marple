@@ -77,6 +77,7 @@ class MemoryGraph(collecter.Collecter):
             if smem.returncode != 0:
                 self.log_error(err, logger)
                 error_acc.errored_collecters.add(consts.InterfaceTypes.MEMTIME)
+                self.end_time = -1
                 return None
 
             datapoints[current_time] = {}
