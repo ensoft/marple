@@ -257,7 +257,7 @@ Heat maps allow three-dimensional data to be visualised, using colour as a third
 <a name="example_heatmap"></a>
 ![heatmap](./res/heatmap.png)
 
-**Figure:** An example heat map, showing disk latency data.
+**Figure:** An example heat map, showing disk latency data, showcasing a possbile bottleneck around second 16.
 
 #### G2
 
@@ -286,7 +286,7 @@ Stack plots (also known as stacked graphs or stacked charts) show 'parts to the 
 <a name="stackplot_example"></a>
 ![stackplot](./res/stackplot.png)
 
-**Figure:** An example stack plot, showing memory usage by process over time.
+**Figure:** An example stack plot, showing memory usage by process over time for the system, with two spikes indicating possible bottlenecks.
 
 #### Event plotter
 
@@ -294,7 +294,7 @@ The event plotter is a visualization mode aimed at displaying big datasets of ev
 
 <a name="eventplotter_example"></a>
 ![eventplotter](./res/eventplotter.png)
-
+**Figure:** The event plotter in action, showing two python processes talking to each other via TCP messages, as well as CPU scheduling events for all the processes.
 
 ### Miscellaneous
  * MARPLE logs can be found in `/var/log/marple/`.
