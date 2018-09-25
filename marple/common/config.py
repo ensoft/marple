@@ -16,6 +16,7 @@ __all__ = (
     'config',
     'get_option_from_section',
     'get_section',
+    'get_default_time'
 )
 
 import os
