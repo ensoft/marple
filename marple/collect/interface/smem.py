@@ -20,12 +20,11 @@ import asyncio
 import datetime
 import logging
 import re
-import subprocess
 import time
 from typing import NamedTuple
 
-from marple.collect.interface import collecter
-from marple.common import data_io, util
+from marple.collect.interface import collecter, error_acc
+from marple.common import data_io, util, consts
 from marple.common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
@@ -46,7 +45,8 @@ class MemoryGraph(collecter.Collecter):
         mode: str
         frequency: float
 
-    _DEFAULT_OPTIONS = Options(mode="name", frequency=2.0)
+    _DEFAULT_OPTIONS = Options(mode="name", frequency=0.5)
+    modes = ["command", "name"]
 
     @util.Override(collecter.Collecter)
     def __init__(self, time_, options=_DEFAULT_OPTIONS):
@@ -58,40 +58,35 @@ class MemoryGraph(collecter.Collecter):
         """ Collect raw data asynchronously from smem """
         # Dict for the datapoints to be collected
         datapoints = {}
-
         # Set the start time
         start_time = time.monotonic()
         current_time = 0.0
         self.start_time = datetime.datetime.now()
-
         while current_time < self.time:
-            if self.options.mode == "name":
-                # TODO: Stop using getoutput
-                out = subprocess.getoutput("smem -c \"name pss\" | tac")
-                # s = subprocess.Popen("smem -c \"name pss\" | tac",
-                #                      stdout=subprocess.PIPE,
-                #                      stderr=subprocess.PIPE)
-                # out, err = s.communicate()
-                # if err.decode():
-                #     logger.error(err.decode())
-            elif self.options.mode == "command":
-                out = subprocess.getoutput("smem -c \"command pss\" | tac")
-                # s = subprocess.Popen("smem -c \"command pss\" | tac",
-                #                      stdout=subprocess.PIPE,
-                #                      stderr=subprocess.PIPE)
-                # out, err = s.communicate()
-                # if err.decode():
-                #     logger.error(err.decode())
-            else:
+            if self.options.mode not in self.modes:
                 raise ValueError(
                     "mode {} not supported.".format(self.options.mode))
 
+            smem = await asyncio.create_subprocess_shell(
+                "smem -c \"{} pss\"".format(self.options.mode),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+
+            out, err = await smem.communicate()
+            if smem.returncode != 0:
+                self.log_error(err, logger)
+                error_acc.errored_collecters.add(consts.InterfaceTypes.MEMTIME)
+                return None
+
             datapoints[current_time] = {}
 
-            index = 0
-            for line in out.split("\n"):
-                if re.match("Name", line) is not None:
-                    break
+            # Get lines and get rid of the title line (Name       PSS) and the
+            # empty line produced by the split
+            lines = out.decode().split("\n")[1:-1]
+            # TODO: Check why it's in reverse
+            for idx in reversed(range(len(lines))):
+                line = lines[idx]
 
                 match = re.match(r"\s*(?P<label>\S+(\s\S+)*)\s*"
                                  r"(?P<memory>\d+)", line)
@@ -104,8 +99,6 @@ class MemoryGraph(collecter.Collecter):
 
                 if label in datapoints[current_time]:
                     memory += float(datapoints[current_time][label])
-                else:
-                    index += 1
 
                 datapoints[current_time][label] = memory / 1024.0
 
@@ -114,7 +107,6 @@ class MemoryGraph(collecter.Collecter):
             current_time = time.monotonic() - start_time
 
         self.end_time = datetime.datetime.now()
-
         return datapoints
 
     @util.log(logger)
@@ -132,6 +124,9 @@ class MemoryGraph(collecter.Collecter):
         """ Collect data asynchronously using smem """
         raw_data = await self._get_raw_data()
         data = self._get_generator(raw_data)
+        if data is None:
+            return None
+
         data_options = data_io.PointData.DataOptions(
             x_label='Time', y_label='Memory', x_units='s', y_units='MB')
         return data_io.PointData(data, self.start_time, self.end_time,
@@ -148,10 +143,3 @@ class MemoryGraph(collecter.Collecter):
             A float value to the nearest integer with the memory in megabytes.
         """
         return float(int(memory / 1024))
-
-
-if __name__ == "__main__":
-    mg=MemoryGraph(15)
-    it=asyncio.wait_for(mg.collect(), 60)
-    for i in it:
-        print(i)
