@@ -39,7 +39,6 @@ class InterfaceTypes(Enum):
     MEMEVENTS = 'memevents'
     DISKBLOCK = 'diskblockrq'
     PERF_MALLOC = 'perf_malloc'
-    LIB = 'lib'
 
 
 class Datatypes(Enum):

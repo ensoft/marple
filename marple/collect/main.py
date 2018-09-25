@@ -147,7 +147,8 @@ def _get_collecters(subcommands, collection_time):
         if subcommand in consts.interfaces_argnames:
             args_seen.add(subcommand)
         else:
-            assert config.config.has_option("Aliases", subcommand)
+            if not config.config.has_option("Aliases", subcommand):
+                raise ValueError('One or more subcommands or aliases invalid!')
             # Look for aliases
             alias_args = set(config.get_option_from_section(
                 "Aliases", subcommand).split(','))
@@ -171,8 +172,6 @@ def _get_collecter_instance(interface_name, collection_time):
     """
     interfaces = consts.InterfaceTypes
     interface = interfaces(interface_name)
-
-    assert interface in interfaces
 
     if interface is interfaces.SCHEDEVENTS:
         collecter = perf.SchedulingEvents(collection_time)
@@ -230,6 +229,44 @@ async def _loading_bar(collection_time):
 
 
 @util.log(logger)
+def _collect(collecters, collection_time):
+    """
+    Helper function that async collects all the data using the asyncio lib
+    :param collecters: the collecter instances that we use to collect data
+    :param collection_time: the collection time
+    :return: the data gathered as a list of data objects
+
+    """
+    # Create event loop to collect and write data
+    ioloop = asyncio.get_event_loop()
+
+    # Reset the list of collectors whose subprocesses resulted in an error
+    error_acc.errored_collecters = set()
+
+    # Begin async collection
+    futures = tuple(collecter.collect() for collecter in collecters)
+    results = ioloop.run_until_complete(
+        asyncio.gather(*futures, _loading_bar(collection_time))
+    )
+    ioloop.close()
+
+    # We deal with the errored collecters
+    if error_acc.errored_collecters != set():
+        print("Interfaces {} errored. No data collected for them. "
+              "Check if the collection tools are installed "
+              "correctly. For more info check the logs.".format(
+            ','.join(map(lambda coll: coll.value, error_acc.errored_collecters))
+        ))
+
+    results = results[:-1]  # Get rid of the loading bar, not relevant
+
+    # Return the unerrored results
+    return filter(lambda res: res.interface not in
+                              error_acc.errored_collecters,
+                  results)
+
+
+@util.log(logger)
 def main(argv):
     """
     The main function of the controller.
@@ -241,7 +278,6 @@ def main(argv):
         a list of command line arguments from call in main module
 
     """
-
     # Parse arguments
     args = _args_parse(argv)
 
@@ -267,32 +303,10 @@ def main(argv):
     # Get collecter interfaces
     collecters = _get_collecters(args.subcommands, collection_time)
 
-    # Create event loop to collect and write data
-    ioloop = asyncio.get_event_loop()
-
-    # Reset the list of collectors whose subprocesses resulted in an error
-    error_acc.errored_collecters = set()
-    # Begin async collection
-    futures = tuple(collecter.collect() for collecter in collecters)
-    results = ioloop.run_until_complete(
-        asyncio.gather(*futures, _loading_bar(collection_time))
-    )
-
-    # We deal with the errored collecters
-    if error_acc.errored_collecters != set():
-        print("Interfaces {} errored. No data collected for them. "
-              "Check if the collection tools are installed "
-              "correctly. For more info check the logs.".format(
-            ','.join(map(lambda coll: coll.value, error_acc.errored_collecters))
-        ))
-
-    unerrored = []
-    for result in results[:-1]:  # We skip the last result since it is the bar
-        if result.interface not in error_acc.errored_collecters:
-            unerrored.append(result)
+    # Async collect everything
+    results = _collect(collecters, collection_time)
 
     with marple.common.data_io.Writer(str(filename)) as writer:
-        writer.write(unerrored)
+        writer.write(results)
 
-    ioloop.close()
     output.print_("Done.")
