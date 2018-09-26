@@ -4,14 +4,14 @@
 # -------------------------------------------------------------
 
 """
-Visualiser that can display event data as a line graph
+Visualiser that can display event data as a line graph.
 
 If the connect field of a datum is None, the event will be displayed as single
 coloured triangles on the timeline, otherwise lines will connect sources and
-destination based on the prefixes in the connected field (see the `EventDatum`
-class from the module `common.data_io`
+destination based on the prefixes in the connected field (see the class
+`common.data_io.EventDatum`).
 The UI is created automatically based on the properties specified in the
-specific_datum field
+`specific_datum` field of `data_io.EventDatum`.
 
 Terminology:
     * ticks: the small lines that mark points on an axis (for example on the

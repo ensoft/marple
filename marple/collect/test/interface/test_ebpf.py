@@ -202,9 +202,6 @@ class TCPTracerTest(asynctest.TestCase):
             'Traceback (most recent call last):\nstacktrace'
             '\nstacktrace etc.\nKeyboardInterrupt\nERROR')
 
-        gen_dict_mock.assert_called_once()
-        gen_events_mock.assert_called_once()
-
     def test_generate_dict_empty(self):
         """ Test _generate_dict with empty data"""
         tracer = object.__new__(ebpf.TCPTracer)

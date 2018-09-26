@@ -5,12 +5,13 @@
 """
 Class that interacts with the flamegraph tool.
 
-Implements the GenericDiaplay interface to display an image of a flamegraph.
+Implements the GenericDiaplay interface to display an interactive flamegraph
+in the browser.
 
 """
 
 __all__ = (
-    "Flamegraph"
+    "Flamegraph",
 )
 
 import collections
@@ -35,6 +36,10 @@ FLAMEGRAPH_DIR = paths.MARPLE_DIR + "/display/tools/flamegraph/flamegraph.pl"
 
 
 class Flamegraph(GenericDisplay):
+    """
+    The class representing flamegraphs.
+
+    """
     class DisplayOptions(NamedTuple):
         """
         - coloring: can be hot (default), mem, io, wakeup, chain, java, js,
@@ -44,11 +49,11 @@ class Flamegraph(GenericDisplay):
 
     def __init__(self, data):
         """
-        Constructor for the flamegraph.
+        Initialise the flamegraph.
 
         :param data:
-            A generator that returns the data for the section we want to
-            display as a flamegraph
+            A `data_io.StackData` object that encapsulated the collected data
+            we want to display as a flamegraph
 
         """
         # Initialise the base class
@@ -60,7 +65,7 @@ class Flamegraph(GenericDisplay):
         self.svg_temp_file = str(file.TempFileName())
 
     @util.log(logger)
-    def _make(self, data):
+    def _make(self):
         """
         Uses Brendan Gregg's flamegraph tool to convert data to flamegraph.
 
@@ -71,7 +76,7 @@ class Flamegraph(GenericDisplay):
         stacks_temp_file = str(file.TempFileName())
         counts = collections.Counter()
 
-        stack_data = data.datum_generator
+        stack_data = self.data.datum_generator
         for stack in stack_data:
             new_counts = collections.Counter({stack.stack: stack.weight})
             counts += new_counts
@@ -100,7 +105,7 @@ class Flamegraph(GenericDisplay):
 
         """
         # Create a flamegraph svg based on the data
-        self._make(self.data)
+        self._make()
 
         # Open firefox
         username = os.environ['SUDO_USER']

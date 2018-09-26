@@ -7,8 +7,8 @@
 import unittest
 from unittest import mock
 
-import collect.main as collect
-from common import consts
+from marple.collect import main as collect
+from marple.common import consts
 
 
 class _ParseTest(unittest.TestCase):
@@ -32,7 +32,7 @@ class MainTest(unittest.TestCase):
     @mock.patch('marple.collect.test.test_main.collect.output')
     @mock.patch('marple.collect.test.test_main.collect.file')
     @mock.patch('marple.collect.test.test_main.collect._get_collecters')
-    @mock.patch('marple.collect.test.test_main.collect._collect')
+    @mock.patch('marple.collect.test.test_main.collect._collect_results')
     def test_main(self, collect_mock, getc_mock, file_mock, outpt_mock,
                   config_mock, writer_mock):
         command = ['cpusched', 'memtime', '-o', 'out', '-t', '10']

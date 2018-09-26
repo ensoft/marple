@@ -5,7 +5,7 @@
     frequency:99
     system_wide: -a
     warnings:true
-    top_stacks:25
+    top_processes:25
 
 [DisplayInterfaces]
     # Used to set the default display mode for the interfaces

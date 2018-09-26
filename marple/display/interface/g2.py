@@ -5,12 +5,13 @@
 """
 Class that interacts with the g2 tool.
 
-Implements the GenericDiaplay interface to display a track separated graph.
+Implements the GenericDiaplay interface to display a track separated graph for
+events.
 
 """
 
 __all__ = (
-    "G2"
+    "G2",
 )
 
 import logging
@@ -34,6 +35,10 @@ logger.setLevel(logging.DEBUG)
 
 
 class G2(GenericDisplay):
+    """
+    The class representing g2 windows.
+
+    """
     class DisplayOptions(NamedTuple):
         """
         Options:
@@ -43,10 +48,11 @@ class G2(GenericDisplay):
 
     def __init__(self, data):
         """
-        Constructor for the g2 display mode.
+        Initialise the object.
 
         :param data:
-            An EventData object.
+            A `data_io.EventData` object that encapsulated the collected data
+            we want to display using g2.
 
         """
         # Initialise the base class
@@ -60,10 +66,10 @@ class G2(GenericDisplay):
     @util.log(logger)
     def show(self):
         """
-        Calls g2 to show a track separated graph
+        Calls g2 to show a track separated graph.
 
         The conversion for the MARPLE format happens here, a new CPEL file being
-        created
+        created.
 
         """
         tmp_cpel = str(file.TempFileName())

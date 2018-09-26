@@ -1,11 +1,12 @@
-# -------------------------------------------------------------
+# -----------------------------------------------------------------
 # stackplot.py - Creates a stackplot from labelled coordinate data.
-# June-July 2018 - Franz Nowak, Hrutvik
-# -------------------------------------------------------------
+# June - September 2018 - Franz Nowak, Hrutvik
+# -----------------------------------------------------------------
 """
-# stackplot.py - Creates a stackplot from labelled coordinate data.
+Class that interacts with the flamegraph tool.
 
-Adds colours and legend and fills in between the lines.
+Implements the GenericDiaplay interface to display an interactive matplotlib
+stackplot figure.
 
 """
 
@@ -31,9 +32,6 @@ class StackPlot(GenericDisplay):
     """
     The class representing stackplots.
 
-    Takes a filename with CSV formatted data as input.
-        To show the stack plot, use :func:`StackPlot.show`.
-
     """
 
     class DisplayOptions(NamedTuple):
@@ -46,13 +44,11 @@ class StackPlot(GenericDisplay):
     @util.log(logger)
     def __init__(self, data):
         """
-        Constructor, initialises the stackplot.
+        Constructor for the StackPlot.
 
-        There is no out file since currently we do not save an image of the
-        output
         :param data:
-            A generator that returns the data in the section we want to
-            display as a stackplot
+            A `data_io.PointData` object that encapsulated the collected data
+            we want to display using the stackplot.
 
         """
         # Initialise the base class

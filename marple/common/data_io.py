@@ -1,17 +1,18 @@
-# -------------------------------------------------------------
+# ------------------------------------------------------------------
 # data_io.py - intermediate form of data between collect and display
 # June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
-# -------------------------------------------------------------
+# ------------------------------------------------------------------
 
 """
 Handles data input and output for MARPLE.
 
-Standard datatypes are defined.
-Collections of data (including header info) are also defined here.
+Standard datatypes are defined (the "Datum" classes).
+Collections of data (including header info) are also defined here (the "Data"
+classes).
 Lastly, methods for writing and reading these to standard MARPLE data files
-are defined here.
+are defined here (together with headers, metaheaders).
 
-Each datatype has __str__ and from_string methods, allowing for simple
+Each datatype has `__str__` and `from_string` methods, allowing for simple
 conversion to and from standard strings.
 Each collection of data has a method to convert the header to a string.
 
@@ -31,8 +32,6 @@ collection of data
 ...
 
 Where each collection of data consists of a single datapoint on each line.
-
-
 
 """
 
@@ -63,12 +62,27 @@ class EventDatum(typing.NamedTuple):
     Represents an event (any type).
 
     .. attribute:: time:
-        The timestamp of the event in CPU ticks.
+        The timestamp of the event in nanoseconds.
     .. attribute:: type:
         The type of the event.
-    .. attribute:: event_specific_datum:
-        A tuple representing the data belonging to this particular event;
-        The order of the arguments matters
+    .. attribute:: specific_datum:
+        A dict representing the data belonging to this particular event.
+    .. attribute:: connected:
+        A list of touples, each touple containing prefixes for various sources
+        and destinations of an event.
+        For example, an event could have the specific_datum field like so:
+            specific_datum = {
+                "s1_pid": 1,
+                "d1_pid": 2,
+                "s2_pid": 3,
+                "d2_pid": 4
+            }
+        In this case the connected field would look like
+            [("s1_", "d1_"), ("s2_", "d2_")]
+        This lets us see which pids are connected to each other (they are
+        in the same pair) and also get rid of the prefixes in the
+        `specific_datum` field so that we only have a unique property of the
+        event, thta is "pid".
 
     """
     time: int
@@ -76,7 +90,7 @@ class EventDatum(typing.NamedTuple):
     specific_datum: dict
     connected: list
     # of tuples of same length, connected[i][0] is the
-    # source and connected[i][1] is its destionation
+    # source and connected[i][1] is its destination
 
     def __str__(self):
         """
@@ -258,15 +272,15 @@ class Data:
         Set relevant fields.
 
         :param datum_generator:
-            A generator of datum object, each of class datum_class
+            A generator of datum object, each of class datum_class.
         :param start_time:
-            The start time for the data collection
+            The start time for the data collection.
         :param end_time:
-            The end time for the data collection
+            The end time for the data collection.
         :param interface:
             The collecter interface used to collect the data.
         :param data_options:
-            Data options of type DataOptions
+            Data options of type DataOptions.
 
         """
         self.datum_generator = datum_generator
@@ -280,8 +294,11 @@ class Data:
         """
         Create a dictionary containing header information for this data.
 
+        This defines a standard header format for all the "Data" classes that
+        inherit the interface.
+
         :return:
-            The dictionary
+            The dictionary described above.
 
         """
         header_dict = {
@@ -482,7 +499,7 @@ class Writer:
         Write a metaheader, and then sections of data.
 
         :param data_objs:
-            An iterator of data objects.
+            An iterator of `Data` objects.
 
         """
         for index, data in enumerate(data_objs):

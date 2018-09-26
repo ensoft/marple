@@ -6,8 +6,8 @@
 """
 Interacts with the smem tool.
 
-Calls smem to collect memory data, format it, and has functions that create data
-    object generators.
+Calls smem to collect memory data, format it, and has functions that create
+data object generators.
 
 """
 
@@ -23,8 +23,8 @@ import re
 import time
 from typing import NamedTuple
 
-from marple.collect.interface import collecter, error_acc
-from marple.common import data_io, util, consts
+from marple.collect.interface import collecter
+from marple.common import data_io, util, exceptions
 from marple.common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
@@ -35,18 +35,22 @@ class MemoryGraph(collecter.Collecter):
     """
     Collects sorted memory usage for a specific number of processes.
 
+    Collects multiple datasets based on the supplied frequency and groups them
+    based on the collection time.
+
     """
     class Options(NamedTuple):
         """
         .. attribute:: mode:
-            "name" or "pid" or "command", to decide the labelling
-
+            "name", "pid" or "command", to decide the labelling
+        .. attribute:: frequency:
+            refresh rate for the collection of datasets
         """
         mode: str
         frequency: float
 
     _DEFAULT_OPTIONS = Options(mode="name", frequency=0.5)
-    modes = ["command", "name"]
+    modes = ["command", "name", "pid"]
 
     @util.Override(collecter.Collecter)
     def __init__(self, time_, options=_DEFAULT_OPTIONS):
@@ -75,10 +79,8 @@ class MemoryGraph(collecter.Collecter):
 
             out, err = await smem.communicate()
             if smem.returncode != 0:
-                self.log_error(err, logger)
-                error_acc.errored_collecters.add(consts.InterfaceTypes.MEMTIME)
-                self.end_time = -1
-                return None
+                # Set an end_time
+                raise exceptions.SubprocessedErorred(err.decode())
 
             datapoints[current_time] = {}
 
@@ -96,15 +98,15 @@ class MemoryGraph(collecter.Collecter):
                         line))
 
                 label = match.group("label")
-                memory = float(match.group("memory"))
+                memory = float(match.group("memory")) / 1024.0
 
                 if label in datapoints[current_time]:
                     memory += float(datapoints[current_time][label])
 
-                datapoints[current_time][label] = memory / 1024.0
+                datapoints[current_time][label] = memory
 
             # Update the clock
-            await asyncio.sleep(1.0 / self.options.frequency)
+            await asyncio.sleep(self.options.frequency)
             current_time = time.monotonic() - start_time
 
         self.end_time = datetime.datetime.now()
@@ -123,24 +125,15 @@ class MemoryGraph(collecter.Collecter):
     @util.Override(collecter.Collecter)
     async def collect(self):
         """ Collect data asynchronously using smem """
-        raw_data = await self._get_raw_data()
-        data = self._get_generator(raw_data)
-        if data is None:
-            return None
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.PointData(None, -1, -1,
+                                     InterfaceTypes.MEMTIME, None)
 
+        data = self._get_generator(raw_data)
         data_options = data_io.PointData.DataOptions(
             x_label='Time', y_label='Memory', x_units='s', y_units='MB')
         return data_io.PointData(data, self.start_time, self.end_time,
                                  InterfaceTypes.MEMTIME, data_options)
-
-    @staticmethod
-    def _insert_datapoint(memory):
-        """
-        Converts a number in kilobytes into megabytes.
-
-        :param memory:
-            The amount of memory in kilobytes.
-        :return:
-            A float value to the nearest integer with the memory in megabytes.
-        """
-        return float(int(memory / 1024))

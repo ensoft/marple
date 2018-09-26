@@ -1,10 +1,10 @@
-# -------------------------------------------------------------
+# ---------------------------------------------------
 # ebpf.py - interacts with the eBPF tracing tool
-# June - August 2018 - Franz Nowak, Andrei Diaconu
-# -------------------------------------------------------------
+# June - September 2018 - Franz Nowak, Andrei Diaconu
+# ---------------------------------------------------
 
 """
-Interacts with the eBPF tracing tool
+Interacts with the several bcc tools to collect data using eBPF
 
 """
 
@@ -23,11 +23,9 @@ import signal
 import typing
 from io import StringIO
 
-import marple.collect.interface.error_acc as error_acc
 from marple.collect.interface import collecter
-from marple.common import util, data_io, paths, output, consts
+from marple.common import util, data_io, paths, output, consts, exceptions
 from marple.common.consts import InterfaceTypes
-
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -37,7 +35,9 @@ BCC_TOOLS_PATH = paths.MARPLE_DIR + "/collect/tools/bcc-tools/"
 
 class MallocStacks(collecter.Collecter):
     """
-    Class that interacts with Brendan Gregg's mallocstacks tools
+    Class that interacts with Brendan Gregg's mallocstacks tool.
+
+    Collects allocations done by malloc calls and shows the call stack.
 
     """
 
@@ -50,7 +50,7 @@ class MallocStacks(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def _get_raw_data(self):
-        """ Collect raw data asynchronously using mallocstacks. """
+        """ Collect raw data asynchronously using the mallockstacks module. """
         self.start_time = datetime.datetime.now()
 
         sub_process = await asyncio.create_subprocess_exec(
@@ -62,9 +62,7 @@ class MallocStacks(collecter.Collecter):
 
         self.end_time = datetime.datetime.now()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.MALLOCSTACKS)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         return StringIO(out.decode())
 
@@ -78,8 +76,19 @@ class MallocStacks(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def collect(self):
-        """ Collect data asynchronously using iosnoop."""
-        raw_data = await self._get_raw_data()
+        """
+        Collect data asynchronously.
+
+        :return:
+            A `data_io.StackData` object, encapsulating the collected data.
+        """
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.StackData(None, -1, -1,
+                                     InterfaceTypes.MALLOCSTACKS, None)
+
         data = self._get_generator(raw_data)
         data_options = data_io.StackData.DataOptions("kilobytes")
         return data_io.StackData(data, self.start_time, self.end_time,
@@ -90,27 +99,21 @@ class Memleak(collecter.Collecter):
     """
     Class that interacts with the memleak tool.
 
-    Collects all the top 'top_stacks' stacks with outstanding allocations
-    The memleak.py script places an ebpf program in kernel memory that
-    places uprobes in all the userspace allocation and deallocation
-    functions in the kernel. This program keeps track, using hashtables,
-    of every stack's current allocated memory. If, by the end of a sleep
-    period of 'time' seconds, there are stacks that haven't freed all the
-    memory, the script prints them in a StackLine format
-    (weight#name1;name2;name3;...).
-    This class retrieves and processes this output.
+    Collects all the top 'top_processes' processes with outstanding allocations,
+    together with their sizes. Only collects outstanding alocations that happen
+    after the collection begins.
 
     """
 
     class Options(typing.NamedTuple):
         """
-        Options to use in the collection.
-            - top_stacks: how many stacks to be displayed
+        Options to use in the collection:
+            - top_processes: how many processes to be displayed
 
         """
-        top_stacks: int
+        top_processes: int
 
-    _DEFAULT_OPTIONS = Options(top_stacks=10)
+    _DEFAULT_OPTIONS = Options(top_processes=10)
 
     @util.log(logger)
     @util.Override(collecter.Collecter)
@@ -120,16 +123,14 @@ class Memleak(collecter.Collecter):
 
         sub_process = await asyncio.create_subprocess_exec(
             'sudo', 'python', BCC_TOOLS_PATH + 'memleak.py',
-            '-t', str(self.time), '-T', str(self.options.top_stacks),
+            '-t', str(self.time), '-T', str(self.options.top_processes),
             stderr=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE
         )
 
         out, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.MEMLEAK)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         return StringIO(out.decode())
 
@@ -144,7 +145,13 @@ class Memleak(collecter.Collecter):
     @util.Override(collecter.Collecter)
     async def collect(self):
         """ Collect data asynchronously using memleak.py """
-        raw_data = await self._get_raw_data()
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.StackData(None, -1, -1,
+                                     InterfaceTypes.MEMLEAK, None)
+
         data = self._get_generator(raw_data)
         data_options = data_io.StackData.DataOptions("kilobytes")
         return data_io.StackData(data, self.start_time, self.end_time,
@@ -153,14 +160,13 @@ class Memleak(collecter.Collecter):
 
 class TCPTracer(collecter.Collecter):
     """
-    Trace local TCP system calls to connect(), accept(), and close().
+    Trace local TCP system calls.
 
-    Uses the tcptracer script from BCC.
+    Uses the tcptracer script from BCC to collect accept(), connect(), close(),
+    send(), recv() TCP calls.
     Intended to trace IPC, so ignore all calls that involve non-local
     addresses (i.e. ones that do not start with '127.').
     Can be set to monitor only a single net namespace using the Options class.
-    Collects data, then traverses it once to build up a dictionary mapping
-    ports to PIDs/comms, then traverses again to yield event data.
 
     """
     class Options(typing.NamedTuple):
@@ -211,9 +217,7 @@ class TCPTracer(collecter.Collecter):
                   r"(\S*\s)*KeyboardInterrupt\s$"
         if not re.fullmatch(pattern, err.decode()):
             if sub_process.returncode != 0:
-                self.log_error(err, logger)
-                error_acc.errored_collecters.add(consts.InterfaceTypes.TCPTRACE)
-                return None
+                raise exceptions.SubprocessedErorred(err.decode())
 
         return StringIO(out.decode())
 
@@ -240,8 +244,19 @@ class TCPTracer(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def collect(self):
-        """ Collect data asynchronously using tcptracer """
-        raw_data = await self._get_raw_data()
+        """
+        Collect data asynchronously using tcptracer.
+
+        :return
+            A `data_io.EventData` object that encapsulates the collected data.
+        """
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.EventData(None, -1, -1,
+                                     InterfaceTypes.TCPTRACE, None)
+
         data = self._get_generator(raw_data)
         return data_io.EventData(data, self.start_time, self.end_time,
                                  InterfaceTypes.TCPTRACE)
@@ -252,7 +267,7 @@ class TCPTracer(collecter.Collecter):
         Generate a dictionary mapping ports to sets of (PID, comm) pairs.
 
         :param data:
-            The input tcptracer data
+            The raw tcptracer data.
         :return:
             The port-mapping dictionary.
 
@@ -262,7 +277,7 @@ class TCPTracer(collecter.Collecter):
         data.readline()
         data.readline()
 
-        # Use a Python dictionary to match up ports and PIDS/command names
+        # Use a dictionary to match up ports and PIDS/command names
         port_lookup = {}
 
         # Process rest of file
@@ -275,12 +290,11 @@ class TCPTracer(collecter.Collecter):
             source_port = int(values[7])
             net_ns = int(values[10])
 
-            # Discard external TCP / not in net namespace
-            if not source_addr.startswith("127."):
-                continue
-            elif not dest_addr.startswith("127."):
-                continue
-            elif self.options and self.options.net_ns != net_ns:
+            # Discard external TCP or messages that are not in the specified
+            # net namespace
+            if not source_addr.startswith("127.") or \
+               not dest_addr.startswith("127.") or \
+               self.options and self.options.net_ns != net_ns:
                 continue
 
             # Add the port data to port_lookup dictionary
@@ -300,12 +314,12 @@ class TCPTracer(collecter.Collecter):
         generated from that data by _generate_dict
 
         :param data:
-            The tcptracer data.
+            The raw tcptracer data.
         :param port_lookup:
-            The port-mapping dictionary generated from that data by
+            The port-mapping dictionary generated from the raw data by
             _generate_dict
         :return:
-            A generatory of :class:`EventDatum` objects.
+            A generator of :class:`EventDatum` objects.
 
         """
         # Skip header
@@ -326,13 +340,10 @@ class TCPTracer(collecter.Collecter):
             size = int(values[9])
             net_ns = int(values[10])
 
-
             # Discard external TCP
-            if not source_addr.startswith("127."):
-                continue
-            elif not dest_addr.startswith("127."):
-                continue
-            elif self.options and self.options.net_ns != net_ns:
+            if not source_addr.startswith("127.") or \
+               not dest_addr.startswith("127.") or \
+               self.options and self.options.net_ns != net_ns:
                 continue
 
             # Get destination PIDs from port_lookup dictionary

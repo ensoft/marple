@@ -1,13 +1,13 @@
-# -------------------------------------------------------------
+# --------------------------------------------------------------------
 # perf.py - interacts with the perf tracing tool
-# June-July 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
-# -------------------------------------------------------------
+# June - September 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
+# --------------------------------------------------------------------
 
 """
 Interacts with the perf tracing tool.
 
-Specified several collecter (deriving from collecter.Collecter) that use perf
-to gather data and then return it using data object generators.
+Specifies several collecter (deriving from collecter.Collecter) that use perf
+to gather data.
 
 """
 
@@ -28,9 +28,8 @@ from io import StringIO
 from typing import NamedTuple
 
 from marple.collect.interface import collecter
-from marple.common import data_io, util, consts
+from marple.common import data_io, util, exceptions
 from marple.common.consts import InterfaceTypes
-import marple.collect.interface.error_acc as error_acc
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -49,10 +48,10 @@ class MemoryEvents(collecter.Collecter):
 
     _DEFAULT_OPTIONS = None
 
+    # Name for the file perf generates
     _PERF_FILE_NAME = "memevent_perf.data"
 
     @util.check_kernel_version("2.6")
-    @util.Override(collecter.Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         """ Initialise the collecter (see superclass)."""
         super().__init__(time, options)
@@ -72,9 +71,7 @@ class MemoryEvents(collecter.Collecter):
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.MEMEVENTS)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
@@ -83,9 +80,7 @@ class MemoryEvents(collecter.Collecter):
         )
         out, err = await sub_process.communicate()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.MEMEVENTS)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
@@ -101,16 +96,30 @@ class MemoryEvents(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def collect(self):
-        """ Collect data asynchronously using perf """
-        raw_data = await self._get_raw_data()
+        """
+        Collect data asynchronously using perf.
+
+        :return
+            A `data_io.StackData` object that encapsulates the collected data if
+            no subprocesses errored, None otherwise.
+
+        """
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.StackData(None, -1, -1, InterfaceTypes.MEMEVENTS,
+                                     None)
+
         data = self._get_generator(raw_data)
         data_options = data_io.StackData.DataOptions("samples")
         return data_io.StackData(data, self.start_time, self.end_time,
                                  InterfaceTypes.MEMEVENTS, data_options)
 
 
+# TODO: Decide what to do with this, deprecated
 class MemoryMalloc(collecter.Collecter):
-    """ Collect malloc data using perf. """
+    """ Collect malloc stacks using perf. """
 
     class Options(NamedTuple):
         """ No options for this collecter class. """
@@ -121,7 +130,6 @@ class MemoryMalloc(collecter.Collecter):
     _PERF_FILE_NAME = "memmalloc_perf.data"
 
     @util.check_kernel_version("2.6")
-    @util.Override(collecter.Collecter)
     def __init__(self, time, options=_DEFAULT_OPTIONS):
         """ Initialise the collecter (see superclass). """
         super().__init__(time, options)
@@ -131,15 +139,12 @@ class MemoryMalloc(collecter.Collecter):
     async def _get_raw_data(self):
         """ Collect raw data asynchronously using perf. """
         # Delete old probes and create a new one tracking allocation size
-        # @@@ TODO THIS IS ARCHITECTURE SPECIFIC CURRENTLY
         sub_process = await asyncio.create_subprocess_shell(
             "perf probe -q --del *malloc*", stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.PERF_MALLOC)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf probe -qx /lib*/*/libc.so.* malloc:1 size=%di",
@@ -147,9 +152,7 @@ class MemoryMalloc(collecter.Collecter):
         )
         _, err = await sub_process.communicate()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.PERF_MALLOC)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         # Record perf data
         self.start_time = datetime.datetime.now()
@@ -161,9 +164,7 @@ class MemoryMalloc(collecter.Collecter):
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.PERF_MALLOC)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
@@ -171,9 +172,7 @@ class MemoryMalloc(collecter.Collecter):
         )
         out, err = await sub_process.communicate()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.PERF_MALLOC)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
@@ -189,8 +188,21 @@ class MemoryMalloc(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def collect(self):
-        """ Collect data asynchronously using perf """
-        raw_data = await self._get_raw_data()
+        """
+        Collect data asynchronously using perf.
+
+        :return
+            A `data_io.StackData` object that encapsulates the collected data if
+            no subprocesses errored, None otherwise.
+
+        """
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.StackData(None, -1, -1,
+                                     InterfaceTypes.PERF_MALLOC, None)
+
         data = self._get_generator(raw_data)
         data_options = data_io.StackData.DataOptions("kilobytes")
         return data_io.StackData(data, self.start_time, self.end_time,
@@ -238,9 +250,7 @@ class StackTrace(collecter.Collecter):
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.CALLSTACK)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
@@ -248,9 +258,7 @@ class StackTrace(collecter.Collecter):
         )
         out, err = await sub_process.communicate()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.CALLSTACK)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
@@ -266,8 +274,21 @@ class StackTrace(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def collect(self):
-        """ Collect data asynchronously using perf """
-        raw_data = await self._get_raw_data()
+        """
+        Collect data asynchronously using perf.
+
+        :return
+            A `data_io.StackData` object that encapsulates the collected data if
+            no subprocesses errored, None otherwise.
+
+        """
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.StackData(None, -1, -1,
+                                     InterfaceTypes.CALLSTACK, None)
+
         data = self._get_generator(raw_data)
         data_options = data_io.StackData.DataOptions("samples")
         return data_io.StackData(data, self.start_time, self.end_time,
@@ -303,9 +324,7 @@ class SchedulingEvents(collecter.Collecter):
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.SCHEDEVENTS)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf sched script -i " + self._PERF_FILE_NAME +
@@ -314,9 +333,7 @@ class SchedulingEvents(collecter.Collecter):
         )
         out, err = await sub_process.communicate()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.SCHEDEVENTS)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
@@ -349,14 +366,12 @@ class SchedulingEvents(collecter.Collecter):
             time_str = match.group("time").split(".")
             time_int = int(time_str[0]) * 1000000 + int(time_str[1])
 
-            # Specific data for the scheduling events; fields are named in a
-            # general manner so that they could be used, knowing their order,
-            # to display them in a specific way (if g2 is used this info
-            # can be used to decide the tracks and labels)
-
             specific_datum = {'pid': match.group("pid"),
                               'comm': match.group('name'),
                               'cpu': match.group('cpu')}
+
+            # Connected is none to specify we have a standalone event with no
+            # connections
             event = data_io.EventDatum(specific_datum=specific_datum,
                                        time=time_int, connected=None,
                                        type=match.group("event"))
@@ -365,8 +380,21 @@ class SchedulingEvents(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def collect(self):
-        """ Collect data asynchronously using perf """
-        raw_data = await self._get_raw_data()
+        """"
+        Collect data asynchronously using perf.
+
+        :return
+            A `data_io.EventData` object that encapsulates the collected data if
+            no subprocesses errored, None otherwise.
+
+        """
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.EventData(None, -1, -1,
+                                     InterfaceTypes.SCHEDEVENTS, None)
+
         data = self._get_generator(raw_data)
         return data_io.EventData(data, self.start_time, self.end_time,
                                  InterfaceTypes.SCHEDEVENTS)
@@ -401,9 +429,7 @@ class DiskBlockRequests(collecter.Collecter):
         _, err = await sub_process.communicate()
         self.end_time = datetime.datetime.now()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.DISKBLOCK)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf script -i " + self._PERF_FILE_NAME,
@@ -411,9 +437,7 @@ class DiskBlockRequests(collecter.Collecter):
         )
         out, err = await sub_process.communicate()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.DISKBLOCK)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         os.remove(os.getcwd() + "/" + self._PERF_FILE_NAME)
 
@@ -429,8 +453,21 @@ class DiskBlockRequests(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def collect(self):
-        """ Collect data asynchronously using perf """
-        raw_data = await self._get_raw_data()
+        """
+        Collect data asynchronously using perf.
+
+        :return
+            A `data_io.StackData` object that encapsulates the collected data if
+            no subprocesses errored, None otherwise.
+
+        """
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.StackData(None, -1, -1,
+                                     InterfaceTypes.DISKBLOCK, None)
+
         data = self._get_generator(raw_data)
         data_options = data_io.StackData.DataOptions("samples")
         return data_io.StackData(data, self.start_time, self.end_time,
@@ -441,7 +478,8 @@ class StackParser:
     """
     Goes through input line by line to fold the stacks.
 
-    Takes stacks that were captured by perf and converts them to stack objects.
+    Takes stacks that were captured by perf and converts them to
+    `data_io.StackDatum` objects.
 
     """
     # ---------------------------------------------------------
@@ -634,8 +672,8 @@ class StackParser:
                 # Matches empty line
                 stack_folded = self._make_stack()
                 if stack_folded:
-                    yield data_io.StackDatum(weight=1, stack=stack_folded)
                     # @@@ TODO: generalise to allow different weights
+                    yield data_io.StackDatum(weight=1, stack=stack_folded)
             # event record start
             elif self._line_is_baseline(line):
                 # Matches "perf script" output, first line of a stack

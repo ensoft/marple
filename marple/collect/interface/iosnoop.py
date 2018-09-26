@@ -6,11 +6,11 @@
 """
 Interacts with the iosnoop tracing tool.
 
-Calls iosnoop to collect data and format it.
+Calls iosnoop to collect disk latency data and format it.
 
 """
 __all__ = (
-    'Disk'
+    'DiskLatency',
 )
 
 import asyncio
@@ -19,9 +19,8 @@ import logging
 from io import StringIO
 from typing import NamedTuple
 
-import marple.collect.interface.error_acc as error_acc
 from marple.collect.interface import collecter
-from marple.common import data_io, util, paths, consts
+from marple.common import data_io, util, paths, exceptions
 from marple.common.consts import InterfaceTypes
 
 logger = logging.getLogger(__name__)
@@ -58,9 +57,7 @@ class DiskLatency(collecter.Collecter):
 
         self.end_time = datetime.datetime.now()
         if sub_process.returncode != 0:
-            self.log_error(err, logger)
-            error_acc.errored_collecters.add(consts.InterfaceTypes.DISKLATENCY)
-            return None
+            raise exceptions.SubprocessedErorred(err.decode())
 
         return StringIO(out.decode())
 
@@ -83,8 +80,20 @@ class DiskLatency(collecter.Collecter):
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def collect(self):
-        """ Collect data asynchronously using iosnoop."""
-        raw_data = await self._get_raw_data()
+        """
+        Collect data asynchronously using iosnoop.
+
+        :return:
+            a `data_io.PointData` object that encapsulates the collected
+            data
+        """
+        try:
+            raw_data = await self._get_raw_data()
+        except exceptions.SubprocessedErorred as se:
+            logger.error(str(se))
+            return data_io.PointData(None, -1, -1,
+                                     InterfaceTypes.DISKLATENCY, None)
+
         data = self._get_generator(raw_data)
         data_options = data_io.PointData.DataOptions(
             x_label="Time", y_label="Latency", x_units="s", y_units="ms")

@@ -24,7 +24,6 @@ class _FlamegraphBaseTest(unittest.TestCase):
     )
     data = data_io.StackData(datum_generator, None, None, None, data_io.StackData.DataOptions("kb"))
 
-
     outfile = mock.MagicMock()
     outfilename = "test_output"
     outfile.__str__.return_value = outfilename
@@ -77,7 +76,7 @@ class MakeTest(_FlamegraphBaseTest):
         temp_file_mock.TempFileName.return_value.__str__.return_value = \
             "test_temp_file"
 
-        fg = flamegraph.Flamegraph(self.data)
+        fg = flamegraph.Flamegraph(self.test_stack_data)
 
         context_mock1, context_mock2 = mock.MagicMock(), mock.MagicMock()
         file_mock1, file_mock2 = StringIO(""), StringIO("")
@@ -85,7 +84,7 @@ class MakeTest(_FlamegraphBaseTest):
         context_mock1.__enter__.return_value = file_mock1
         context_mock2.__enter__.return_value = file_mock2
 
-        actual = fg._make(self.test_stack_data)
+        actual = fg._make()
 
         temp_file_mock.TempFileName.return_value.__str__.\
             assert_has_calls((mock.call(), mock.call()))
@@ -110,7 +109,7 @@ class MakeTest(_FlamegraphBaseTest):
         temp_file_mock.TempFileName.return_value.__str__.return_value = \
             "test_temp_file"
 
-        fg = flamegraph.Flamegraph(self.data)
+        fg = flamegraph.Flamegraph(self.test_stack_data)
 
         context_mock1, context_mock2 = mock.MagicMock(), mock.MagicMock()
         file_mock1, file_mock2 = StringIO(""), StringIO("")
@@ -118,7 +117,7 @@ class MakeTest(_FlamegraphBaseTest):
         context_mock1.__enter__.return_value = file_mock1
         context_mock2.__enter__.return_value = file_mock2
 
-        actual = fg._make(self.test_stack_data)
+        actual = fg._make()
 
         temp_file_mock.TempFileName.return_value.__str__.\
             assert_has_calls((mock.call(), mock.call()))
@@ -149,7 +148,7 @@ class ShowTest(_FlamegraphBaseTest):
 
         self.fg.show()
 
-        make_mock.assert_called_once_with(self.data)
+        make_mock.assert_called_once_with()
 
         subproc_mock.call.assert_called_once_with(
             ['su', '-', '-c', 'firefox ' + "test_svg_file", "test_user"]

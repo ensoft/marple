@@ -22,8 +22,6 @@ import logging
 import os
 import textwrap
 
-import marple.collect.interface.error_acc as error_acc
-
 from marple.common import (
     file,
     output,
@@ -190,7 +188,7 @@ def _get_collecter_instance(interface_name, collection_time):
         collecter = perf.StackTrace(collection_time, options)
     elif interface is interfaces.MEMLEAK:
         options = ebpf.Memleak.Options(
-            config.get_option_from_section("General", "top_stacks", "int"))
+            config.get_option_from_section("General", "top_processes", "int"))
         collecter = ebpf.Memleak(collection_time, options)
     elif interface is interfaces.MEMEVENTS:
         collecter = perf.MemoryEvents(collection_time)
@@ -208,8 +206,10 @@ async def _loading_bar(collection_time):
     """
     Function that displays a progress bar during collection
 
-    We update the bar asyncronously every half a second, while collecting
-    data
+    We update the bar asynchronously every half a second, while collecting
+    data.
+
+    :param collection_time: the colelction time for the collectors
     """
 
     bar_width = 60
@@ -229,19 +229,17 @@ async def _loading_bar(collection_time):
 
 
 @util.log(logger)
-def _collect(collecters, collection_time):
+def _collect_results(collecters, collection_time):
     """
     Helper function that async collects all the data using the asyncio lib
+
     :param collecters: the collecter instances that we use to collect data
-    :param collection_time: the collection time
+    :param collection_time: the collection time used by the collectors
     :return: the data gathered as a list of data objects
 
     """
     # Create event loop to collect and write data
     ioloop = asyncio.get_event_loop()
-
-    # Reset the list of collectors whose subprocesses resulted in an error
-    error_acc.errored_collecters = set()
 
     # Begin async collection
     futures = tuple(collecter.collect() for collecter in collecters)
@@ -250,20 +248,24 @@ def _collect(collecters, collection_time):
     )
     ioloop.close()
 
-    # We deal with the errored collecters
-    if error_acc.errored_collecters != set():
-        print("Interfaces {} errored. No data collected for them. "
-              "Check if the collection tools are installed "
-              "correctly. For more info check the logs.".format(
-            ','.join(map(lambda coll: coll.value, error_acc.errored_collecters))
-        ))
-
     results = results[:-1]  # Get rid of the loading bar, not relevant
 
-    # Return the unerrored results
-    return filter(lambda res: res.interface not in
-                              error_acc.errored_collecters,
-                  results)
+    # Now, if a result has its `datum_generator` field None we know it errored
+    errored = list(filter(lambda res: res.datum_generator is None,
+                          results))
+    not_errored = list(filter(lambda res: res.datum_generator is not None,
+                              results))
+
+    # We deal with the errored collecters
+    if errored:
+        print("Interfaces {} errored. No data collected for them. "
+              "Check if the collection tools are installed "
+              "correctly. Check the logs for more info about the errors.".
+            format(','.join(map(lambda data: data.interface.value, errored)))
+        )
+
+    # Return only the unerrored results
+    return not_errored
 
 
 @util.log(logger)
@@ -271,8 +273,10 @@ def main(argv):
     """
     The main function of the controller.
 
-    Calls the middle level modules according to options selected by user.
-    Uses asyncio to asynchronously call collecters.
+    Calls the middle level modules according to options selected by user in the
+    terminal.
+    Uses asyncio to asynchronously collect data using the appropriate
+    collectors.
 
     :param argv:
         a list of command line arguments from call in main module
@@ -303,8 +307,8 @@ def main(argv):
     # Get collecter interfaces
     collecters = _get_collecters(args.subcommands, collection_time)
 
-    # Async collect everything
-    results = _collect(collecters, collection_time)
+    # Asynchronously collect everything
+    results = _collect_results(collecters, collection_time)
 
     with marple.common.data_io.Writer(str(filename)) as writer:
         writer.write(results)

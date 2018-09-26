@@ -1,14 +1,17 @@
-# -------------------------------------------------------------
+# -----------------------------------------------------------
 # treemap.py - Generates a treemap representation of the data
 # July 2018 - Andrei Diaconu, Hrutvik Kanabar
-# -------------------------------------------------------------
+# -----------------------------------------------------------
 """
-Displays the collected data as a treemap
+Class that displays data as a treemap.
+
+Implements the GenericDiaplay interface to display an interactive treemap
+in the browser.
 
 """
 
 __all__ = (
-    'Treemap'
+    'Treemap',
 )
 
 import logging
@@ -30,6 +33,10 @@ logger.debug('Entered module: %s', __name__)
 
 
 class Treemap(GenericDisplay):
+    """
+    The class representing treemaps.
+
+    """
     # @TODO: Add more options (look at how the treemap is initialised)
     class DisplayOptions(NamedTuple):
         """
@@ -45,8 +52,8 @@ class Treemap(GenericDisplay):
         Constructor for the Treemap.
 
         :param data:
-            A generator that returns the data for the section we want to
-            display as a treemap
+            A `data_io.StackData` object that encapsulated the collected data
+            we want to display using the treemap.
 
         """
         # Initialise the base class

@@ -24,6 +24,10 @@ OUT_DIR = os.getcwd() + "/marple_out/"
 
 
 def create_directories():
+    """
+    Method that creates the required MARPLE directories
+
+    """
     if not os.path.isdir(LOG_DIR):
         os.mkdir(LOG_DIR)
     if not os.path.isdir(TMP_DIR):

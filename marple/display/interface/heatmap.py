@@ -6,22 +6,18 @@
 """
 Creating and displaying heat maps.
 
-The data file should be comma-separated 2D datapoints with accompanying
-information or annotation: <x>,<y>,<info>.
-
 Two classes are provided for modifying the graph:
     :class:`AxesLabels` allows labelling of axes.
     :class:`GraphParameters` allows scaling.
 
 The class :class:`HeatMap` encapsulates the heat map itself,
-and allows construction, display, and saving of the figure.
+and allows construction and displaying of the figure.
 
 """
 
 __all__ = (
     'AxesLabels',
     'GraphParameters',
-    'HeatmapException',
     'HeatMap',
 )
 
@@ -87,11 +83,6 @@ class GraphParameters(NamedTuple):
     figure_size: float
     scale: float
     y_res: float
-
-
-class HeatmapException(Exception):
-    def __init__(self, msg):
-        super().__init__("Error in display.heatmap: " + msg)
 
 
 class HeatMap(GenericDisplay):
@@ -251,7 +242,7 @@ class HeatMap(GenericDisplay):
         # y_values = [dp.y for dp in data]
 
         if not x_values or not y_values:
-            raise HeatmapException("No data in input file.")
+            raise ValueError("No data in input file.")
         if normalised:
             # Normalize x-axis values to start from zero
             x_values = [x - min(x_values) for x in x_values]
@@ -350,8 +341,8 @@ class HeatMap(GenericDisplay):
                        self.pos.y + self.data_stats.y_delta)
 
         if x_ax_min >= x_ax_max or y_ax_min >= y_ax_max:
-            raise HeatmapException("Invalid axes bounds generated - change "
-                                   "scaling parameters.")
+            raise ValueError("Invalid axes bounds generated - change "
+                             "scaling parameters.")
 
         self.axes.axis([x_ax_min, x_ax_max, y_ax_min, y_ax_max])
 

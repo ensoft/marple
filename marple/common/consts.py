@@ -1,7 +1,7 @@
-# -------------------------------------------------------------
+# ---------------------------------------------
 # consts.py - Various enums and other constants
 # August 2018 - Andrei Diaconu
-# -------------------------------------------------------------
+# ---------------------------------------------
 
 """
 Module that defines various enums and constants used althroughout the interface
@@ -55,7 +55,11 @@ display_dictionary = {
     Datatypes.POINT: [DisplayOptions.HEATMAP, DisplayOptions.STACKPLOT],
 }
 
+# All the interfaces detected by the collect module
 interfaces_argnames = [interface.value for interface in InterfaceTypes]
 
+# Separator used by the datatypes to separate their fields
 field_separator = "$$$"
+
+# Separator used to separate sections in the .marple files
 section_separator = "\n"

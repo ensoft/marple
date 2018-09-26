@@ -51,11 +51,11 @@ class GetDataTest(_BaseHeatMapTest):
         hm = object.__new__(heatmap.HeatMap)
 
         # Test that correct exception is raised (including message)
-        with self.assertRaises(heatmap.HeatmapException) as de:
+        with self.assertRaises(ValueError) as de:
             hm._get_data(iter(()))
         err = de.exception
         self.assertEqual(str(err),
-                         "Error in display.heatmap: No data in input file.")
+                         "No data in input file.")
 
     def test_simple_data(self):
         """
@@ -127,12 +127,12 @@ class SetAxesLimitsTest(_BaseHeatMapTest):
         hm.pos = test_pos
 
         # Ensure correct exception raised
-        with self.assertRaises(heatmap.HeatmapException) as he:
+        with self.assertRaises(ValueError) as he:
             hm._set_axes_limits()
         err = he.exception
         self.assertEqual(str(err),
-                         "Error in display.heatmap: Invalid axes bounds "
-                         "generated - change scaling parameters.")
+                         "Invalid axes bounds generated - change "
+                         "scaling parameters.")
 
     def test_set_correct_axes_limits(self):
         """

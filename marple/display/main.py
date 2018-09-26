@@ -6,11 +6,11 @@
 """
 Controller script - user interface, parses and applies display commands
 
-Handles interaction between the output modules (flamegraph, g2, etc.)
+Handles interaction between the display modules (flamegraph, g2, etc.)
 It calls the relevant functions for each command.
 
 """
-__all__ = "main"
+__all__ = ["main"]
 
 import argparse
 import logging
@@ -59,7 +59,7 @@ def _select_mode(interface, datatype, args):
         terminal arguments as a dictionary
 
     :return:
-        a consts.DisplayOptions specifing the display mode
+        a `consts.DisplayOptions` specifing the display mode
 
     """
     # Create the dictionaries used in the selection step

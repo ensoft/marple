@@ -17,7 +17,7 @@ class Collecter:
     Options class as a NamedTuple.
     A set of default options should also ideally be specified.
     The data collection functionality should be carried out in the collect()
-    method, and should ideally yield data one by one.
+    method.
 
     """
     _DEFAULT_OPTIONS = None
@@ -47,23 +47,13 @@ class Collecter:
         """ Collect raw data asynchronously from the collection tool """
 
     def _get_generator(self, raw_data):
-        """ Convert the raw data to standard datatypes and yield it """
+        """ Convert the raw data to standard datum types and yield it """
         pass
 
     async def collect(self):
-        """ Overall collection: collect data asynchronously and return it. """
+        """
+        Overall collection: collect data asynchronously and return it as
+        data objects.
+
+        """
         pass
-
-    @staticmethod
-    def log_error(msg, log):
-        """
-        Logs a byte string at level ERROR on logger if non-empty.
-
-        :param msg:
-            Message to log, as a byte string.
-        :param log:
-            Logger object to log to.
-
-        """
-        if msg.decode():
-            log.error(msg.decode())
