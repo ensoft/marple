@@ -6,7 +6,7 @@ Documentation for the common module
    :caption: Contents:
 
    common/data_io
-   common/ouput
+   common/output
    common/util
    common/file
    common/exceptions

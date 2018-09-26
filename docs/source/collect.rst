@@ -11,4 +11,3 @@ Documentation for the collection module
    collect/perf
    collect/iosnoop
    collect/smem
-   collect/error_acc

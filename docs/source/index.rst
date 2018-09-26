@@ -1,5 +1,5 @@
-__main__ module documentation
-==================================
+MARPLE documentation
+====================
 
 .. toctree::
    :maxdepth: 3
