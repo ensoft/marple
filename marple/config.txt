@@ -1,33 +1,13 @@
-# TODO: Verifier + create config from file at startup if it doesn not exist or
-# TODO: it is corrupted
 [General]
     time:10
-    frequency:99
-    system_wide: -a
     warnings:true
-    top_processes:25
 
+# Default display modes used for collection interfaces
 [DisplayInterfaces]
-    # Used to set the default display mode for the interfaces
-    # Respect the following conventions:
-    #   - Interface types are as in the arguments to `marple --collect`:
-    #       * 'cpusched';
-    #       * 'disklat';
-    #       * 'mallocstacks';
-    #       * 'memusage';
-    #       * 'memtime';
-    #       * 'callstack';
-    #       * 'ipc';
-    #       * 'memevents';
-    #       * 'diskblockrq';
-    #       * 'perf_malloc';
-    #       * 'lib';
-    #   - Display modes: * 'flamegraph'
-    #                    * 'treemap'
-    #                    * 'g2'
-    #                    * 'heatmap'
-    #                    * 'stackplot'
-    #                    * 'plot'
+    # Names in here need to correspond with the
+    # arguments from the command line for
+    # collect and display; check the help for those
+    # commands
     cpusched:g2
     disklat:heatmap
     mallocstacks:flamegraph
@@ -39,7 +19,15 @@
     perf_malloc:flamegraph
     ipc:plot
 
-# The following sections will set some options for the various display modes
+############## Options for the collection interfaces ##############
+[callstack]
+    frequency:99
+    system_wide: -a
+
+[memusage]
+    top_processes:25
+
+############## Options for display modules ##############
 [heatmap]
     figure_size: 10.0
     scale: 5.0
@@ -49,7 +37,7 @@
 [g2]
     # pid or cpu
     track: pid
-    # Path to g2 executable
+    # Path to g2 executable, may need changing depending on installation
     path: ~/vpp/build-root/install-native/g2/bin/g2
 
 [stackplot]
@@ -61,6 +49,8 @@
 [flamegraph]
     coloring: hot
 
+
+############## Special options for collection ##############
 [Aliases]
     boot: memleak,cpusched,disklat
 
