@@ -96,6 +96,8 @@ class Flamegraph(GenericDisplay):
         # doesn't try to open it while it's being written to
         sp.wait()
 
+        return counts  # for testing
+
     @util.log(logger)
     @util.Override(GenericDisplay)
     def show(self):
