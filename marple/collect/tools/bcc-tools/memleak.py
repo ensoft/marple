@@ -298,7 +298,7 @@ def print_outstanding():
                                               info.name.decode(),
                                               info.pid)
     to_show = sorted(alloc_info.values(),
-                     key=lambda a: a.size)[-top_stacks:]  # top_stacks
+                     key=lambda a: a.size, reverse=True)[:top_stacks + 1]
     for alloc in to_show:
         if alloc.pid != os.getpid():
             # @TODO: Better way to deal with pid and count so that the tooltip
