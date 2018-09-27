@@ -69,9 +69,6 @@ class Flamegraph(GenericDisplay):
         """
         Uses Brendan Gregg's flamegraph tool to convert data to flamegraph.
 
-        :param data:
-            A StackData object.
-
         """
         stacks_temp_file = str(file.TempFileName())
         counts = collections.Counter()
@@ -87,15 +84,17 @@ class Flamegraph(GenericDisplay):
 
         with open(self.svg_temp_file, "w") as out:
             if self.display_options.coloring:
-                subprocess.Popen(
-                    [FLAMEGRAPH_DIR, "--color=" + self.display_options.coloring,
-                     "--countname=" + self.data_options.weight_units,
-                     stacks_temp_file], stdout=out)
+                sp = subprocess.Popen(
+                        [FLAMEGRAPH_DIR, "--color=" +
+                         self.display_options.coloring,
+                         "--countname=" + self.data_options.weight_units,
+                         stacks_temp_file], stdout=out)
             else:
-                subprocess.Popen([FLAMEGRAPH_DIR, stacks_temp_file], stdout=out)
-
-        # Return counts to aid debugging
-        return counts
+                sp = subprocess.Popen([FLAMEGRAPH_DIR, stacks_temp_file],
+                                      stdout=out)
+        # Wait for the subprocess to generate the svg file so the show method
+        # doesn't try to open it while it's being written to
+        sp.wait()
 
     @util.log(logger)
     @util.Override(GenericDisplay)

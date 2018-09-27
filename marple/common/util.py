@@ -1,7 +1,7 @@
-# -------------------------------------------------------------
+# -------------------------------------------
 # util.py - various utilities
 # July 2018 - Andrei Diaconu, Hrutvik Kanabar
-# -------------------------------------------------------------
+# -------------------------------------------
 
 """Various utilities"""
 
@@ -15,6 +15,7 @@ def check_kernel_version(required_kernel):
     """
     Decorator function that checks if the target kernel supports the interface
     Raises a NotSupportedException if the kernel is not supported
+
     :param: required_kernel:
         The required kernel for the interface
 
@@ -22,9 +23,11 @@ def check_kernel_version(required_kernel):
     def wrap(f):
         def wrapped_check(*args):
             target_kernel = platform.release()
-            delimited_rk = re.split(r'\.|-', required_kernel)
-            delimited_tk = re.split(r'\.|-', target_kernel)
-            if delimited_tk[0:3] < delimited_rk[0:3]:
+            delimited_rk = list(map(lambda s: int(s),
+                                    re.split(r'\.|-', required_kernel)[0:3]))
+            delimited_tk = list(map(lambda s: int(s),
+                                    re.split(r'\.|-', target_kernel)[0:3]))
+            if delimited_tk < delimited_rk:
                 raise exceptions.NotSupportedException("Kernel not supported",
                                                        required_kernel)
             return f(*args)
