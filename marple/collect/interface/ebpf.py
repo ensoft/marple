@@ -47,6 +47,11 @@ class MallocStacks(collecter.Collecter):
 
     _DEFAULT_OPTIONS = None
 
+    @util.check_kernel_version("4.6")
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass). """
+        super().__init__(time, options)
+
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def _get_raw_data(self):
@@ -115,6 +120,11 @@ class Memleak(collecter.Collecter):
 
     _DEFAULT_OPTIONS = Options(top_processes=10)
 
+    @util.check_kernel_version("4.2")
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass). """
+        super().__init__(time, options)
+
     @util.log(logger)
     @util.Override(collecter.Collecter)
     async def _get_raw_data(self):
@@ -181,6 +191,11 @@ class TCPTracer(collecter.Collecter):
         net_ns: int
 
     _DEFAULT_OPTIONS = None
+
+    @util.check_kernel_version("4.2")
+    def __init__(self, time, options=_DEFAULT_OPTIONS):
+        """ Initialise the collecter (see superclass). """
+        super().__init__(time, options)
 
     @util.log(logger)
     @util.Override(collecter.Collecter)

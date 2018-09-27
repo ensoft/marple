@@ -51,7 +51,7 @@ import logging
 import typing
 import ast
 
-from marple.common import exceptions, consts, util
+from marple.common import exceptions, consts, util, output
 
 logger = logging.getLogger(__name__)
 logger.debug('Entered module: %s', __name__)
@@ -474,22 +474,42 @@ class Writer:
         Appends the section to the current standard format file.
         Includes the section separator.
 
+        :param index:
+            Index for the metaheader labeling
         :param data:
             A StackData, EventData, or PointData object.
 
         """
         # Write to file, keep track of start and end
         start_byte = self.file.tell()
-        for line in data.to_string():
-            self.file.write(line + "\n")
-        self.file.write(consts.section_separator)
-        end_byte = self.file.tell()
 
-        # Update metaheader
-        header = data.header_dict()
-        header["start byte"] = start_byte
-        header["end byte"] = end_byte
-        self.metaheader[index] = header
+        line_generator = data.to_string()
+        header = next(line_generator)  # the header must exist
+        # Now we try to see if there is any data in the section
+        try:
+            first_line = next(line_generator)
+        except StopIteration:
+            # No ther data
+            output.warn_("Warning while collecting",
+                         "Interface {} did not collect any data, so nothing"
+                         " was written for it!".format(data.interface.value))
+            return
+        else:
+            # We write the data we extracted
+            self.file.write(header + '\n')
+            self.file.write(first_line + '\n')
+
+            # And continue writing the remaining lines
+            for line in line_generator:
+                self.file.write(line + "\n")
+            self.file.write(consts.section_separator)
+            end_byte = self.file.tell()
+
+            # Update metaheader
+            header = data.header_dict()
+            header["start byte"] = start_byte
+            header["end byte"] = end_byte
+            self.metaheader[index] = header
 
     @util.log(logger)
     def write(self, data_objs):

@@ -52,7 +52,7 @@ class MemoryGraph(collecter.Collecter):
     _DEFAULT_OPTIONS = Options(mode="name", frequency=0.5)
     modes = ["command", "name", "pid"]
 
-    @util.Override(collecter.Collecter)
+    @util.check_kernel_version("2.6.27")
     def __init__(self, time_, options=_DEFAULT_OPTIONS):
         super().__init__(time_, options)
 

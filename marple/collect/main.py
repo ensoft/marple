@@ -1,7 +1,7 @@
-# -------------------------------------------------------------
+# --------------------------------------------------------------------
 # main.py - user interface, parses and applies collect commands
-# June - August 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
-# -------------------------------------------------------------
+# June - September 2018 - Franz Nowak, Hrutvik Kanabar, Andrei Diaconu
+# --------------------------------------------------------------------
 
 """
 Controller script - user interface, parses and applies collect commands
@@ -183,12 +183,15 @@ def _get_collecter_instance(interface_name, collection_time):
         collecter = smem.MemoryGraph(collection_time)
     elif interface is interfaces.CALLSTACK:
         options = perf.StackTrace.Options(
-            config.get_option_from_section("General", "frequency", "int"),
-            config.get_option_from_section("General", "system_wide"))
+            config.get_option_from_section(interfaces.CALLSTACK.value,
+                                           "frequency", "int"),
+            config.get_option_from_section(interfaces.CALLSTACK.value,
+                                           "system_wide"))
         collecter = perf.StackTrace(collection_time, options)
     elif interface is interfaces.MEMLEAK:
         options = ebpf.Memleak.Options(
-            config.get_option_from_section("General", "top_processes", "int"))
+            config.get_option_from_section(interfaces.MEMLEAK.value,
+                                           "top_processes", "int"))
         collecter = ebpf.Memleak(collection_time, options)
     elif interface is interfaces.MEMEVENTS:
         collecter = perf.MemoryEvents(collection_time)
@@ -258,11 +261,13 @@ def _collect_results(collecters, collection_time):
 
     # We deal with the errored collecters
     if errored:
-        print("Interfaces {} errored. No data collected for them. "
-              "Check if the collection tools are installed "
-              "correctly. Check the logs for more info about the errors.".
-            format(','.join(map(lambda data: data.interface.value, errored)))
-        )
+        output.error_("Error while collecting data",
+                      ("Interfaces {} errored. No data collected for them. "
+                       "Check if the collection tools are installed "
+                       "correctly. Check the logs for more info"
+                       ".".format(','.join(map(lambda data:
+                                               data.interface.value,
+                                               errored)))))
 
     # Return only the unerrored results
     return not_errored

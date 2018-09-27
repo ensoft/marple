@@ -143,16 +143,12 @@ class MemoryMalloc(collecter.Collecter):
             "perf probe -q --del *malloc*", stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
-        if sub_process.returncode != 0:
-            raise exceptions.SubprocessedErorred(err.decode())
 
         sub_process = await asyncio.create_subprocess_shell(
             "perf probe -qx /lib*/*/libc.so.* malloc:1 size=%di",
             stderr=asyncio.subprocess.PIPE
         )
         _, err = await sub_process.communicate()
-        if sub_process.returncode != 0:
-            raise exceptions.SubprocessedErorred(err.decode())
 
         # Record perf data
         self.start_time = datetime.datetime.now()

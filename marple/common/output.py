@@ -41,4 +41,19 @@ def error_(text, description):
 
     """
     logger.error("Error: %s, %s", text, description)
-    print(text, file=sys.stderr)
+    print("{}: {}".format(text, description), file=sys.stderr)
+
+
+def warn_(text, description):
+    """
+    Displays warning messages to the user and logs them.
+
+    :param text:
+        The warning message to be displayed to the user.
+
+    :param description:
+        The error description for logging.
+
+    """
+    print("{}: {}".format(text, description))
+    logger.warning("Warning: %s, %s", text, description)
