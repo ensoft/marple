@@ -85,7 +85,7 @@ class EventDatum(typing.NamedTuple):
         event, thta is "pid".
 
     """
-    time: int
+    time: int  # us
     type: str
     specific_datum: dict
     connected: list

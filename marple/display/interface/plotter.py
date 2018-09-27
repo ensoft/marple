@@ -188,7 +188,7 @@ class _PlotContainer:
                                      labels={
                                          'left': ','.join(
                                              self.y_axis_ticks),
-                                         'bottom': 'time (ms)'},
+                                         'bottom': 'time (us)'},
                                      axisItems={'left': ticks})
 
         # Event plots init
