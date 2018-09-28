@@ -3,15 +3,13 @@
 # September 2018 - Andrei Diaconu
 # -------------------------------------------------------------
 
-""" Test bcc/ebpf interactions and stack parsing. """
+""" Test the smem module. """
 
-import asyncio
 import asynctest
-from io import StringIO
-
 
 from marple.collect.interface import smem
-from marple.common import data_io, consts
+from marple.common import data_io
+
 
 class SmemTest(asynctest.TestCase):
     """ Test memtime data collection. """
@@ -60,8 +58,10 @@ class SmemTest(asynctest.TestCase):
             super().run(result)
 
     @asynctest.patch('marple.collect.interface.smem.time.monotonic')
-    async def test_normal(self, mono_patch):
-        mono_patch.side_effect = [0, 1, 2]
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test_normal(self, release_mock, mono_patch):
+        mono_patch.side_effect = [0, 1, 2]  # so we get exactly 2 collections
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
 
         collecter = smem.MemoryGraph(self.time)
         data = await collecter.collect()

@@ -124,13 +124,6 @@ def main():
                       "Attempted to import '{}' in {}:\n"
                       .format(mnfe.name, mnfe.path) + traceback.format_exc())
         exit(1)
-    except NotImplementedError as nie:
-        # if the requested function is not implemented, exit with an error
-        output.error_("The command \"{}\" is currently not implemented. "
-                      "Please try a different command.".format(nie.args[0]),
-                      "Exited with a NotImplementedError. Command: {}"
-                      .format(nie.args[0]))
-        exit(1)
     except FileExistsError as fee:  # TODO is this ever raised?
         # If the output filename requested by the user already exists
         output.error_("A file with the name {} already exists. Please "
@@ -144,13 +137,6 @@ def main():
                       "different input file.".format(fnfe.filename),
                       "Exited with a FileNotFoundError. Filename: {}"
                       .format(fnfe.filename))
-        exit(1)
-    except exceptions.NotSupportedException as nse:
-        # If the target kernel does not meet the requirements
-        output.error_("You need to have kernel {} or above for this "
-                      "functionality".format(nse.required_kernel),
-                      "Exited with NotSupportedError. Required kernel: "
-                      "{}".format(nse.required_kernel))
         exit(1)
     except IsADirectoryError as iade:
         # If user tried to save output under a name that is a directory name

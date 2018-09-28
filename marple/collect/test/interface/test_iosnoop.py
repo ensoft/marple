@@ -40,7 +40,10 @@ class DiskLatencyTest(asynctest.TestCase):
             # Call super
             super().run(result)
 
-    async def test(self):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test(self, release_mock):
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
+
         collecter = iosnoop.DiskLatency(self.time, None)
         data = await collecter.collect()
         datapoints = list(data.datum_generator)

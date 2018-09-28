@@ -56,7 +56,10 @@ class _PerfCollecterBaseTest(asynctest.TestCase):
 class MemoryEventsTest(_PerfCollecterBaseTest):
     """ Test memory event collection. """
     @asynctest.patch('marple.collect.interface.perf.StackParser')
-    async def test(self, stack_parse_mock):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test(self, release_mock, stack_parse_mock):
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check  # so we ignore the kernel check
+
         collecter = perf.MemoryEvents(self.time, None)
         await collecter.collect()
 
@@ -91,7 +94,10 @@ class MemoryEventsTest(_PerfCollecterBaseTest):
 class MemoryMallocTest(_PerfCollecterBaseTest):
     """ Test memory malloc probe collection. """
     @asynctest.patch('marple.collect.interface.perf.StackParser')
-    async def test(self, stack_parse_mock):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test(self, release_mock, stack_parse_mock):
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
+
         collecter = perf.MemoryMalloc(self.time, None)
         await collecter.collect()
 
@@ -134,7 +140,10 @@ class MemoryMallocTest(_PerfCollecterBaseTest):
 class StackTraceTest(_PerfCollecterBaseTest):
     """ Test stack trace collection. """
     @asynctest.patch('marple.collect.interface.perf.StackParser')
-    async def test(self, stack_parse_mock):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test(self, release_mock, stack_parse_mock):
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
+
         options = perf.StackTrace.Options(frequency=1, cpufilter="filter")
         collecter = perf.StackTrace(self.time, options)
         await collecter.collect()
@@ -170,9 +179,11 @@ class StackTraceTest(_PerfCollecterBaseTest):
 class SchedulingEventsTest(_PerfCollecterBaseTest):
     """ Test scheduling event collection. """
     @asynctest.patch('marple.collect.interface.perf.re')
-    async def test_success(self, re_mock):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test_success(self, release_mock, re_mock):
         """ Test successful regex matching. """
         # Set up mocks
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
         self.strio_mock.return_value = StringIO('test_out2')
         match_mock = re_mock.match.return_value
         match_mock.group.side_effect = [
@@ -228,9 +239,11 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
         self.assertEqual([expected_event], sched_events)
 
     @asynctest.patch('marple.collect.interface.perf.re')
-    async def test_no_match(self, re_mock):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test_no_match(self, release_mock, re_mock):
         """ Test failed regex matching. """
         # Set up mocks
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
         self.strio_mock.return_value = StringIO('test_out2')
         re_mock.match.return_value = None
 
@@ -276,7 +289,10 @@ class SchedulingEventsTest(_PerfCollecterBaseTest):
 class DiskBlockRequestsTest(_PerfCollecterBaseTest):
     """ Test disk block request data collection. """
     @asynctest.patch('marple.collect.interface.perf.StackParser')
-    async def test(self, stack_parse_mock):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test(self, release_mock, stack_parse_mock):
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
+
         collecter = perf.DiskBlockRequests(self.time, None)
         await collecter.collect()
 

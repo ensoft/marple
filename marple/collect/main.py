@@ -27,7 +27,8 @@ from marple.common import (
     output,
     util,
     config,
-    consts
+    consts,
+    exceptions
 )
 from marple.collect.interface import (
     perf,
@@ -145,14 +146,28 @@ def _get_collecters(subcommands, collection_time):
         if subcommand in consts.interfaces_argnames:
             args_seen.add(subcommand)
         else:
+            # Check for aliases
             if not config.config.has_option("Aliases", subcommand):
-                raise ValueError('One or more subcommands or aliases invalid!')
+                raise ValueError('Subcommand or alias {} not valid!'.format(
+                    subcommand
+                ))
             # Look for aliases
             alias_args = set(config.get_option_from_section(
                 "Aliases", subcommand).split(','))
             args_seen = args_seen.union(alias_args)
 
-    return [_get_collecter_instance(arg, collection_time) for arg in args_seen]
+    collecter_instances = []
+    for arg in args_seen:
+        try:
+            instance = _get_collecter_instance(arg, collection_time)
+        except exceptions.NotSupportedException as nse:
+            output.error_("Requirement not satisfied:", " Subcommand or alias "
+                          "{} needs kernel version "
+                          "{} or above!".format(arg, nse.required_kernel))
+        else:
+            collecter_instances.append(instance)
+
+    return collecter_instances
 
 
 def _get_collecter_instance(interface_name, collection_time):
@@ -199,8 +214,6 @@ def _get_collecter_instance(interface_name, collection_time):
         collecter = perf.DiskBlockRequests(collection_time)
     elif interface is interfaces.PERF_MALLOC:
         collecter = perf.MemoryMalloc(collection_time)
-    else:
-        raise NotImplementedError(interface_name)
 
     return collecter
 

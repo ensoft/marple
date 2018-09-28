@@ -32,7 +32,10 @@ class Mallocstacks(asynctest.TestCase):
             A generator of StackDatum objects created from the desired output.
 
         """
-        with asynctest.patch("marple.collect.interface.ebpf.asyncio") as async_mock:
+        with asynctest.patch('marple.collect.interface.ebpf.asyncio') as async_mock, \
+             asynctest.patch('marple.common.util.platform.release') as release_mock:
+            release_mock.return_value = "100.0.0"  # so we ignore the kernel check
+
             # Set up mocks
             create_mock = asynctest.CoroutineMock()
             async_mock.create_subprocess_exec = create_mock
@@ -98,13 +101,15 @@ class TCPTracerTest(asynctest.TestCase):
     @asynctest.patch('marple.collect.interface.ebpf.os')
     @asynctest.patch('marple.collect.interface.ebpf.TCPTracer._generate_dict')
     @asynctest.patch('marple.collect.interface.ebpf.TCPTracer._generate_events')
-    async def test_collect_normal(self, gen_events_mock, gen_dict_mock, os_mock,
-                                  log_mock, async_mock):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test_collect_normal(self, release_mock, gen_events_mock,
+                                  gen_dict_mock, os_mock, log_mock, async_mock):
         """
         Test normal operation, when tcptracer outputs KeyboardInterrupt only
 
         """
         # Set up mocks
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
         create_mock = asynctest.CoroutineMock()
         wait_mock = asynctest.CoroutineMock()
 
@@ -153,13 +158,15 @@ class TCPTracerTest(asynctest.TestCase):
     @asynctest.patch('marple.collect.interface.ebpf.os')
     @asynctest.patch('marple.collect.interface.ebpf.TCPTracer._generate_dict')
     @asynctest.patch('marple.collect.interface.ebpf.TCPTracer._generate_events')
-    async def test_collect_error(self, gen_events_mock, gen_dict_mock, os_mock,
-                                 log_mock, async_mock):
+    @asynctest.patch('marple.common.util.platform.release')
+    async def test_collect_error(self, release_mock, gen_events_mock,
+                                 gen_dict_mock, os_mock, log_mock, async_mock):
         """
         Test error operation, when tcptracer outputs an error
 
         """
         # Set up mocks
+        release_mock.return_value = "100.0.0"  # so we ignore the kernel check
         create_mock = asynctest.CoroutineMock()
         wait_mock = asynctest.CoroutineMock()
 
