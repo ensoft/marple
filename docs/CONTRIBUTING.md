@@ -142,3 +142,20 @@ The workflow for using MARPLE is as follows:
  2. *(optional)* **Transfer collected data to another machine** - the data can be moved to another machine and still viewed.
 
  3. **Display data** - specify the input data file, and MARPLE will automatically select the best visualiser to display this data. Alternatively, defaults can be set in the [configuration file](#configuration) or pass as [command line arguments](#displaying-data).
+
+## Generating docs
+You can generate the MARPLE doc using if you have sphinx installed. Simply go to the `docs` folder and run `make html` in there. It can then be seen by opening `docs/build/index/html`.
+
+## Extending MARPLE
+
+### Adding a new collecter
+To add a new collecter:
+ * Implement the collecter using the `collect.interface.collecter.Collecter` interface, following the guidelines provided by the others.
+ * Add info about it to the `common.consts` file (add it to everything that concerns interfaces) and `common.config` file (how to visualize it under the `DisplayInterfaces` section, and what options it has under the collecter options), where appropriate.
+ * Add it as an option in the `_get_collecter_instance` function in `collect.main` file.
+
+### Adding a new visualizer
+To add a new visualizer:
+ * Implement the new visualized using the `display.interface.generic_display` interface, following the guidelines provided by the others.
+ * Add info about it in the `common.consts` file and the `common.config` file
+ * Add it as an option in the `display.main` module arg parsing function.

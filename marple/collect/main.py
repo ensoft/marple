@@ -160,7 +160,7 @@ def _get_collecters(subcommands, collection_time):
         try:
             instance = _get_collecter_instance(arg, collection_time)
         except exceptions.NotSupportedException as nse:
-            output.error_("Requirement not satisfied:", " Subcommand or alias "
+            output.error_("Requirement not satisfied", " Subcommand or alias "
                           "{} needs kernel version "
                           "{} or above!".format(arg, nse.required_kernel))
         else:
