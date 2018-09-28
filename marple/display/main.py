@@ -123,13 +123,18 @@ def _args_parse(argv):
     # List, entry selection, and data aggregation functionality
     meta = parser.add_mutually_exclusive_group()
     meta.add_argument("-l", "--list", action="store_true",
-                      help="list available datasets in data file")
+                      help="list available datasets in data file; if the "
+                           "user provides a marple_out directory as input, "
+                           "it lists the contents of the files in that folder")
 
     meta.add_argument("-e", "--entry", nargs='*',
                             help="select dataset(s) from data file")
+
     meta.add_argument(
         "--noagg", action="store_true",
-        help="if set, none of the sections in the file will be aggregated")
+        help="If set, none of the sections in the file will be aggregated. "
+             "Otherwise, the user can set what interfaces should aggregate "
+             "collected when displayed in the config file.")
 
     # Group of the display options for displaying stacks
     stack_display = parser.add_mutually_exclusive_group()

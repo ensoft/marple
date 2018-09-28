@@ -65,20 +65,19 @@ def _args_parse(argv):
     options = parser.add_argument_group()
 
     user_groups = config.get_section('Aliases').items()
-
     user_groups_help = [name + ": " + interfaces
                         for name, interfaces in user_groups]
 
     subcommand_help = (
-            "interfaces to use for data collection.\n\n"
+            "Interfaces to use for data collection.\n\n"
             "When multiple interfaces are specified, they will all be used "
             "to collect data simultaneously.\n"
             "Users can also define their own groups of interfaces using "
-            "the config file.\n\n"
+            "the config file.\n"
             "Built-in interfaces are:\n"
             ">" + ", ".join(consts.interfaces_argnames) + "\n"
             "Current user-defined groups are:\n"
-            ">" + "\n>".join(user_groups_help)
+            ">" + "\n>".join(user_groups_help) + "\n"
     )
 
     line_length = 55
