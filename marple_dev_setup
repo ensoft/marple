@@ -65,7 +65,7 @@ sudo apt-get -y --allow-unauthenticated install bcc-tools libbcc-examples linux-
 printf "${BEGIN}Done.${END}\n\n\n"
 
 printf "${BEGIN}Installing dependencies for vpp/g2... ${END}"
-sudo apt-get -y install libgtk2.0-dev
+sudo apt-get -y install libtool m4 automake libgtk2.0-dev
 printf "${BEGIN}Done.${END}\n\n\n"
 
 printf "${BEGIN}Adding vpp/g2 submodule... ${END}"
